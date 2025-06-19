@@ -1,0 +1,194 @@
+SISTEMA;EXTRACT(YEARFROMVIG_INICIAL);DESARROLLADOR;DE_OTRO_SIST;CUAL_OTRO_SIST;COMO_CONECTA
+REQ;2007;;NO;
+Asunto: %ASUNTO_RQ%
+Descripción: 
+%DETALLE_RQ% ... 
+
+%CALIFICA% 
+
+Por favor no responda este mensaje.;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2013;;NO;1-Tabla de Retención básica (art. 383 del E.T.);Se toma de una tabla donde esta configurado y se lee desde el código
+NOMINA;2020;;NO;1. Mi patrimonio bruto era igual o inferior a 4.500 UVT ($160.232.000);Se toma de una tabla donde esta configurado y se lee desde el código
+NOMINA;2023;;NO;1. Mi patrimonio bruto era igual o inferior a 4.500 UVT.;Se toma de una tabla donde esta configurado y se lee desde el código
+NOMINA;2000;;NO;1. Mi patrimonio bruto era igual o inferior a cuatro mil quinientos (4.500) UVT. ($133.889.000).;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;1999;;NO;10.180.24.17;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2014;;NO;10.180.24.17;Se toma de una tabla donde esta configurado y se lee desde el código
+BONPENS;2000;;NO;100% S.H.D.;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;1999;;NO;11 11. Otras adquisic de bienes. serv y obra inferior al 10% de la mc. Sin sorteo;Se toma de una tabla donde esta configurado y se lee desde el código
+OPGET;2017;;NO;1159-I.F.I. CONCESION SALINAS;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;1999;;NO;12 12. Otras adquisic de bienes. serv y obra inferio al 10% de la mc. Con sorteo;Se toma de una tabla donde esta configurado y se lee desde el código
+SISLA;2001;;NO;12-Falta de Datos Básicos: Dirección, teléfonos,
+Fecha Nacimiento, EPS. Dirección y teléfonos actuales. Formato o Certificación de Afiliación a EPS.;Se toma de una tabla donde esta configurado y se lee desde el código
+OPGET;2017;;NO;1204-EMPRESAS VARIAS DE MEDELLIN E.S.E.;Se toma de una tabla donde esta configurado y se lee desde el código
+SISLA;2001;;NO;17-Falta Documento de Identificación para Menores de Edad.
+Fotoc. TI o RC de los representados menores.;Se toma de una tabla donde esta configurado y se lee desde el código
+OPGET;2017;;NO;1701-EMPRESAS VARIAS DE MEDELLIN E.S.E.;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2000;;NO;18 - Empresa Social del Estado - E.S.E.;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2000;;NO;19 - Empresa de Servicios Públicos - E.S.P.;Se toma de una tabla donde esta configurado y se lee desde el código
+SISLA;2000;;NO;2. Mi patrimonio bruto era igual o inferior a ciento cincuenta y cinco millones quinientos mil pesos ($155.500.000) al 31 de Diciembre de;Se toma de una tabla donde esta configurado y se lee desde el código
+NOMINA;2023;;NO;2. Mis ingresos brutos fueron inferiores a 1.400 UVT.;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2000;;NO;21 - Empresa Promotora de Salud - E.P.S.;Se toma de una tabla donde esta configurado y se lee desde el código
+NOMINA;2000;;NO;3. Mis ingresos brutos fueron inferiores a mil cuatrocientos (1.400) UVT.  ($41.654.000).;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2015;;NO;37-F.01,37-F.04,37-F.21,;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2015;;NO;37-F.01,37-F.04,37-F.21,37-F.33,37-F.34,37-F.45,;Se toma de una tabla donde esta configurado y se lee desde el código
+NOMINA;2023;;NO;4. Mis consumos mediante tarjeta de crédito no excedieron la suma de 1.400 UVT.;Se toma de una tabla donde esta configurado y se lee desde el código
+NOMINA;2016;;NO;4. Mis consumos mediante tarjeta de crédito no excedieron la suma de dos mil ochocientas (2.800) UVT. ($79.181.000);Se toma de una tabla donde esta configurado y se lee desde el código
+NOMINA;2000;;NO;4. Mis consumos mediante tarjeta de crédito no excedieron la suma de dos mil ochocientos (2.800) UVT. ($83.308.000);Se toma de una tabla donde esta configurado y se lee desde el código
+SISLA;2000;;NO;4. Mis ingresos brutos ordinarios fueron iguales o inferiores a ochenta  millones ochocientos mil pesos ($80.800.000).;Se toma de una tabla donde esta configurado y se lee desde el código
+SISLA;2001;;NO;5-Por cumplir la mayoría de edad (18 años). Fotoc. CC.
+Fotoc. formato cambio condición EPS.
+Supervivencia actualizada.
+Certificado original de Escolaridad actualizado.;Se toma de una tabla donde esta configurado y se lee desde el código
+NOMINA;2020;;NO;5. Que el total de mis compras y consumos no superaron la suma de 1.400 UVT ($49.850.000);Se toma de una tabla donde esta configurado y se lee desde el código
+NOMINA;2000;;NO;5. Que el total de mis compras y consumos no superaron la suma de dos mil ochocientos (2.800) UVT.  ($83.308.000);Se toma de una tabla donde esta configurado y se lee desde el código
+NOMINA;2023;;NO;5. Que el total de mis compras y consumos no superó la suma de 1.400 UVT.;Se toma de una tabla donde esta configurado y se lee desde el código
+SISLA;2001;;NO;6-Fin Representación Curadores/Representantes.
+Fotoc. CC del Curador/Representante.
+Fotoc. Doc. identidad de representados.
+Fotoc. Afiliación del Grupo Familiar a la EPS.
+Certificaciones de Escolaridad de los representados (Mayores de Edad).;Se toma de una tabla donde esta configurado y se lee desde el código
+NOMINA;2023;;NO;6. Que el valor total de mis consignaciones bancarias, depósitos o inversiones financieras no excedieron los 1.400 UVT.;Se toma de una tabla donde esta configurado y se lee desde el código
+NOMINA;2000;;NO;6. Que el valor total de mis consignaciones bancarias, depósitos o inversiones financieras no excedieron los cuatro mil quinientos (4.500) UVT.  ($133.889.000);Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;1999;;NO;6.5. Menor Cuantía - Programas de Protección personas amenazadas, Desmovilización y Reincorporación, Población desplazada, protección de derechos Humanos y población con alto grado de exclusión.;Se toma de una tabla donde esta configurado y se lee desde el código
+SISLA;2001;;NO;7-Por cumplimiento de los 25 años (estudiantes).
+Fotoc. Cédula Ciudadanía.;Se toma de una tabla donde esta configurado y se lee desde el código
+SISLA;2001;;NO;9-Aclaracion de afiliación a EPS y/o unificación.
+Formato de Afiliación a la EPS.
+Certificación de aceptación del descuento (Régimen Especial).;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;1999;;NO;9.2. Directa - Cuando no exista pluralidad de oferentes.;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2000;;NO;910 910-Contrato de adm/on. mantenim. y aprovech. económico del espacio público;Se toma de una tabla donde esta configurado y se lee desde el código
+OPGET;2002;;NO;ACCIONES E.T.B.;Se toma de una tabla donde esta configurado y se lee desde el código
+SISLA;2021;;NO;AUX.MEJOR BACH.HIJO PENS.;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2008;;NO;Aceptacion Especificaciones Esenciales Serv. Prof...(PDF,RTF);Se toma de una tabla donde esta configurado y se lee desde el código
+NOMINA;2002;;NO;CARTAGENA DE INDIAS ...;Se toma de una tabla donde esta configurado y se lee desde el código
+NOMINA;2002;;NO;CARTAGENA DE INDIAS ...;Se toma de una tabla donde esta configurado y se lee desde el código
+SISLA;2021;;NO;COOP.MULT.ACT.FIN.COAFIN;Se toma de una tabla donde esta configurado y se lee desde el código
+SISLA;2012;;NO;Carrera 13 No. 60-91 Teléfono 5442424, 7447854/55 ext 601-602-603; Calle 31 No. 13 A 51 Local 12 y 13 Teléfono 6079977 ext 309-350-454-455 Carrera 13 A No. 29-24 Piso 20  teléfono 6079977; Horario de atención : 08:00 a.m. a 4:00 p.m.;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2017;;NO;Cra 6 NÂº 14-98 Torre A. Piso 2. Edif. Condominio Parque Santander;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;1999;;NO;I.C.A. IMPUESTO DE INDUSTRIA Y COMERCIO;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;1999;;NO;I.V.A. IMPUESTO AL VALOR AGREGADO;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2006;;NO;Identificado con Cédula de Ciudadanía No. 80412607 de Bogotá, fue nombrado Secretario de Hacienda mediante Decreto No. 001 del 1 de Enero de 2008 y tomó posesión del cargo el 10 de Enero de 2008, según consta en el Acta No. 026 de la misma fecha.;Se toma de una tabla donde esta configurado y se lee desde el código
+SAI;2017;;NO;NOTA 1. LEY 734 DE 2002. ART.34. NUMERAL 22. RESPONDER POR LA CONSERVACION DE LOS UTILES, EQUIPOS MUEBLES Y BIENES CONFIADOS A SU GUARDA O ADMINISTRACION Y RENDIR CUENTA OPORTUNA DE SU UTILIZACION;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2008;;NO;P_CODIGO_COMPANIA,:B_CO_CONTRATACION.CODIGO_COMPANIA;P_VIGENCIA,:B_CO_CONTRATACION.VIGENCIA;P_NUM_SOL_ADQ,:B_CO_DTLLE_CONTRATACION.NUMERO_DOC_ACT;P_MODALIDAD,:B_CO_CONTRATACION.TIPO_CONTRATACION;;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2008;;NO;P_CODIGO_COMPANIA,:B_CO_CONTRATACION.CODIGO_COMPANIA;P_VIGENCIA,:B_CO_CONTRATACION.VIGENCIA;P_NUM_SOL_ADQ,:B_CO_DTLLE_CONTRATACION.NUMERO_DOC_ACT;P_NUMERO_PROCESO,:B_CO_CONTRATACION.NUMERO_DOC_ACT;P_TITULO,"ASIGNACION COMITE EVALUADOR";P_FECHA;Se toma de una tabla donde esta configurado y se lee desde el código
+SAI;1999;;NO;P_COMPANIA(NUM),B_SAI_TRASLADO_U.CODIGO_COMPANIA,P_UNIDAD(CHAR),B_SAI_TRASLADO_U.UNIDAD_EJECUTORA_ENTREGA,P_PROYECTO(CHAR),B_SAI_TRASLADO_U.PROYECTO_ENTREGA,P_VIGENCIA(NUM),B_SAI_TRASLADO_U.VIGENCIA_TRASLADO,P_TRASLADO(NUM),B_SAI_TRASLADO_U.NUMERO_TRASLADO;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2008;;NO;P_ID,:B_CO_DTLLE_CONTRATACION.NUMERO_DOC_ACT;P_VIGENCIA,:B_CO_CONTRATACION.VIGENCIA;P_CODIGO_COMPANIA,:B_CO_CONTRATACION.CODIGO_COMPANIA;;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2008;;NO;P_ID,:B_CO_DTLLE_CONTRATACION.NUMERO_DOC_ACT;P_VIGENCIA,:B_CO_CONTRATACION.VIGENCIA;P_CODIGO_COMPANIA,:B_CO_CONTRATACION.CODIGO_COMPANIA;;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2008;;NO;P_ID,:B_CO_DTLLE_CONTRATACION.NUMERO_DOC_ACT;P_VIGENCIA,:B_CO_CONTRATACION.VIGENCIA;P_CODIGO_COMPANIA,:B_CO_CONTRATACION.CODIGO_COMPANIA;;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2008;;NO;P_ID_CONS_EM,:B_CO_DTLLE_CONTRATACION.NUMERO_DOC_ACT;P_VIGENCIA,:B_CO_CONTRATACION.VIGENCIA;P_CODIGO_COMPANIA,:B_CO_CONTRATACION.CODIGO_COMPANIA;P_DEPENDENCIA,:B_CO_CONTRATACION.DEPENDENCIA;P_DIRECTOR,;P_OBJETO,:B_CO_CONTRATACION.OBJETO;;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2008;;NO;P_ID_SOL_ADQ,:B_CO_DTLLE_CONTRATACION.NUMERO_DOC_ACT;P_VIGENCIA,:B_CO_CONTRATACION.VIGENCIA;P_CODIGO_COMPANIA,:B_CO_CONTRATACION.CODIGO_COMPANIA;P_DEPENDENCIA,:DEPENDENCIA;P_OBJETO,:B_CO_CONTRATACION.OBJETO;P_MODALIDAD_SELECCION,:TIPO_CONTRATACION;;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2008;;NO;P_ID_SOL_CDP,:B_CO_DTLLE_CONTRATACION.NUMERO_DOC_ACT;P_VIGENCIA,:B_CO_CONTRATACION.VIGENCIA;P_CODIGO_COMPANIA,:B_CO_CONTRATACION.CODIGO_COMPANIA;;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2008;;NO;P_ID_SOL_CDP,:B_CO_DTLLE_CONTRATACION.NUMERO_DOC_ACT;P_VIGENCIA,:B_CO_CONTRATACION.VIGENCIA;P_CODIGO_COMPANIA,:B_CO_CONTRATACION.CODIGO_COMPANIA;P_OBJETO,:B_CO_CONTRATACION.OBJETO;;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2008;;NO;P_ID_SOL_COT,:B_CO_DTLLE_CONTRATACION.NUMERO_DOC_ACT;P_VIGENCIA,:B_CO_CONTRATACION.VIGENCIA;P_CODIGO_COMPANIA,:B_CO_CONTRATACION.CODIGO_COMPANIA;P_DEPENDENCIA,:B_CO_CONTRATACION.DEPENDENCIA;P_DIRECTOR,;P_OBJETO,:B_CO_CONTRATACION.OBJETO;;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2008;;NO;P_ID_SOL_COT,:B_CO_DTLLE_CONTRATACION.NUMERO_DOC_ACT;P_VIGENCIA,:B_CO_CONTRATACION.VIGENCIA;P_OBJETO,:B_CO_CONTRATACION.OBJETO;;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2008;;NO;P_ID_SOL_COT,:B_CO_DTLLE_CONTRATACION.NUMERO_DOC_ACT;P_VIGENCIA,:B_CO_CONTRATACION.VIGENCIA;P_objeto,:B_CO_CONTRATACION.objeto;;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;1999;;NO;P_INTERNO_MC(num),b_co_minuta_adicion.interno_mc,P_CONSECUTIVO_CONTRATO(NUM),B_CO_MINUTA_ADICION.CONSECUTIVO_CONTRATO,P_VIGENCIA(NUM),B_CO_MINUTA_ADICION.VIGENCIA,P_TAMANO_LETRA(NUM),,;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2008;;NO;P_NUM_SOL_ADQ,:B_CO_DTLLE_CONTRATACION.NUMERO_DOC_ACT;P_VIGENCIA,:B_CO_CONTRATACION.VIGENCIA;P_CODIGO_COMPANIA,:B_CO_CONTRATACION.CODIGO_COMPANIA;;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2008;;NO;P_NUM_SOL_ADQ,:B_CO_DTLLE_CONTRATACION.NUMERO_DOC_ACT;P_VIGENCIA,:B_CO_CONTRATACION.VIGENCIA;P_CODIGO_COMPANIA,:B_CO_CONTRATACION.CODIGO_COMPANIA;;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2008;;NO;P_NUM_SOL_ADQ,:B_CO_DTLLE_CONTRATACION.NUMERO_DOC_ACT;P_VIGENCIA,:B_CO_CONTRATACION.VIGENCIA;P_CODIGO_COMPANIA,:B_CO_CONTRATACION.CODIGO_COMPANIA;;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2008;;NO;P_NUM_SOL_ADQ,:B_CO_DTLLE_CONTRATACION.NUMERO_DOC_ACT;P_VIGENCIA,:B_CO_CONTRATACION.VIGENCIA;P_CODIGO_COMPANIA,:B_CO_CONTRATACION.CODIGO_COMPANIA;;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2008;;NO;P_VIGENCIA,:B_CO_CONTRATACION.VIGENCIA;P_ID_SOL_COT,:B_CO_DTLLE_CONTRATACION.NUMERO_DOC_ACT;P_OBJETO,:B_CO_CONTRATACION.OBJETO;;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2008;;NO;Página web de la Secretaría Distrital de Hacienda www.shd.gov.co;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;1999;;NO;RETENCION APLICABLE SOBRE EL I.V.A.;Se toma de una tabla donde esta configurado y se lee desde el código
+BONPENS;2000;;NO;S.H.D. Contribuyente;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;1999;;NO;SEL. ABREVIADA SUB.INV.PRES.,SEL.ABREVIADA.SUB.INV.ELECTRO.,;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;1999;;NO;SELECT CODIGO_DEPENDENCIA||'-'||decode(n,1,'REV_FINANC',2,'REV_PLANEAC','REV_BANCA'), decode(n,1,'R. Financiera',2,'R. Planeación','R.BANCA') descripcion FROM RH_DEPENDENCIAS a,(select level n from dual
+connect by level<4) b where fecha_hasta is null;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2000;;NO;SELECT CODIGO_DEPENDENCIA||'-PLAN_CONT' estado, 'Reg. Plan' descripcion FROM rh_dependencias WHERE fecha_hasta IS NULL UNION SELECT 'ADMON_PLAN', 'Adm. Plan' FROM dual UNION SELECT 'ADMON_MODDAT', 'Adm. ModDat' FROM dual;Se toma de una tabla donde esta configurado y se lee desde el código
+NOMINA;2010;;NO;SERVICIO DE SALUD INMEDIATO MEDICINA PREPAGADA S.A. ¿S.S.I. S.A.¿;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2014;;NO;Se informa que se encuentra en estado Devuelta la certificación de cumplimiento No.%%B_CO_ORDEN_CERTIFICACION.ID_CERTIFICACION%%  del contrato %%B_CO_ORDEN_CERTIFICACION.NUM_CONTRATO%% - %%B_CO_ORDEN_CERTIFICACION.VIGENCIA%%.
+
+%%OBSERVACIONES%%;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2014;;NO;Se informa que se encuentra en estado RADICADO la certificación de cumplimiento No.%%B_CO_ORDEN_CERTIFICACION.ID_CERTIFICACION%% del contrato %%B_CO_ORDEN_CERTIFICACION.NUM_CONTRATO%% - %%B_CO_ORDEN_CERTIFICACION.VIGENCIA%%.;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2014;;NO;Se informa que se encuentra en estado en TRAMITE, la certificación de cumplimiento No. %%B_CO_ORDEN_CERTIFICACION.ID_CERTIFICACION%%  del contrato %%B_CO_ORDEN_CERTIFICACION.NUM_CONTRATO%% por valor de $ %%VALOR_PAGAR%%
+
+
+SUBDIRECCION FINANCIERA;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;1999;;NO;ejurrego@shd.gov.co; ihidalgo@shd.gov.co; mvidal@shd.gov.co;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;1999;;NO;el Decreto Distrital No. 001 del 1 de enero del aÃ±o 2016, modificado mediante Decreto Distrital No. 014 del 4 de enero 2016 y acta de posesiÃ³n No. 022 del 1 de enero de 2016,;Se toma de una tabla donde esta configurado y se lee desde el código
+NOMINA;2025;;NO;http://10.160.3.188:8888/carga;Se toma de una tabla donde esta configurado y se lee desde el código
+NOMINA;1999;;NO;http://10.160.3.188:8888/carga;Se toma de una tabla donde esta configurado y se lee desde el código
+NOMINA;1999;;NO;http://10.160.3.188:8888/carga/;Se toma de una tabla donde esta configurado y se lee desde el código
+NOMINA;1999;;NO;http://10.160.3.188:8888/descarga/;Se toma de una tabla donde esta configurado y se lee desde el código
+NOMINA;1999;;NO;http://10.160.3.188:8888/descarga/;Se toma de una tabla donde esta configurado y se lee desde el código
+NOMINA;1999;;NO;http://10.160.3.188:8888/reports/rwservlet;Se toma de una tabla donde esta configurado y se lee desde el código
+NOMINA;1999;;NO;http://10.160.3.188:8888/reports/rwservlet/getjobid;Se toma de una tabla donde esta configurado y se lee desde el código
+LIMAY;2018;;NO;http://10.160.3.188:8888/reports/rwservlet/getjobid;Se toma de una tabla donde esta configurado y se lee desde el código
+SISLA;1997;;NO;http://10.160.3.35/liqlog;Se toma de una tabla donde esta configurado y se lee desde el código
+REQ;2008;;NO;http://10.160.3.35/req_adjuntos;Se toma de una tabla donde esta configurado y se lee desde el código
+BONPENS;2006;;NO;http://10.160.3.35/syncBD;Se toma de una tabla donde esta configurado y se lee desde el código
+CORR;2008;;NO;http://10.160.3.35/tempcordis;Se toma de una tabla donde esta configurado y se lee desde el código
+REQ;2008;;NO;http://10.160.3.35/tempreq;Se toma de una tabla donde esta configurado y se lee desde el código
+DOCUMENTOS;2001;;NO;http://10.160.3.35/tempsgd;Se toma de una tabla donde esta configurado y se lee desde el código
+SISLA;2002;;NO;http://10.160.3.35:7778/cache;Se toma de una tabla donde esta configurado y se lee desde el código
+CORR;2003;;NO;http://10.160.3.35:7778/cache;Se toma de una tabla donde esta configurado y se lee desde el código
+BONPENS;2003;;NO;http://10.160.3.35:7778/cache;Se toma de una tabla donde esta configurado y se lee desde el código
+CAMEN;2002;;NO;http://10.160.3.35:7778/cache;Se toma de una tabla donde esta configurado y se lee desde el código
+GENERAL;2000;;NO;http://10.160.3.35:7778/reports/rwservlet/;Se toma de una tabla donde esta configurado y se lee desde el código
+DOCUMENTOS;2001;;NO;http://10.160.3.35:7778/reports/rwservlet/;Se toma de una tabla donde esta configurado y se lee desde el código
+PAC;1999;;NO;http://10.160.3.35:7778/reports/rwservlet/;Se toma de una tabla donde esta configurado y se lee desde el código
+OPGET;2000;;NO;http://10.160.3.35:7778/reports/rwservlet/;Se toma de una tabla donde esta configurado y se lee desde el código
+PREDIS;2003;;NO;http://10.160.3.35:7778/reports/rwservlet/;Se toma de una tabla donde esta configurado y se lee desde el código
+PAC;1999;;NO;http://10.160.3.35:7778/reports/rwservlet/;Se toma de una tabla donde esta configurado y se lee desde el código
+OPGET;2001;;NO;http://10.160.3.35:7778/reports/rwservlet/getjobid;Se toma de una tabla donde esta configurado y se lee desde el código
+PREDIS;2002;;NO;http://10.160.3.35:7778/reports/rwservlet/getjobid;Se toma de una tabla donde esta configurado y se lee desde el código
+CAMEN;1999;;NO;http://10.160.3.35:7778/reports/rwservlet/getjobid;Se toma de una tabla donde esta configurado y se lee desde el código
+PAC;1999;;NO;http://10.160.3.35:7778/reports/rwservlet/getjobid;Se toma de una tabla donde esta configurado y se lee desde el código
+CCOACTIVO;2011;;NO;http://10.160.3.35:7778/reports/rwservlet/getjobid;Se toma de una tabla donde esta configurado y se lee desde el código
+DOCUMENTOS;2002;;NO;http://10.160.3.35:7778/reports/rwservlet/getjobid;Se toma de una tabla donde esta configurado y se lee desde el código
+BONPENS;2006;;NO;http://10.160.3.35:7778/reports/rwservlet/getjobid=;Se toma de una tabla donde esta configurado y se lee desde el código
+BONPENS;2000;;NO;http://10.160.3.35:7778/reports/rwservlet/getjobid=;Se toma de una tabla donde esta configurado y se lee desde el código
+BONPENS;2003;;NO;http://10.160.3.35:7778/reports/rwservlet?;Se toma de una tabla donde esta configurado y se lee desde el código
+GENERAL;2000;;NO;http://10.160.3.35:7778/tempbonos;Se toma de una tabla donde esta configurado y se lee desde el código
+BONPENS;2004;;NO;http://10.160.3.35:7778/tempbonos;Se toma de una tabla donde esta configurado y se lee desde el código
+BONPENS;2005;;NO;http://10.160.3.35:7778/tempbonos/;Se toma de una tabla donde esta configurado y se lee desde el código
+CORR;1999;;NO;http://10.160.3.35:7778/tempcor;Se toma de una tabla donde esta configurado y se lee desde el código
+OPGET;2006;;NO;http://10.160.3.35:7778/tempogt/;Se toma de una tabla donde esta configurado y se lee desde el código
+NOMINA;1997;;NO;http://10.160.3.35:7778/temppernoliq;Se toma de una tabla donde esta configurado y se lee desde el código
+PREDIS;2002;;NO;http://10.160.3.35:7778/temppredis;Se toma de una tabla donde esta configurado y se lee desde el código
+DOCUMENTOS;2007;;NO;http://10.160.3.35:7778/tempsgdplano;Se toma de una tabla donde esta configurado y se lee desde el código
+CCOACTIVO;2011;;NO;http://10.160.3.35:7778/tempsisla;Se toma de una tabla donde esta configurado y se lee desde el código
+CCOACTIVO;2011;;NO;http://10.160.3.35:7778/tempsisla;Se toma de una tabla donde esta configurado y se lee desde el código
+SISLA;2003;;NO;http://10.160.3.35:7778/tempsisla;Se toma de una tabla donde esta configurado y se lee desde el código
+SISLA;1999;;NO;http://10.160.3.35:7778/tempsisla;Se toma de una tabla donde esta configurado y se lee desde el código
+TERCEROS;2018;;NO;http://10.180.2.19:8888/reports/rwservlet/getjobid;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;1999;;NO;http://10.180.2.63:7777/coimagenes/encabezado.jpg;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;1999;;NO;http://10.180.2.63:7777/coimagenes/encabezado.jpg;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;1999;;NO;http://10.180.2.63:7777/xmlpserver/;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;1999;;NO;http://10.180.2.73:7777/coimagenes/SDH_PV.jpg;Se toma de una tabla donde esta configurado y se lee desde el código
+SISLA;2024;;NO;http://10.183.2.11:8080/reportes_sisla/ServletReporteUsuario?usuario=;Se toma de una tabla donde esta configurado y se lee desde el código
+TERCEROS;2018;;NO;http://192.168.1.25:8888/carga;Se toma de una tabla donde esta configurado y se lee desde el código
+PREDIS;2002;;NO;http://192.168.4.58:7777/dev60cgi/rwcgi60/rwcgi60?server=rep60apliserverd+desformat=pdf+destype=cache;Se toma de una tabla donde esta configurado y se lee desde el código
+PAC;1999;;NO;http://192.168.4.58:7777/dev60cgi/rwcgi60?server=rep60_apliserverd+destype=cache;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2001;;NO;http://administrativas.shd.gov.co/carga;Se toma de una tabla donde esta configurado y se lee desde el código
+SAI;2008;;NO;http://administrativas.shd.gov.co/carga;Se toma de una tabla donde esta configurado y se lee desde el código
+SAE;1999;;NO;http://administrativas.shd.gov.co/carga;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;1999;;NO;http://aplinternas.shd.gov.co/calidad/archivos_adjuntos/37-G-05_2_20160211_092533.pdf;Se toma de una tabla donde esta configurado y se lee desde el código
+SAE;2002;;NO;http://apliserver.shd.gov.co/cache;Se toma de una tabla donde esta configurado y se lee desde el código
+PAC;1999;;NO;http://devaserver.shd.gov.co/cgi-bin/rwcgi60.exe?server=repserver+desformat=pdf+destype=cache;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2007;;NO;http://intranetapp.shd.gov.co/calidad/archivos_adjuntos/41-F.01.doc;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;1999;;NO;http://obiie10g.shd.gov.co:7777/coimagenes/SDH_PV.jpg;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;1999;;NO;http://obiie10g.shd.gov.co:7777/coimagenes/encabezado.jpg;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;1999;;NO;http://obiie10g.shd.gov.co:7777/xmlpserver/;Se toma de una tabla donde esta configurado y se lee desde el código
+EXPEDIENTES;2010;;NO;http://oracle-apl2.foncep.gov.co:7778/tempbonos;Se toma de una tabla donde esta configurado y se lee desde el código
+LIMAY;2000;;NO;http://pivote9i.shd.gov.co:7778/cache;Se toma de una tabla donde esta configurado y se lee desde el código
+LIMAY;2000;;NO;http://pivote9i.shd.gov.co:7778/cache;Se toma de una tabla donde esta configurado y se lee desde el código
+LIMAY;2000;;NO;http://pivote9i.shd.gov.co:7778/cgi-bin/rwcgi60.exe?server=repserver+desformat=pdf+destype=cache;Se toma de una tabla donde esta configurado y se lee desde el código
+LIMAY;2000;;NO;http://pivote9i.shd.gov.co:7778/cgi-bin/rwcgi60.exe?server=repserver+desformat=pdf+destype=cache;Se toma de una tabla donde esta configurado y se lee desde el código
+GENERAL;2001;;NO;http://saf_server.shd.gov.co/cache;Se toma de una tabla donde esta configurado y se lee desde el código
+GENERAL;2002;;NO;http://saf_server.shd.gov.co/dev60cgi/rwcgi60.exe?repserver=rep60devaserver+report=;Se toma de una tabla donde esta configurado y se lee desde el código
+GENERAL;2025;;NO;http://saf_server.shd.gov.co:60/cache;Se toma de una tabla donde esta configurado y se lee desde el código
+GENERAL;1999;;NO;http://saf_server.shd.gov.co:60/cache;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2008;;NO;http://wikiprod.shd.gov.co/wikishd/index.php/Manual_de_Usuario:CONTRATACION:CONTRATACION;Se toma de una tabla donde esta configurado y se lee desde el código
+SAE;2006;;NO;http://wikiprod.shd.gov.co/wikishd/index.php/SAE;Se toma de una tabla donde esta configurado y se lee desde el código
+SAI;2002;;NO;http://wikiprod.shd.gov.co/wikishd/index.php/SAI;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2015;;NO;http://www.colombiacompra.gov.co/es/Clasificacion;Se toma de una tabla donde esta configurado y se lee desde el código
+SISLA;1999;;NO;http://zecantc02.shd.gov.co:7778/sl/cache;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2000;;NO;http://zeccantc06.shd.gov.co:7778/cache;Se toma de una tabla donde esta configurado y se lee desde el código
+SAE;2000;;NO;http://zeccantc28.shd.gov.co/cache;Se toma de una tabla donde esta configurado y se lee desde el código
+SAI;2002;;NO;http://zeccantc28.shd.gov.co:7778/cache;Se toma de una tabla donde esta configurado y se lee desde el código
+SAI;1999;;NO;http://zeccantc28.shd.gov.co:7778/cache;Se toma de una tabla donde esta configurado y se lee desde el código
+REQ;2008;;NO;mail.foncep.gov.co;Se toma de una tabla donde esta configurado y se lee desde el código
+CONTRATACION;2016;;NO;www.foncep.gov.co;Se toma de una tabla donde esta configurado y se lee desde el código
+GENERAL;2000;;NO;www.foncep.gov.co;Se toma de una tabla donde esta configurado y se lee desde el código
+SISLA;2020;;NO;¡Vacúnate Gratis! ¡Contra la Fiebre Amarilla, Influenza, Neumococo y más! Este 08 de mayo de 2025 de 9:00 a.m. a 3:00 p.m. en nuestra Sede Principal Cra 6 No. 14 98, Servicio a la Ciudadanía, 2 Piso.;Se toma de una tabla donde esta configurado y se lee desde el código

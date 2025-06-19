@@ -1,0 +1,80 @@
+SELECT
+    PK_OGT_TERCEROS.FN_INFCOMERCIAL(222918)
+FROM
+    DUAL;
+
+PK_SIT_INFCOMERCIAL.SIT_FN_INFCOMERCIAL(UN_ID, UNA_FECHA);
+
+SET SERVEROUTPUT ON;
+DECLARE
+    MI_TRC_INFCOMERCIAL PK_SIT_INFCOMERCIAL.CUR_INFCOMERCIAL;
+    MI_ID               NUMBER(20);
+    MI_FECHA_INICIAL    DATE;
+    MI_FECHA_FINAL      DATE;
+    MI_BANCO            NUMBER(20);
+    MI_SUCURSAL         VARCHAR2(30);
+    MI_TIPO_CUENTA      VARCHAR2(30);
+    MI_CUENTA           VARCHAR2(30);
+    MI_TIPO_PAGO        VARCHAR2(30);
+BEGIN
+    MI_TRC_INFCOMERCIAL := PK_SIT_INFCOMERCIAL.SIT_FN_INFCOMERCIAL(222918, SYSDATE);
+    LOOP
+        FETCH MI_TRC_INFCOMERCIAL 
+        INTO MI_ID, MI_FECHA_INICIAL, MI_FECHA_FINAL, 
+            MI_BANCO, MI_SUCURSAL, MI_TIPO_CUENTA, MI_CUENTA, MI_TIPO_PAGO;
+        EXIT WHEN MI_TRC_INFCOMERCIAL%NOTFOUND;
+        dbms_output.put_line('id '||MI_ID);
+       DBMS_OUTPUT.PUT_LINE('banco '||MI_BANCO);
+        DBMS_OUTPUT.PUT_LINE('mi_sucursal '||MI_SUCURSAL);
+        DBMS_OUTPUT.PUT_LINE('mi_tipo_cuenta '||MI_TIPO_CUENTA);
+        DBMS_OUTPUT.PUT_LINE('mi_cuenta '||MI_CUENTA);
+        DBMS_OUTPUT.PUT_LINE('mi_tipo_pago '||MI_TIPO_PAGO);
+    END LOOP;
+    CLOSE MI_TRC_INFCOMERCIAL;
+    EXCEPTION WHEN OTHERS THEN 
+        DBMS_OUTPUT.PUT_LINE('Error '||SQLERRM);
+END;  
+/ 
+SET SERVEROUTPUT OFF;
+
+----Enn terceros
+
+pk_sit_infcomercial.SIT_FN_INFCOMERCIAL
+;
+
+
+SELECT ID,
+        ic_fecha_inicial,
+        ic_fecha_final,
+        ic_banco,
+        ic_sucursal,
+        ic_tipo_cuenta,
+        ic_cuenta,
+        ic_tipo_pago
+      FROM shd_informacion_comercial
+      WHERE id = 222918 AND ic_fecha_inicial <= sysdate AND
+            (ic_fecha_final >= sysdate OR ic_fecha_final IS NULL);
+
+SELECT IC_BANCO,
+       IC_CUENTA,
+       IC_TIPO_CUENTA
+FROM SHD_INFORMACION_COMERCIAL
+WHERE ID = 223398 AND
+(IC_FECHA_FINAL IS NULL OR IC_FECHA_FINAL > SYSDATE)
+ORDER BY IC_FECHA_INICIAL DESC
+;
+
+            
+select *
+from shd_informacion_basica where id in (222918,223398)   ;
+
+
+SELECT  SITUACION_FONDOS
+FROM 
+--UPDATE 
+OGT_ORDEN_PAGO
+SET SITUACION_FONDOS = 'S'
+WHERE VIGENCIA=2025
+AND ENTIDAD=206
+AND UNIDAD_EJECUTORA = 01
+AND CONSECUTIVO = 525

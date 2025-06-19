@@ -1,0 +1,609 @@
+CREATE OR REPLACE PROCEDURE "RH".Rh_Pr_Actualiza_Planta(una_fecha DATE DEFAULT SYSDATE, un_Fun Number Default Null)
+IS
+  CURSOR c_Act (Var_Fun NUMBER, Var_fec DATE) IS  -- Cursor de posición estando activo
+  SELECT TO_NUMBER(A.VALOR) Posicion, A.FECHA_EFECTIVIDAD, A.secuencia,
+    A.FECHA_FINAL, A.TIPO_ACTO
+    FROM RH_PERSONAS p JOIN
+    (SELECT aa.FUNCIONARIO, aa.TIPO_ACTO, aa.FECHA_EFECTIVIDAD, de.VALOR,
+            aa.secuencia, NVL(aa.FECHA_FINAL, TO_DATE('99991231', 'YYYYMMDD')) FECHA_FINAL
+    FROM RH_ACTOS_ADMINISTRATIVOS aa
+    JOIN RH_DETALLE_ACTO de
+    ON aa.SECUENCIA = de.SECUENCIA
+    WHERE de.NOMBRE_DETALLE = 'POSICION'
+    AND aa.FECHA_EFECTIVIDAD <= Var_fec
+    AND NVL(aa.FECHA_FINAL, TO_DATE('99991231', 'YYYYMMDD')) >= Var_fec
+    AND aa.TIPO_ACTO NOT IN (SELECT argumento FROM bintablas
+    WHERE grupo = 'NOMINA' AND nombre = 'ACTOS_RETIRO')) A
+    ON (p.INTERNO_PERSONA = A.funcionario)
+    WHERE P.INTERNO_PERSONA = Var_Fun
+    ORDER BY 2 DESC, 1 DESC;
+  mi_pos NUMBER;
+  mi_sec NUMBER;
+  mi_fAct DATE;
+  mifDinAct DATE;
+  mi_TActo VARCHAR2(30);
+  mi_DepAct VARCHAR2(30); -- Dependencia del acto que se analisa
+  mi_DepTras VARCHAR2(30); -- Dependencia de traslados
+  mi_EstActPos VARCHAR2(30);
+  mi_EstActFun VARCHAR2(30);
+  TYPE mi_tPos IS TABLE OF NUMBER
+  INDEX BY BINARY_INTEGER;
+  mi_PosEnc mi_tPos; -- Arreglo para acumular las posiciones de vacantes de encargo
+  mi_PosCom mi_tPos; -- Arreglo para acumular las posiciones de vacantes por comision
+  PROCEDURE pr_registrar_log(un_Fun NUMBER, una_fecha DATE, un_msg VARCHAR2)
+  IS
+  BEGIN
+    INSERT INTO RH_LOG_PLANTA
+    (FECHA_EJECUCION, FECHA_PROCESO, FUNCIONARIO, MENSAJE )
+    VALUES
+    (SYSDATE, una_fecha, un_fun, SUBSTR(un_msg, 1, 2000));
+  END pr_registrar_log;
+/**********************************************************************/
+--Retorna el número de dias (según el dia de la semana indicado) que existen
+--entre fecha1 y fecha2
+  FUNCTION fn_ge_Dia_N_Entre(unaFecha1 Date, unaFecha2 Date, unDia Numeric) RETURN Numeric
+  IS
+    miDia1    Numeric;
+    miDia2    Numeric;
+    misDias    Numeric;
+
+  BEGIN
+    miDia1 := To_Number(To_Char(UnaFecha1, 'D'));
+    miDia2 := To_Number(To_Char(UnaFecha2, 'D'));
+
+    misDias := Floor((unaFecha2 - UnaFecha1) / 7);
+    If miDia1 >= unDia Then
+      miDia1 := miDia1 - unDia + 1;
+    Else
+      miDia1 := 8 - unDia + miDia1;
+    End If;
+
+    If miDia2 >= unDia Then
+      miDia2 := miDia2 - unDia + 1;
+    Else
+      miDia2 := 8 - unDia + miDia2;
+    End If;
+    If miDia1 > miDia2 Then
+      misDias := misDias + 1;
+    End If;
+    Return misDias;
+  END fn_ge_Dia_N_Entre;
+--Retorna el número de días hábiles entre dos fechas dadas, consultando la tabla rh_calendario
+  FUNCTION fn_ge_Dias_Habiles_Entre(unaFecha1 Date, unaFecha2 Date) RETURN Numeric
+  IS
+    nDias       Numeric;
+    nFestivos    Numeric;
+    miFecha1    Date;
+    miFecha2    Date;
+  BEGIN
+    If unaFecha1 Is Null Or unaFecha2 Is Null Then
+      Return Null;
+    End If;
+    If unaFecha1 < unaFecha2 Then
+      miFecha1 := unaFecha1;
+      miFecha2 := unaFecha2;
+    Else
+      miFecha1 := unaFecha2;
+      miFecha2 := unaFecha1;
+    End If;
+    Select Count(*)
+    Into nFestivos
+    From Rh_Calendario
+    Where Fecha_Festivo > miFecha1 And Fecha_Festivo <= miFecha2 ;
+
+    nDias := unaFecha2 - unaFecha1 - fn_ge_Dia_N_Entre(unaFecha1, unaFecha2, 1) - nFestivos;
+    nDias := nDias - fn_ge_Dia_N_Entre(unaFecha1, unaFecha2, 7) + 1;
+    Return nDias;
+  END fn_ge_Dias_Habiles_Entre;
+--Retorna una fecha apartir de otra, sumandole "unosDias" habiles.
+  FUNCTION fn_ge_fecha_despues_de_habiles(unaFecha Date, unosDias Numeric) Return Date
+  IS
+    miFecha    Date;
+    misFestivos  Numeric;
+  BEGIN
+    If unaFecha Is Null Or unosDias Is Null Then
+      Return Null;
+    End If;
+
+    If unosDias < 1 Then
+      Return miFecha;
+    End If;
+    miFecha := unaFecha + UnosDias;
+    misFestivos := miFecha - UnaFecha - fn_ge_Dias_Habiles_Entre(unafecha, miFecha) + 1;
+    If misFestivos <= 0 Then
+      Return miFecha;
+    End If;
+
+    miFecha := fn_ge_fecha_despues_de_habiles(mifecha, misFestivos);
+    Return miFecha;
+  END fn_ge_fecha_despues_de_habiles;
+BEGIN
+  FOR r_Fun IN (SELECT Personas_Interno FROM RH_FUNCIONARIO
+                   WHERE Personas_Interno = nvl(un_Fun, Personas_Interno))
+                   LOOP
+    mi_pos := NULL;
+    mi_TActo := NULL;
+    mi_DepAct := NULL;
+    mi_DepTras := NULL;
+    OPEN c_Act(r_Fun.Personas_Interno, TRUNC(una_fecha));
+    FETCH c_Act INTO mi_pos, mi_fAct, mi_sec, mifDinAct, mi_TActo;
+    CLOSE c_Act;
+    IF mifDinAct <= una_fecha THEN
+      mi_pos := NULL;
+    END IF;
+    -- Buscar la dependencia del acto.
+    BEGIN
+      SELECT Valor
+      INTO mi_DepAct
+      FROM RH_DETALLE_ACTO
+      WHERE secuencia = mi_sec
+      AND Nombre_Detalle = 'DEPENDENCIA';
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        NULL;
+      WHEN OTHERS THEN
+        pr_registrar_log(r_Fun.Personas_Interno, una_fecha, 'Error consultando la dependencia del Funcionario ' ||
+                      r_Fun.Personas_Interno || ' en el acto de secuencia ' || mi_sec);
+    END;
+    IF mi_TActo = '040' THEN -- En caso de tratarse de un ecargo hay que identificar el cargo titular
+      BEGIN
+        SELECT POSICION_ANTERIOR
+        INTO mi_PosEnc(mi_PosEnc.COUNT + 1)
+        FROM RH_MOVIMIENTOS_PLANTA
+        WHERE SECUENCIA = mi_sec;
+      EXCEPTION
+        WHEN OTHERS THEN
+          pr_registrar_log(r_Fun.Personas_Interno, una_fecha, 'No se encontró la posición titular del encargo del ' ||
+                        r_Fun.Personas_Interno);
+      END;
+      mi_EstActPos := '2'; -- Ocupada
+      mi_EstActFun := '1'; -- Activo
+    ELSE
+      BEGIN
+        SELECT Resultado
+        INTO mi_EstActFun
+        FROM Bintablas
+        WHERE Grupo = 'NOMINA'
+        AND NOMBRE = 'ACTO ESTADO FUNCIONARIO'
+        AND Argumento = mi_TActo
+        AND Vig_Inicial <= una_fecha
+        AND NVL(Vig_Final, una_Fecha) >= una_fecha;
+      EXCEPTION
+        WHEN OTHERS THEN
+          pr_registrar_log(r_Fun.Personas_Interno, una_fecha, 'No se encontró el estado del funcionario para el acto ' ||
+                        mi_TActo);
+          mi_EstActPos := '3'; -- Retirado
+      END;
+
+      IF mi_TActo NOT IN ('010', '009') THEN -- Nombramiento y nombramiento provisional
+        BEGIN
+          SELECT Resultado
+          INTO mi_EstActPos
+          FROM Bintablas
+          WHERE Grupo = 'NOMINA'
+          AND NOMBRE = 'ACTO ESTADO POSICION'
+          AND Argumento = mi_TActo
+          AND Vig_Inicial <= una_fecha
+          AND NVL(Vig_Final, una_Fecha) >= una_fecha;
+          IF mi_EstActPos <> '2' THEN -- Posicion ocupada
+            mi_pos := NULL;
+          END IF;
+        EXCEPTION
+          WHEN OTHERS THEN
+            pr_registrar_log(r_Fun.Personas_Interno, una_fecha, 'No se encontró el estado de la posición para el acto ' ||
+                            mi_TActo);
+            mi_EstActPos := '1'; -- Vacante.
+        END;
+      ELSE
+        mi_EstActPos := '2'; -- Ocupado.
+      END IF;
+    END IF;
+    -- Busca si hay traslado de dependencia despues del acto que se trabaja y antes de la fecha de corte
+    DECLARE
+      CURSOR c_Tras IS
+      SELECT Valor, b.FECHA_EFECTIVIDAD
+      FROM RH_DETALLE_ACTO A JOIN RH_ACTOS_ADMINISTRATIVOS b
+      USING (secuencia)
+      WHERE b.TIPO_ACTO = '012' -- TRASLADO INTERNO
+      AND A.Nombre_Detalle = 'DEPENDENCIA'
+      AND b.Funcionario = r_Fun.Personas_Interno
+      AND b.FECHA_EFECTIVIDAD <= una_fecha
+      AND b.FECHA_EFECTIVIDAD >= mi_fAct
+      ORDER BY b.FECHA_EFECTIVIDAD DESC, Secuencia DESC;
+      mi_FTras DATE;
+      i PLS_INTEGER;
+    BEGIN
+      OPEN c_Tras;
+      FETCH c_Tras INTO mi_DepTras, mi_FTras;
+      IF c_Tras%NOTFOUND THEN
+        mi_DepTras := mi_DepAct;
+      ELSIF mi_TActo IN ('010', '009') THEN
+      -- En caso de no estar en un encargo, se debe verificar si el TRASLADO INTERNO no
+      -- corresponda al período de un posible Encargo posterior al nombramiento o ingreso temporal
+        LOOP
+          SELECT COUNT(*)
+          INTO i
+          FROM RH_MOVIMIENTOS_PLANTA
+          WHERE Funcionario = r_Fun.Personas_Interno
+          AND Tipo_Acto = '040'
+          AND FECHA_INICIAL <= mi_FTras
+          AND NVL(FECHA_FINAL, TO_DATE('99991231', 'YYYYMMDD')) >= mi_FTras;
+          EXIT WHEN i = 0;
+          mi_DepTras := NULL;
+          FETCH c_Tras INTO mi_DepTras, mi_FTras;
+          EXIT WHEN c_Tras%NOTFOUND;
+        END LOOP;
+        mi_DepTras := NVL(mi_DepTras, mi_DepAct);
+      END IF;
+      CLOSE C_Tras;
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_registrar_log(r_Fun.Personas_Interno, una_fecha, 'Error consultando la dependencia del Funcionario ' ||
+                      r_Fun.Personas_Interno || ' en el acto de secuencia ' || mi_sec);
+    END;
+
+    IF mi_pos IS NOT NULL THEN
+      -- Buscar si tiene retiro despues del acto identificado
+      DECLARE
+        CURSOR c_Ret IS
+        SELECT Secuencia, FECHA_EFECTIVIDAD
+        FROM RH_ACTOS_ADMINISTRATIVOS
+        WHERE TIPO_ACTO IN (SELECT argumento FROM bintablas
+              WHERE grupo = 'NOMINA' AND nombre = 'ACTOS_RETIRO')
+        AND Funcionario = r_Fun.Personas_Interno
+        AND FECHA_EFECTIVIDAD > mi_fAct
+        AND FECHA_EFECTIVIDAD <= TRUNC(una_Fecha)
+        UNION ALL
+        SELECT Secuencia, NVL(FECHA_FINAL, TO_DATE('31/12/9999', 'DD/MM/YYYY'))
+        FROM RH_ACTOS_ADMINISTRATIVOS
+        WHERE TIPO_ACTO IN ('009') -- ingreso Temporal
+        AND Funcionario = r_Fun.Personas_Interno
+        AND Secuencia = mi_Sec
+        AND NVL(FECHA_FINAL, TO_DATE('31/12/9999', 'DD/MM/YYYY')) >= mi_fAct
+        AND NVL(FECHA_FINAL, TO_DATE('31/12/9999', 'DD/MM/YYYY')) <= TRUNC(una_Fecha)
+        Order by Secuencia Desc;
+        mi_SecR NUMBER;
+        mi_fRet DATE;
+        mi_fNom DATE;
+        mi_fNomUlt DATE;
+        mi_nPag NUMBER;
+        mi_fConR NUMBER;
+      BEGIN
+        OPEN c_Ret;
+        FETCH c_Ret INTO mi_SecR, mi_fRet;
+        IF c_Ret%FOUND THEN
+          CLOSE c_Ret;
+          IF (mi_fRet > mi_fAct) OR (mi_fRet = mi_fAct AND mi_SecR >= mi_sec) THEN
+             mi_pos := NULL; -- El funcionario está retirado
+             -- Buscar el estado de vacante
+             DECLARE
+               CURSOR C_EstAnt IS
+               SELECT ESTADO_ANTERIOR_POSICION
+               FROM RH_MOVIMIENTOS_PLANTA
+               WHERE FUNCIONARIO = r_Fun.Personas_Interno
+               AND TIPO_ACTO = mi_TActo
+               AND FECHA_INICIAL <= mi_fRet
+               AND NVL(FECHA_FINAL, mi_fRet) <= mi_fRet
+               ORDER BY Fecha_Inicial DESC; -- Ultimo estado anterior para el acto diferente de retiro
+             BEGIN
+               OPEN C_EstAnt;
+               FETCH C_EstAnt INTO mi_EstActPos;
+               IF C_EstAnt%NOTFOUND THEN
+                 mi_EstActPos := '1'; -- Se deja la posición vacante
+               END IF;
+               CLOSE C_EstAnt;
+             END;
+          END IF;
+          -- Si la fecha de retiro es anterior en el último período liquidado
+          -- Se cambia estado del funcionario de INACTIVO PARA LIQUIDACION
+          -- a RETIRADO
+          SELECT MIN(FECHA_FINAL_PERIODO)
+          INTO mi_fNom
+          FROM RH_NOMINA
+          WHERE PROCESO = 'NOMINA_DE_EMPLEADOS_PLANTA'
+          AND FECHA_FINAL_PERIODO > mi_fRet
+          AND DEFINITIVA = 'S';
+
+          SELECT MAX(FECHA_FINAL_PERIODO)
+          INTO mi_fNomUlt
+          FROM RH_NOMINA
+          WHERE PROCESO = 'NOMINA_DE_EMPLEADOS_PLANTA'
+          AND FECHA_FINAL_PERIODO > mi_fRet
+          AND DEFINITIVA = 'S';
+
+          IF mi_fNom IS NULL THEN
+            mi_EstActFun := '5'; -- INACTIVO PARA LIQUIDACION
+          ELSE -- Se busca si ya se registro la novedad de pago conceptos retiro
+            SELECT COUNT(*), nvl(Max(dfechaefectiva), 19000101)
+            INTO mi_nPag, mi_fConR
+            FROM RH_HISTORICO_NOMINA
+            WHERE nFuncionario = r_Fun.Personas_Interno
+            AND nHash = 566945256 -- PAGO_CONCEPTOS_RETIRO
+            AND brechazado = 0
+            AND ndcampo0 = 1 -- Incluye liquidación de vacaciones
+            AND dfechaefectiva >= TO_NUMBER(TO_CHAR(mi_fNom, 'YYYYMMDD'));
+            IF mi_nPag > 0 Or Add_Months(mi_fRet, 2) < una_fecha THEN
+              If mi_fConR <= TO_NUMBER(TO_CHAR(mi_fNom, 'YYYYMMDD')) or mi_fConR <= TO_NUMBER(TO_CHAR(mi_fNomUlt, 'YYYYMMDD')) Then
+                mi_EstActFun := '3'; -- RETIRADO
+              Else
+                mi_EstActFun := '5'; -- INACTIVO PARA LIQUIDACION
+              End If;
+            ELSE
+              mi_EstActFun := '5'; -- INACTIVO PARA LIQUIDACION
+            END IF;
+          END IF;
+        ELSE
+          CLOSE c_Ret;
+          -- Verificar si se está en vacaciones
+          For r_dVac In (SELECT FECHA_INICIO_VACACIONES, TOTAL_DIAS_TOMADOS
+                          FROM RH_DETALLE_VACACIONES
+                          WHERE FUNCIONARIO = r_Fun.Personas_Interno
+                          AND FECHA_INICIO_VACACIONES <= una_fecha
+                          AND FECHA_FIN_VACACIONES >= una_fecha
+                          AND Total_dias_Tomados > 0) Loop
+            IF fn_ge_fecha_despues_de_habiles(r_dVac.FECHA_INICIO_VACACIONES, r_dVac.TOTAL_DIAS_TOMADOS) >= una_fecha THEN
+              mi_EstActFun := '1'; -- Activo
+              mi_EstActPos := '7'; -- Vacante por vacaciones
+              -- Se actualiza en movimientos planta en movimientos planta si al
+              -- terminar las vacaciones debe regresar al encargo
+              BEGIN
+                UPDATE RH_MOVIMIENTOS_PLANTA mp
+                SET POSICION_ANTERIOR = NVL((SELECT POSICION_ACTUAL
+                                        FROM RH_MOVIMIENTOS_PLANTA
+                                        WHERE tipo_acto = ('040')
+                                        AND FUNCIONARIO = r_Fun.Personas_Interno
+                                        AND mp.FECHA_FINAL BETWEEN FECHA_INICIAL AND
+                                            NVL(FECHA_FINAL - 1, TO_DATE('99991231', 'YYYYMMDD'))),
+                                        POSICION_ANTERIOR)
+                WHERE tipo_acto IN ('171', '255') -- Vacaciones y reanude de vacaciones
+                AND FUNCIONARIO = r_Fun.Personas_Interno
+                AND POSICION_ANTERIOR <> NVL((SELECT POSICION_ACTUAL
+                                        FROM RH_MOVIMIENTOS_PLANTA
+                                        WHERE tipo_acto = ('040')
+                                        AND FUNCIONARIO = r_Fun.Personas_Interno
+                                        AND mp.FECHA_FINAL BETWEEN FECHA_INICIAL AND
+                                            NVL(FECHA_FINAL - 1, TO_DATE('99991231', 'YYYYMMDD'))),
+                                        POSICION_ANTERIOR);
+              EXCEPTION
+                WHEN OTHERS THEN
+                  pr_registrar_log(r_Fun.Personas_Interno, una_fecha, 'Error actualizando en movimientos planta del funcionario ' ||
+                                r_Fun.Personas_Interno || ' :' || SQLERRM);
+              END;
+            ELSE
+              mi_EstActFun := '1'; -- Activo
+            END IF;
+          End Loop;
+          -- Verificar si se está en Comisión
+          Declare
+            mi_fcom1 Date;
+            mi_fcom2 Date;
+          Begin
+            SELECT Max(FECHA_EFECTIVIDAD), Max(NVL(FECHA_FINAL, TO_DATE('99991231', 'YYYYMMDD')))
+            INTO mi_fcom1, mi_fcom2
+            FROM RH_ACTOS_ADMINISTRATIVOS
+            WHERE FUNCIONARIO = r_Fun.Personas_Interno
+            AND tipo_acto = '092' -- Comision
+            AND FECHA_EFECTIVIDAD <= una_fecha
+            AND NVL(FECHA_FINAL, TO_DATE('99991231', 'YYYYMMDD')) >= una_fecha;
+            IF mi_fcom1 Is Not Null THEN
+              SELECT Count(*)
+              INTO mi_nPag
+              FROM RH_ACTOS_ADMINISTRATIVOS
+              WHERE FUNCIONARIO = r_Fun.Personas_Interno
+              AND tipo_acto = '015' -- Comision
+              AND FECHA_EFECTIVIDAD <= una_fecha
+              AND FECHA_EFECTIVIDAD >= mi_fcom1
+              AND FECHA_EFECTIVIDAD < mi_fcom2;
+              If mi_nPag = 0 Then
+                mi_EstActFun := '6'; -- Comision
+                mi_PosCom(mi_PosCom.COUNT + 1) := mi_pos;
+                mi_Pos := NULL;
+              Else
+                mi_EstActFun := '1'; -- Activo
+              End If;
+            ELSE
+              mi_EstActFun := '1'; -- Activo
+            END IF;
+          Exception
+            When Others Then
+              pr_registrar_log(r_Fun.Personas_Interno, una_fecha, 'Error consultando datos de comisión del Funcionario ' ||
+                            r_Fun.Personas_Interno);
+          End;
+        END IF;
+      END;
+    ELSE
+      -- Establecer el estado el funcionario
+      -- Buscar si hay fecha final de nombramiento provisional
+    DECLARE
+      mi_fRet DATE;
+      mi_fRet2 DATE;
+      mi_fNom DATE;
+      mi_fNomUlt DATE;
+      mi_fIngTem DATE;
+      mi_nPag NUMBER;
+      mi_fConR NUMBER;
+    BEGIN
+      SELECT max(NVL(FECHA_FINAL, TO_DATE('31/12/9999', 'DD/MM/YYYY'))),
+             max(NVL(FECHA_EFECTIVIDAD, TO_DATE('31/12/9999', 'DD/MM/YYYY')))
+      Into mi_fRet, mi_fIngTem
+      FROM RH_ACTOS_ADMINISTRATIVOS
+      WHERE TIPO_ACTO IN ('009') -- ingreso Temporal
+      AND Funcionario = r_Fun.Personas_Interno
+      AND Secuencia = (Select Max(Secuencia) FROM RH_ACTOS_ADMINISTRATIVOS
+                       Where TIPO_ACTO IN ('009') -- ingreso Temporal
+                       And FECHA_EFECTIVIDAD <= TRUNC(una_Fecha)
+                       AND Funcionario = r_Fun.Personas_Interno)
+      Order by Secuencia Desc;
+      If mi_fRet Is Null Then
+        mi_EstActFun := '3'; -- RETIRADO
+      Else
+        Begin
+          SELECT Max(FECHA_EFECTIVIDAD)
+          Into mi_fRet2
+          FROM RH_ACTOS_ADMINISTRATIVOS
+          WHERE TIPO_ACTO IN (SELECT argumento FROM bintablas
+                WHERE grupo = 'NOMINA' AND nombre = 'ACTOS_RETIRO')
+          AND Funcionario = r_Fun.Personas_Interno
+          AND FECHA_EFECTIVIDAD > mi_fIngTem
+          AND FECHA_EFECTIVIDAD <= Least(mi_fRet, una_fecha);
+          mi_fRet := nvl(mi_fRet2, mi_fRet);
+        Exception
+          When No_Data_Found Then
+            Null;
+        End;
+        -- Si la fecha de retiro es anterior en el último período liquidado
+        -- Se cambia estado del funcionario de INACTIVO PARA LIQUIDACION
+        -- a RETIRADO
+        SELECT MAX(FECHA_FINAL_PERIODO)
+        INTO mi_fNom
+        FROM RH_NOMINA
+        WHERE PROCESO = 'NOMINA_DE_EMPLEADOS_PLANTA'
+        AND FECHA_FINAL_PERIODO > mi_fRet
+        AND DEFINITIVA = 'S';
+
+        SELECT MAX(FECHA_FINAL_PERIODO)
+        INTO mi_fNomUlt
+        FROM RH_NOMINA
+        WHERE PROCESO = 'NOMINA_DE_EMPLEADOS_PLANTA'
+        AND FECHA_FINAL_PERIODO > mi_fRet
+        AND DEFINITIVA = 'S';
+
+        IF mi_fNom IS NULL THEN
+          mi_EstActFun := '5'; -- INACTIVO PARA LIQUIDACION
+        ELSE -- Se busca si ya se registro la novedad de pago conceptos retiro
+          SELECT COUNT(*), nvl(Max(dfechaefectiva), 19000101)
+          INTO mi_nPag, mi_fConR
+          FROM RH_HISTORICO_NOMINA
+          WHERE nFuncionario = r_Fun.Personas_Interno
+          AND nHash = 566945256 -- PAGO_CONCEPTOS_RETIRO
+          AND brechazado = 0
+          AND ndcampo0 = 1 -- Incluye liquidación de vacaciones
+          AND dfechaefectiva >= TO_NUMBER(TO_CHAR(mi_fNom, 'YYYYMMDD'));
+          IF mi_nPag > 0 Or Add_Months(mi_fRet, 2) < una_fecha THEN
+            If mi_fConR <= TO_NUMBER(TO_CHAR(mi_fNom, 'YYYYMMDD')) or mi_fConR <= TO_NUMBER(TO_CHAR(mi_fNomUlt, 'YYYYMMDD')) Then
+              mi_EstActFun := '3'; -- RETIRADO
+            Else
+              mi_EstActFun := '5'; -- INACTIVO PARA LIQUIDACION
+            End If;
+          ELSE
+            mi_EstActFun := '5'; -- INACTIVO PARA LIQUIDACION
+          END IF;
+        END IF;
+      End If;
+    END;
+    END IF;
+    -- Establecer la posición y el estado del funcionario
+    -- 1. Retira al funcionario de la planta si no está en la
+    -- posición identificada.
+    UPDATE RH_POSICIONES
+    SET Funcionario = NULL, Estado_posicion = '1'
+    WHERE Funcionario = r_Fun.Personas_Interno
+    AND Secuencia <> NVL(mi_pos, 0);
+    IF SQL%RowCount > 0 THEN
+      pr_registrar_log(r_Fun.Personas_Interno, una_fecha, 'Funcionario: ' || r_Fun.Personas_Interno ||
+                      ' retirado de una posición.');
+    END IF;
+    IF mi_pos IS NOT NULL AND mi_EstActPos = '2' THEN
+      UPDATE RH_POSICIONES
+      SET Funcionario = r_Fun.Personas_Interno, Estado_posicion = mi_EstActPos,
+          Codigo_Dependencia = NVL(mi_DepTras, Codigo_Dependencia)
+      WHERE Secuencia = mi_pos
+      AND (NVL(Funcionario, 0) <> r_Fun.Personas_Interno
+      OR NVL(Codigo_Dependencia, 0) <> NVL(mi_DepTras, NVL(Codigo_Dependencia, 0)));
+      IF SQL%RowCount > 0 THEN
+        pr_registrar_log(r_Fun.Personas_Interno, una_fecha, 'Funcionario: ' || r_Fun.Personas_Interno ||
+                      ' se asigna a la posición ' || mi_pos || ' con la dependencia ' || mi_DepTras);
+      END IF;
+    ELSIF mi_pos IS NOT NULL AND mi_EstActPos <> '2' THEN
+      UPDATE RH_POSICIONES
+      SET Funcionario = NULL, Estado_posicion = mi_EstActPos,
+          Codigo_Dependencia = NVL(mi_DepTras, Codigo_Dependencia)
+      WHERE Secuencia = mi_pos;
+    END IF;
+    If mi_EstActFun Is Not Null Then
+      UPDATE rh_funcionario
+      Set ESTADO_FUNCIONARIO = mi_EstActFun
+      Where PERSONAS_INTERNO = r_Fun.Personas_Interno
+      And ESTADO_FUNCIONARIO <> mi_EstActFun;
+      If SQL%RowCount > 0 Then
+        pr_registrar_log(r_Fun.Personas_Interno, una_fecha, 'Funcionario: ' || r_Fun.Personas_Interno ||
+                      ' se actualiza estado a ' || mi_EstActFun);
+      End If;
+    Else
+      pr_registrar_log(r_Fun.Personas_Interno, una_fecha, 'No se encontró estado para el Funcionario: ' || r_Fun.Personas_Interno);
+    End If;
+  END LOOP;
+  -- Dejar estado Vacante por encargo en las posiciones titulares de los que estan encargados
+  FOR i IN 1..mi_PosEnc.COUNT LOOP
+    UPDATE RH_POSICIONES
+    SET Estado_posicion = '8' -- VACANCIA POR ENCARGO
+    WHERE Secuencia = mi_PosEnc(i)
+    AND Funcionario IS NULL;
+  END LOOP;
+  -- Dejar estado Vacante por comisión en las posiciones titulares de los que estan en comisión
+  FOR i IN 1..mi_PosCom.COUNT LOOP
+    UPDATE RH_POSICIONES
+    SET Estado_posicion = '5' -- VACANCIA POR COMISION
+    WHERE Secuencia = mi_PosCom(i)
+    AND Funcionario IS NULL;
+  END LOOP;
+  -- FTORRESV MAYO 06 2025
+  UPDATE RH_MOVIMIENTOS_PLANTA mp
+  SET POSICION_ANTERIOR = NVL((SELECT POSICION_ACTUAL
+                          FROM RH_MOVIMIENTOS_PLANTA
+                          WHERE tipo_acto = ('040')
+                          AND FUNCIONARIO = mp.FUNCIONARIO
+                          AND mp.FECHA_FINAL BETWEEN FECHA_INICIAL AND
+                              NVL(FECHA_FINAL - 1, TO_DATE('99991231', 'YYYYMMDD'))
+                          AND FECHA_INICIAL = (SELECT MAX(FECHA_INICIAL)
+                                                  FROM RH_MOVIMIENTOS_PLANTA
+                                                  WHERE tipo_acto = ('040')
+                                                  AND FUNCIONARIO = mp.FUNCIONARIO
+                                                  AND  mp.FECHA_FINAL BETWEEN FECHA_INICIAL AND
+                                                      NVL(FECHA_FINAL - 1, TO_DATE('99991231', 'YYYYMMDD')))
+
+                           ),
+                          POSICION_ANTERIOR)
+  WHERE tipo_acto IN ('171', '255') -- Vacaciones y reanude de vacaciones
+  AND mp.funcionario = 52
+  AND POSICION_ANTERIOR <> NVL((SELECT POSICION_ACTUAL
+                          FROM RH_MOVIMIENTOS_PLANTA
+                          WHERE tipo_acto = ('040')
+                          AND FUNCIONARIO = mp.FUNCIONARIO
+                          AND mp.FECHA_FINAL BETWEEN FECHA_INICIAL AND
+                              NVL(FECHA_FINAL - 1, TO_DATE('99991231', 'YYYYMMDD'))
+                          AND FECHA_INICIAL = (SELECT MAX(FECHA_INICIAL)
+                                                  FROM RH_MOVIMIENTOS_PLANTA
+                                                  WHERE tipo_acto = ('040')
+                                                  AND FUNCIONARIO = mp.FUNCIONARIO
+                                                  AND  mp.FECHA_FINAL BETWEEN FECHA_INICIAL AND
+                                                      NVL(FECHA_FINAL - 1, TO_DATE('99991231', 'YYYYMMDD')))),
+                          POSICION_ANTERIOR);
+END;
+
+/*
+
+insert into rh_posiciones_fac
+select * from rh_posiciones
+
+select secuencia, a.funcionario, b.funcionario, a.estado_posicion, b.estado_posicion
+from rh_posiciones a join rh_posiciones_fac b
+using (secuencia)
+where nvl(a.FUNCIONARIO, 0) <> nvl(b.funcionario, -1)
+
+select secuencia, a.funcionario, b.funcionario, a.estado_posicion, b.estado_posicion,
+nvl(a.codigo_dependencia, 0), nvl(b.codigo_dependencia, -1)
+from rh_posiciones a join rh_posiciones_fac b
+using (secuencia)
+where nvl(a.codigo_dependencia, 0) <> nvl(b.codigo_dependencia, -1)
+
+
+Select PERSONAS_INTERNO, a.estado_funcionario, b.estado_funcionario
+From RH_FUNCIONARIO_FAC a join rh_funcionario b
+using (PERSONAS_INTERNO)
+where a.estado_funcionario <> b.estado_funcionario
+
+bintablas
+
+-- rh_personas
+*/

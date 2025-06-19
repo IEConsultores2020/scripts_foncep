@@ -1,0 +1,1104 @@
+CREATE OR REPLACE PACKAGE BODY pk_TRC_Util AS
+/***************************************************************************************************
+ SISTEMA                :   TERCEROS II
+ MODULO                 :   TERCEROS
+ DESCRIPCION            :   ACTUALIZACION DE LOS PACKAGES DE TERCEROS
+
+ HISTORIAL DE CAMBIOS ::
+ GLPI 2025002280 06-2025 ftorresv Se adiciona 'COD_JUZGADO' a la función PR_ValidarDocumento
+ RQ2010-1580-595 03-2011 <fmateus>  Modifique el procedimiento pr_ValidarValorContacto para dejar una sola validacion al tama?o de la cadena sin importar el tipo del contacto.
+ RQ2009-1254             <fmateus>  Modifique la funcion PR_ValidarDepto para eliminar la validacion del error 20958, la cual se disparaba cuando el tercero es de procedencia extranjera y que no es necesaria porque los extranjeros no se les selecciona departamento.
+ RQ2009-1052     10-2009 <fmateus>  Se cambio el codigo de error -20909 por el -20905.
+ RQ2009-1735     06-2009 <ljvargas> Modifique el procedimiento pr_ValidarDocumento, para tomar la longitud de la tabla parametrica.
+ RQ2009-272      03-2009 <fmateus>  Modifique el procedimiento pr_ValidarDocumento, para cambiar la longitud de algunos tipos de documentos. Tambien elimine la validacion que se teniaa con el sistema en el mismo procedimiento. Elimine las funciones fn_Es_Alfanumerico(un_campo VARCHAR2) RETURN BOOLEAN y
+                                    fn_Es_Numerico(un_campo VARCHAR2) RETURN BOOLEAN para ser reemplazadas por las funciones correspondientes en trc_pg_basicas.
+ RQ2008-1269     08-2008 <fmateus>  Nueva funcion para verificar la existencia en la BD de sucursal del B.Agrario enviada como parametro.
+ RQ2008-407-230  06-2008 <fmateus>  A la fn_Es_Alfanumerico adicione los siguientes caracteres solicitados por el usuario como signos validos: coma(,) guion(-)  slash(/) ampersand(&) comilla doble(") comilla sencilla(').
+******************************************************************************************************/
+    FUNCTION FN_ExisteEnBinTablas(UnDato VARCHAR2, UnNombre VARCHAR2, UnGrupo VARCHAR2) RETURN BOOLEAN IS
+        CURSOR     c_bintablas(Un_Dato  VARCHAR2, Un_Nombre VARCHAR2, Un_Grupo VARCHAR2) IS
+        SELECT     'x'
+        FROM     bintablas
+        WHERE
+            grupo = Un_Grupo AND
+            nombre = Un_Nombre AND
+            argumento = Un_Dato AND
+            (vig_final IS NULL OR vig_final>=SYSDATE);
+        Dummy CHAR(1) := NULL;
+    BEGIN
+        OPEN c_bintablas (UPPER(UnDato), UPPER(UnNombre), UPPER(UnGrupo));
+        FETCH c_bintablas INTO Dummy;
+        CLOSE c_bintablas;
+
+        IF Dummy IS NOT NULL THEN
+            RETURN TRUE;
+        ELSE
+            RETURN FALSE;
+        END IF;
+    END FN_ExisteEnBinTablas;
+
+    FUNCTION FN_Descripcionparametro(UnDato VARCHAR2, UnNombre VARCHAR2, UnGrupo VARCHAR2) RETURN VARCHAR2 IS
+    CURSOR     c_bintablas(Un_Dato  VARCHAR2, Un_Nombre VARCHAR2, Un_Grupo VARCHAR2) IS
+        SELECT     resultado
+        FROM     bintablas
+        WHERE
+            grupo = Un_Grupo AND
+            nombre = Un_Nombre AND
+            argumento = Un_Dato AND
+            (vig_final IS NULL OR vig_final>=SYSDATE);
+        MiResultado bintablas.resultado%TYPE;
+    BEGIN
+        OPEN c_bintablas (UPPER(UnDato), UPPER(UnNombre), UPPER(UnGrupo));
+        FETCH c_bintablas INTO MiResultado;
+        CLOSE c_bintablas;
+        RETURN MiResultado;
+    END FN_Descripcionparametro;
+
+    PROCEDURE PR_ValidarClaseEntidad(UnDato VARCHAR2) IS
+    BEGIN
+            IF NOT Pk_TRC_Util.FN_ExisteEnBinTablas(UnDato,'CLASE_ENTIDAD','TERCEROS') THEN
+                RAISE_APPLICATION_ERROR(-20992,'');
+        END IF;
+    END PR_ValidarClaseEntidad;
+
+        PROCEDURE PR_ValidarTipoSuperbancaria(UnDato VARCHAR2) IS
+    BEGIN
+        IF UnDato IS NOT NULL THEN
+            IF NOT Pk_TRC_Util.FN_ExisteEnBinTablas(UnDato,'TIPO_SUPERBANCARIA','TERCEROS') THEN
+                RAISE_APPLICATION_ERROR(-20947,'');
+            END IF;
+        END IF;
+    END PR_ValidarTipoSuperbancaria;
+
+    PROCEDURE PR_ValidarClaseEP(UnDato VARCHAR2) IS
+    BEGIN
+        IF UnDato IS NOT NULL THEN
+            IF NOT Pk_TRC_Util.FN_ExisteEnBinTablas(UnDato,'CLASE_ENTIDAD_PUBLICA','TERCEROS') THEN
+                RAISE_APPLICATION_ERROR(-20991,'');
+            END IF;
+        END IF;
+    END PR_ValidarClaseEP;
+
+
+ PROCEDURE PR_ValidarCiudad(UnaCiudad VARCHAR2) IS
+    BEGIN
+        IF UnaCiudad IS NOT NULL THEN
+            IF NOT Pk_TRC_Util.FN_ExisteEnBinTablas(UnaCiudad,'MUNICIPIO_CIUDAD','TERCEROS') THEN
+                RAISE_APPLICATION_ERROR(-20965,'');
+            END IF;
+        ELSE
+                    RAISE_APPLICATION_ERROR(-20954,'');
+        END IF;
+    END PR_ValidarCiudad;
+
+    PROCEDURE PR_ValidarCiudades(UnaCiudad VARCHAR2,UnDepto VARCHAR2,UnPais VARCHAR2,UnaProcedencia VARCHAR2) IS
+    BEGIN
+     Pr_ValidarPais(UnPais,UnaProcedencia);
+     Pr_ValidarCiudad(UnaCiudad);
+    IF UnaProcedencia = 'E' THEN
+          IF UnPais <> '001' THEN
+                     IF substr(UnaCiudad,1,3) <> '001' THEN
+                       Pr_ValidarCiudadPais(UnaCiudad,UnPais);
+                    ELSE
+                     RAISE_APPLICATION_ERROR(-20957,'');
+                    END IF;
+           ELSE
+            RAISE_APPLICATION_ERROR(-20962,'');
+      END IF;
+     ELSE
+              Pr_ValidarDepto(UnDepto,UnPais);
+              Pr_ValidarCiudadPais(UnaCiudad,UnPais);
+     END IF;
+    END PR_ValidarCiudades;
+
+
+    PROCEDURE PR_ValidarCiudad_PN(UnaCiudad VARCHAR2,UnDepto VARCHAR2,UnPais VARCHAR2) IS
+    BEGIN
+            IF UnaCiudad IS NOT NULL
+                AND UnDepto IS NOT NULL
+                AND UnPais IS NOT NULL THEN
+                     RAISE_APPLICATION_ERROR(-20953,'');
+            END IF;
+    END PR_ValidarCiudad_PN;
+
+
+    PROCEDURE PR_ValidarCiudadPais(UnaCiudad VARCHAR2,UnPais VARCHAR2) IS
+    BEGIN
+        IF UnaCiudad IS NOT NULL THEN
+            IF UnPais <> substr(UnaCiudad,1,3) then
+                RAISE_APPLICATION_ERROR(-20961,'');
+            END IF;
+        END IF;
+    END PR_ValidarCiudadPais;
+
+--RQ1717-2006 ayucuma
+--Se adiciono la procedencia para buscar el pais en bintablas
+  PROCEDURE PR_ValidarPais(UnPais VARCHAR2, UnaProcedencia trc_informacion_basica.ib_procedencia%TYPE) IS
+    BEGIN
+        IF UnPais IS NOT NULL THEN
+      IF UnaProcedencia = 'E' THEN
+         IF UnPais = TBuscarArgumento(UnPais, 'TERCEROS','PAIS_COLOMBIA', To_char(sysdate, 'DD-MM-YYYY'))  THEN
+            RAISE_APPLICATION_ERROR(-20918,'');
+         ELSIF NOT Pk_TRC_Util.FN_ExisteEnBinTablas(UnPais,'PAIS','TERCEROS') THEN
+                  RAISE_APPLICATION_ERROR(-20964,'');
+               END IF;
+      ELSE
+        IF UnPais != TBuscarArgumento(UnPais, 'TERCEROS','PAIS', To_char(sysdate, 'DD-MM-YYYY'))  THEN
+           RAISE_APPLICATION_ERROR(-20917,'');
+        ELSIF NOT Pk_TRC_Util.FN_ExisteEnBinTablas(UnPais,'PAIS_COLOMBIA','TERCEROS') THEN
+                   RAISE_APPLICATION_ERROR(-20964,'');
+              END IF;
+      END IF;
+        END IF;
+    END PR_ValidarPais;
+
+    PROCEDURE PR_ValidarDepto(UnDepto VARCHAR2,UnPais VARCHAR2) IS
+    BEGIN
+    IF UnPais = '001' THEN
+           IF UnDepto IS NOT NULL THEN
+                        IF NOT Pk_TRC_Util.FN_ExisteEnBinTablas(UnDepto,'DEPTO','TERCEROS') THEN
+                            RAISE_APPLICATION_ERROR(-20963,'');
+                        END IF;
+          ELSE
+                    RAISE_APPLICATION_ERROR(-20955,'');
+          END IF;
+        END IF;
+    END PR_ValidarDepto;
+
+--RQ1717-2006  17/01/2007  ayucuma
+--Se valida el tipo identificacion por naturaleza
+     PROCEDURE PR_ValidarTipoIdentificacion(UnDato VARCHAR2, una_naturaleza trc_informacion_basica.ib_naturaleza%TYPE) IS
+    BEGIN
+        IF UnDato IS NOT NULL AND una_naturaleza = 'J' THEN
+            IF NOT Pk_TRC_Util.FN_ExisteEnBinTablas(UnDato,'IDENTIFICACION_P_JURIDICA','TERCEROS') THEN
+                RAISE_APPLICATION_ERROR(-20990,'');
+            END IF;
+        ELSIF UnDato IS NOT NULL AND una_naturaleza = 'N' THEN
+      IF NOT Pk_TRC_Util.FN_ExisteEnBinTablas(UnDato,'IDENTIFICACION_P_NATURAL','TERCEROS') THEN
+                RAISE_APPLICATION_ERROR(-20990,'');
+            END IF;
+    END IF;
+    END PR_ValidarTipoIdentificacion;
+
+
+    PROCEDURE PR_ValidarCodigoIdentificacion(UnDato VARCHAR2) IS
+    BEGIN
+        IF UnDato IS NOT NULL THEN
+            IF INSTR(UnDato,'.') <> 0 OR
+                INSTR(UnDato,',') <> 0 OR
+                INSTR(UnDato,'-') <> 0 OR
+                INSTR(UnDato,'_') <> 0 OR
+                INSTR(UnDato,'&') <> 0 OR
+                INSTR(UnDato,'%') <> 0 OR
+                INSTR(UnDato,'?') <> 0 OR
+                INSTR(UnDato,'#') <> 0 OR
+                INSTR(UnDato,'$') <> 0 OR
+                INSTR(UnDato,'/') <> 0 OR
+                INSTR(UnDato,'(') <> 0 OR
+                INSTR(UnDato,')') <> 0 OR
+                INSTR(UnDato,'=') <> 0 OR
+                INSTR(UnDato,'|') <> 0 OR
+                INSTR(UnDato,'?') <> 0 OR
+                INSTR(UnDato,';') <> 0 OR
+                INSTR(UnDato,':') <> 0 OR
+                INSTR(UnDato,'?') <> 0 OR
+                INSTR(UnDato,'*') <> 0 OR
+                INSTR(UnDato,'+') <> 0 OR
+                INSTR(UnDato,'[') <> 0 OR
+                INSTR(UnDato,']') <> 0 OR
+                INSTR(UnDato,'{') <> 0 OR
+                INSTR(UnDato,'}') <> 0 OR
+                INSTR(UnDato,'?') <> 0 OR
+                INSTR(UnDato,'<') <> 0 OR
+                INSTR(UnDato,'"') <> 0 OR
+                INSTR(UnDato,'?') <> 0 OR
+                INSTR(UnDato,'!') <> 0 OR
+                INSTR(UnDato,'!') <> 0
+            THEN
+                RAISE_APPLICATION_ERROR(-20983,'');
+            END IF;
+        END IF;
+    END PR_ValidarCodigoIdentificacion;
+
+    PROCEDURE PR_ValidarSector(UnDato VARCHAR2) IS
+    BEGIN
+        IF UnDato IS NOT NULL THEN
+            IF NOT Pk_TRC_Util.FN_ExisteEnBinTablas(UnDato,'SECTOR_ECONOMICO','TERCEROS') THEN
+                RAISE_APPLICATION_ERROR(-20989,'');
+            END IF;
+        END IF;
+    END PR_ValidarSector;
+
+    PROCEDURE PR_ValidarRegimen(UnDato VARCHAR2) IS
+    BEGIN
+        IF UnDato IS NOT NULL THEN
+            IF NOT Pk_TRC_Util.FN_ExisteEnBinTablas(UnDato,'REGIMEN','TERCEROS') THEN
+                RAISE_APPLICATION_ERROR(-20988,'');
+            END IF;
+        END IF;
+    END PR_ValidarRegimen;
+
+--RQ1717-2006   23/01/2007  ayucuma
+--Se agrego el parametro UnaClaseEntidad y verificar en la lista de publicas o privadas
+    PROCEDURE PR_ValidarOtraClasificacion(UnDato VARCHAR2,
+                                        UnaClaseEntidad trc_informacion_basica.ib_clase_entidad%TYPE) IS
+    BEGIN
+        IF UnDato IS NOT NULL THEN --RQ2229-2007. Otra clasificacion puede venir en nulo para ent.privs.
+            IF UnaClaseEntidad = 1 THEN
+         IF NOT Pk_TRC_Util.FN_ExisteEnBinTablas(UnDato,'CLASIFICACION_TERCEROS','TERCEROS') THEN
+                    RAISE_APPLICATION_ERROR(-20987,'');
+               END IF;
+     ELSE
+       IF NOT Pk_TRC_Util.FN_ExisteEnBinTablas(UnDato,'CLASIFICACION_TERCEROS_PRIV','TERCEROS') THEN
+                    RAISE_APPLICATION_ERROR(-20987,'');
+               END IF;
+     END IF;
+        END IF;
+    END PR_ValidarOtraClasificacion;
+
+  PROCEDURE PR_ValidarClaseJuridica(UnDato VARCHAR2) IS
+      BEGIN
+        IF UnDato IS NOT NULL THEN
+            IF NOT Pk_TRC_Util.FN_ExisteEnBinTablas(UnDato,'CLASIFICACION JURIDICAS','TERCEROS') THEN
+                RAISE_APPLICATION_ERROR(-20942,'');
+            END IF;
+        END IF;
+    END PR_ValidarClaseJuridica;
+
+    PROCEDURE PR_ValidarNivelEP(UnDato VARCHAR2) IS
+    BEGIN
+        IF UnDato IS NOT NULL THEN
+            IF NOT Pk_TRC_Util.FN_ExisteEnBinTablas(UnDato,'NIVEL_ENTIDAD_PUBLICA','TERCEROS') THEN
+                RAISE_APPLICATION_ERROR(-20986,'');
+            END IF;
+        END IF;
+    END PR_ValidarNivelEP;
+
+    PROCEDURE PR_ValidarTipoEP(UnDato VARCHAR2, UnaClaseEntidad VARCHAR2) IS
+    BEGIN
+        IF UnaClaseEntidad IS NOT NULL AND UnDato IS NOT NULL THEN
+            IF UnaClaseEntidad = 'ADMINCENTRAL' THEN
+                IF NOT Pk_TRC_Util.FN_ExisteEnBinTablas(UnDato,'ENT_PUB_CENTRALIZADA','TERCEROS') THEN
+                    RAISE_APPLICATION_ERROR(-20968,'');
+                END IF;
+            ELSIF UnaClaseEntidad = 'ADMINDESCENTRAL' THEN
+                IF NOT Pk_TRC_Util.FN_ExisteEnBinTablas(UnDato,'ENT_PUB_DESCENTRALIZADA','TERCEROS') THEN
+                    RAISE_APPLICATION_ERROR(-20968,'');
+                END IF;
+            END IF;
+        ELSIF UnDato IS NOT NULL AND UnaClaseEntidad IS NULL THEN
+            RAISE_APPLICATION_ERROR(-20969,'');
+        END IF;
+    END PR_ValidarTipoEP;
+
+--RQ1717-2006   18/01/2007   ayucuma
+--Se cambio General por Terceros
+    PROCEDURE PR_ValidarTipoContacto(UnDato VARCHAR2) IS
+    BEGIN
+        IF UnDato IS NOT NULL THEN
+            IF NOT Pk_TRC_Util.FN_ExisteEnBinTablas(UnDato,'CONTACTO','TERCEROS') THEN
+                RAISE_APPLICATION_ERROR(-20982,'');
+            END IF;
+        END IF;
+    END PR_ValidarTipoContacto;
+
+--RQ1717-2006   18/01/2007   ayucuma
+--Se cambio General por Terceros
+    PROCEDURE PR_ValidarTipoPago(UnDato VARCHAR2) IS
+    BEGIN
+        IF UnDato IS NOT NULL THEN
+            IF NOT Pk_TRC_Util.FN_ExisteEnBinTablas(UnDato,'TIPO_PAGO','TERCEROS') THEN
+                RAISE_APPLICATION_ERROR(-20979,'');
+            END IF;
+        END IF;
+    END PR_ValidarTipoPago;
+
+--RQ1717-2006   18/01/2007   ayucuma
+--Se cambio General por Terceros
+    PROCEDURE PR_ValidarTipoCuenta(UnDato VARCHAR2) IS
+    BEGIN
+        IF UnDato IS NOT NULL THEN
+            IF NOT Pk_TRC_Util.FN_ExisteEnBinTablas(UnDato,'TIPO_CUENTA','TERCEROS') THEN
+                RAISE_APPLICATION_ERROR(-20978,'');
+            END IF;
+        END IF;
+    END PR_ValidarTipoCuenta;
+
+FUNCTION fn_dvnit (un_codigo IN VARCHAR2) RETURN NUMBER IS
+   L                    NUMBER;
+   sumatoria            NUMBER;
+   cociente             NUMBER;
+   residuo              NUMBER;
+   n1   NUMBER;    d1   NUMBER;    x1   NUMBER;
+   n2   NUMBER;    d2   NUMBER;    x2   NUMBER;
+   n3   NUMBER;    d3   NUMBER;    x3   NUMBER;
+   n4   NUMBER;    d4   NUMBER;    x4   NUMBER;
+   n5   NUMBER;    d5   NUMBER;    x5   NUMBER;
+   n6   NUMBER;    d6   NUMBER;    x6   NUMBER;
+   n7   NUMBER;    d7   NUMBER;    x7   NUMBER;
+   n8   NUMBER;    d8   NUMBER;    x8   NUMBER;
+   n9   NUMBER;    d9   NUMBER;    x9   NUMBER;
+   n10  NUMBER;    d10  NUMBER;    x10  NUMBER;
+   n11  NUMBER;    d11  NUMBER;    x11  NUMBER;
+   n12  NUMBER;    d12  NUMBER;    x12  NUMBER;
+   n13  NUMBER;    d13  NUMBER;    x13  NUMBER;
+   n14  NUMBER;    d14  NUMBER;    x14  NUMBER;
+   n15  NUMBER;    d15  NUMBER;    x15  NUMBER;
+   n16  NUMBER;    d16  NUMBER;    x16  NUMBER;
+   n17  NUMBER;    d17  NUMBER;    x17  NUMBER;
+   n18  NUMBER;    d18  NUMBER;    x18  NUMBER;
+   n19  NUMBER;    d19  NUMBER;    x19  NUMBER;
+   n20  NUMBER;    d20  NUMBER;
+
+ BEGIN
+  IF FN_Valida_numeros(un_codigo) then
+               L:=TO_NUMBER(un_codigo);
+               n1:= Trunc(L);
+               n2:= Trunc(L / 10);
+               n3:= Trunc(L / 100);
+               n4:= Trunc(L / 1000);
+               n5:= Trunc(L / 10000);
+               n6:= Trunc(L / 100000);
+               n7:= Trunc(L / 1000000);
+               n8:= Trunc(L / 10000000);
+               n9:= Trunc(L / 100000000);
+               n10:= Trunc(L / 1000000000);
+               n11:= Trunc(L / 10000000000);
+               n12:= Trunc(L / 100000000000);
+               n13:= Trunc(L / 1000000000000);
+               n14:= Trunc(L / 10000000000000);
+               n15:= Trunc(L / 100000000000000);
+               n16:= Trunc(L / 1000000000000000);
+               n17:= Trunc(L / 10000000000000000);
+               n18:= Trunc(L / 100000000000000000);
+               n19:= Trunc(L / 1000000000000000000);
+               n20:= Trunc(L / 10000000000000000000);
+
+               x1:= n2 * 10;
+               x2:= n3 * 10;
+               x3:= n4 * 10;
+               x4:= n5 * 10;
+               x5:= n6 * 10;
+               x6:= n7 * 10;
+               x7:= n8 * 10;
+               x8:= n9 * 10;
+               x9:= n10 * 10;
+               x10:= n11 * 10;
+               x11:= n12 * 10;
+               x12:= n13 * 10;
+               x13:= n14 * 10;
+               x14:= n15 * 10;
+               x15:= n16 * 10;
+               x16:= n17 * 10;
+               x17:= n18 * 10;
+               x18:= n19 * 10;
+               x19:= n20 * 10;
+               d1:= n1 - x1;
+               d2:= n2 - x2;
+               d3:= n3 - x3;
+               d4:= n4 - x4;
+               d5:= n5 - x5;
+               d6:= n6 - x6;
+               d7:= n7 - x7;
+               d8:= n8 - x8;
+               d9:= n9 - x9;
+               d10:= n10 - x10;
+               d11:= n11 - x11;
+               d12:= n12 - x12;
+               d13:= n13 - x13;
+               d14:= n14 - x14;
+               d15:= n15 - x15;
+               d16:= n16 - x16;
+               d17:= n17 - x17;
+               d18:= n18 - x18;
+               d19:= n19 - x19;
+               d20:= n20;
+               sumatoria:= d1*3 + d2*7 + d3*13 + d4*17 + d5*19 + d6*23 + d7*29 + d8*37 + d9*41
+               + d10*43 + d11*47 + d12*53 + d13*59 + d14*67 + d15*71
+               + d16*73 + d17*79 + d18*83 + d19*89 + d20*97;
+               cociente:= Trunc(sumatoria / 11);
+               residuo:= sumatoria - cociente * 11;
+               IF (residuo = 0 OR residuo = 1) THEN
+                  RETURN(residuo);
+               ELSE
+                  RETURN(11 - residuo);
+               END IF;
+         ELSE
+          RETURN (0);
+         END IF;
+    EXCEPTION
+         WHEN NO_DATA_FOUND THEN
+            RETURN(NULL);
+        WHEN OTHERS THEN
+            RETURN NULL;
+ END fn_dvnit;
+
+/**************************************************************************************
+RQ420-2007     26/02/2007    ayucuma
+Se agrego el parametro un_sistema para no validar la longitud de las
+Cedulas al sistema Terceros
+
+RQ272-2009  03/2009  <fmateus>
+Modificado para cambiar la longitud de algunos tipos de documentos.
+Tambi?n elimin? la validaci?n que se ten?a con el sistema.
+***************************************************************************************/
+PROCEDURE PR_ValidarDocumento(Una_Naturaleza VARCHAR2, Un_Tipo_Identificacion VARCHAR2, Un_Codigo_Identificacion VARCHAR2, Un_Sistema VARCHAR2) IS
+MiLongitud NUMBER(2);
+MiMinimo   NUMBER(2);
+MiMaximo   NUMBER(2);
+BEGIN
+  BEGIN
+    SELECT LD.LIMITE_INFERIOR, LD.LIMITE_SUPERIOR
+      INTO MiMinimo, MiMaximo
+      FROM TRC_LONGITUD_DOCUMENTO LD
+     WHERE LD.NATURALEZA = Una_naturaleza
+       AND LD.TIPO_DOCUMENTO = Un_Tipo_Identificacion;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        MiMinimo := 0;
+        MiMaximo := 0;
+  END;
+
+    MiLongitud := LENGTH(Un_Codigo_identificacion);
+
+    IF Una_naturaleza = 'J' THEN
+     IF RTRIM(LTRIM(Un_Tipo_Identificacion)) NOT IN ('NIT','ESP','TAC','COD_JUZGADO') THEN
+            RAISE_APPLICATION_ERROR(-20970,'');
+    END IF;
+    IF Un_Tipo_Identificacion = 'NIT' AND MiLongitud NOT BETWEEN MiMinimo AND MiMaximo THEN --RQ735-2009
+       RAISE_APPLICATION_ERROR(-20971,'');
+    END IF;
+
+    IF Un_Tipo_Identificacion = 'ESP' AND MiLongitud NOT BETWEEN MiMinimo AND MiMaximo THEN --RQ735-2009
+       RAISE_APPLICATION_ERROR(-20905,'');
+    END IF;
+
+    IF Un_Tipo_Identificacion = 'ESPI' AND MiLongitud NOT BETWEEN MiMinimo AND MiMaximo THEN --RQ735-2009
+       RAISE_APPLICATION_ERROR(-20905,'');
+    END IF;
+
+    IF Un_Tipo_Identificacion = 'TAC' AND MiLongitud NOT BETWEEN MiMinimo AND MiMaximo THEN --RQ735-2009
+       RAISE_APPLICATION_ERROR(-20905,'');
+    END IF;
+
+  ELSE
+      --Tipos de identificacion validos para personas naturales
+    IF Un_Tipo_Identificacion NOT IN ('CC','CE','NIT','TI','PAS','RC','NUIP','ESPI','ESPTI') THEN
+           RAISE_APPLICATION_ERROR(-20938,'');
+    END IF;
+    --Valida el tipo de documento de acuerdo a la longitud
+    --RQ420-2007   26/02/2007   ayucuma  Si el sistema es terceros no valida la longitud de cedulas
+    --RQ272-2009  03-2009 Se elimina la validaci?n del sistema y se modifica la longitud
+    IF Un_Tipo_Identificacion = 'CC'  AND MiLongitud NOT BETWEEN MiMinimo AND MiMaximo THEN
+       RAISE_APPLICATION_ERROR(-20938,'');
+    END IF;
+    --Fin RQ420-2007
+    IF Un_Tipo_Identificacion = 'TI' AND MiLongitud NOT BETWEEN MiMinimo AND MiMaximo THEN
+       RAISE_APPLICATION_ERROR(-20937,'');
+    ELSIF Un_Tipo_Identificacion = 'PAS' AND MiLongitud NOT BETWEEN MiMinimo AND MiMaximo THEN
+       RAISE_APPLICATION_ERROR(-20936,'');
+    ELSIF Un_Tipo_Identificacion = 'CE' AND MiLongitud NOT BETWEEN MiMinimo AND MiMaximo THEN
+       RAISE_APPLICATION_ERROR(-20935,'');
+    ELSIF Un_Tipo_Identificacion = 'NIT' AND MiLongitud NOT BETWEEN MiMinimo AND MiMaximo THEN --RQ272-2009
+       RAISE_APPLICATION_ERROR(-20934,'');
+    ELSIF Un_Tipo_Identificacion = 'RC' AND MiLongitud NOT BETWEEN MiMinimo AND MiMaximo THEN
+       RAISE_APPLICATION_ERROR(-20933,'');
+    ELSIF Un_Tipo_Identificacion = 'NUIP' AND MiLongitud NOT BETWEEN MiMinimo AND MiMaximo THEN --RQ272-2009
+       RAISE_APPLICATION_ERROR(-20932,'');
+    ELSIF Un_Tipo_Identificacion = 'ESPI' AND MiLongitud NOT BETWEEN MiMinimo AND MiMaximo THEN --RQ2018001826 FBernal 11/11/2019
+       RAISE_APPLICATION_ERROR(-20931,'');
+    ELSIF Un_Tipo_Identificacion = 'ESPTI' AND MiLongitud NOT BETWEEN MiMinimo AND MiMaximo THEN --RQ2018001826 FBernal 14/08/2018
+       RAISE_APPLICATION_ERROR(-20931,'');
+
+    END IF;
+  END IF;
+END PR_ValidarDocumento;
+
+PROCEDURE PR_TRC_commit(UnNumGrab IN OUT NUMBER,MAX_NUM_GRAB NUMBER := 10) IS
+    BEGIN
+
+        IF UnNumGrab > MAX_NUM_GRAB THEN
+            COMMIT;
+          UnNumGrab:=0;
+        ELSE
+            UnNumGrab:= UnNumGrab + 1;
+        END IF;
+    END PR_trc_commit;
+
+FUNCTION fn_fecha_hms(una_fecha IN DATE) RETURN DATE IS
+
+CONST_FORMATO_FECHA Constant Varchar2(30) := 'DD/MM/YYYY HH24:MI:SS';
+mi_fec date;
+begin
+select to_date (una_fecha, CONST_FORMATO_FECHA) into mi_fec from dual;
+  IF mi_fec is not null THEN
+      RETURN(mi_fec);
+   ELSE
+          RAISE_APPLICATION_ERROR(-20967,'');
+   END IF;
+END fn_fecha_hms;
+
+FUNCTION fn_consec_banco RETURN VARCHAR2 IS
+Mi_consec_banco varchar2(3);
+begin
+         SELECT NVL(MAX(Substr(ter.codigo_identificacion,2,3)),'000') INTO Mi_consec_banco
+          FROM TRC_TERCEROS TER,TRC_INFORMACION_BASICA IB
+          WHERE TER.TIPO_IDENTIFICACION = 'ESP'
+           AND IB.IB_NATURALEZA = 'J'
+           AND IB.IB_PROCEDENCIA = 'E'
+           AND IB.IB_FECHA_FINAL IS NULL;
+       MI_CONSEC_BANCO := LTRIM(MI_CONSEC_BANCO + 1,0);
+    RETURN(Mi_Consec_banco);
+EXCEPTION
+    WHEN OTHERS THEN
+            RAISE_APPLICATION_ERROR(-20960,'');
+end fn_consec_banco;
+
+FUNCTION fn_consec_sucursal (Un_dato IN VARCHAR2) RETURN VARCHAR2 IS
+Mi_consec_sucursal varchar2(3);
+begin
+
+    SELECT NVL(MAX(SUBSTR(TER.CODIGO_IDENTIFICACION,11,3)),'000') INTO MI_CONSEC_SUCURSAL
+           FROM TRC_TERCEROS TER,TRC_INFORMACION_BASICA IB
+          WHERE TER.TIPO_IDENTIFICACION = 'ESP'
+                       AND IB.IB_NATURALEZA = 'J'
+                       AND IB.IB_PROCEDENCIA = 'E'
+                       AND IB.IB_FECHA_FINAL IS NULL
+                       AND SUBSTR(TER.CODIGO_IDENTIFICACION,2,3) = Un_dato;
+                 MI_CONSEC_SUCURSAL := LTRIM(MI_CONSEC_SUCURSAL + 1,0);
+    RETURN (Mi_Consec_Sucursal);
+EXCEPTION
+    WHEN OTHERS THEN
+            RAISE_APPLICATION_ERROR(-20959,'');
+end fn_consec_sucursal;
+
+
+FUNCTION FN_Codigo_Externo(UnCodigoIdentificacion varchar2,
+                                                UnaProcedencia varchar2,                                                UnaNaturaleza varchar2,
+                                                UnTipoIdentificacion varchar2,
+                                                UnPais varchar2,
+                                                UnaCiudad Varchar2,
+                                                UnCodigoExterno varchar2) RETURN VARCHAR2 IS
+MI_CODIGO_EXTERNO VARCHAR2(20);
+MI_CONSEC_BANCO VARCHAR2(3);
+MI_CONSEC_SUCURSAL VARCHAR2(3);
+
+BEGIN
+    IF UnCodigoIdentificacion IS NULL THEN
+      IF UnaProcedencia = 'E' THEN
+          IF UnaNaturaleza = 'J' THEN
+                 IF UnTipoIdentificacion = 'ESP' THEN
+                      IF UnPais  IS NOT NULL THEN
+                             pk_trc_util.pr_validarPais(UnPais,UnaProcedencia );
+                              IF UnPais <> '001' THEN
+                                     pk_trc_util.pr_validarciudades(UnaCiudad,substr(UnaCiudad,4,2),UnPais,UnaProcedencia);
+                                              IF UnCodigoExterno IS NULL THEN
+                                                 MI_CONSEC_BANCO := LPAD(PK_TRC_UTIL.Fn_consec_banco,3,'0');
+                                              ELSE
+                                                  MI_CONSEC_BANCO := LPAD(substr(UnCodigoExterno,2,3),3,'0');
+                                              END IF;
+                                                 MI_CONSEC_SUCURSAL := LPAD(PK_TRC_UTIL.Fn_consec_sucursal(MI_CONSEC_BANCO),3,'0');
+                                                 MI_CODIGO_EXTERNO := '1'||Mi_CONSEC_BANCO||UnPais||SUBSTR(UnaCiudad,6,3)||Mi_CONSEC_SUCURSAL;
+                                                RETURN(MI_CODIGO_EXTERNO);
+                                  ELSE
+                      RAISE_APPLICATION_ERROR(-20952,'');
+                      END IF;
+                         ELSE
+                RAISE_APPLICATION_ERROR(-20951,'');
+                        END IF;
+                 ELSE
+             RAISE_APPLICATION_ERROR(-20950,'');
+                  END IF;
+            ELSE
+                  RAISE_APPLICATION_ERROR(-20949,'');
+            END IF;
+      ELSE
+         RAISE_APPLICATION_ERROR(-20948,'');
+        END IF;
+    ELSE
+      RAISE_APPLICATION_ERROR(-20947,'');
+    END IF;
+
+EXCEPTION
+    WHEN OTHERS THEN
+      RAISE_APPLICATION_ERROR(-20946,'');
+end FN_Codigo_Externo;
+
+FUNCTION FN_Envia_Numeros(UnaCadena IN VARCHAR2) RETURN VARCHAR2 IS
+MI_CADENA VARCHAR2(200);
+BEGIN
+              FOR I IN 1..LENGTH(UnaCadena) LOOP
+                 IF SUBSTR(UnaCadena,I,1) BETWEEN '0' AND '9' THEN
+                    MI_CADENA:=MI_CADENA||SUBSTR(UnaCadena,I,1);
+                 END IF;
+              END LOOP;
+            RETURN (MI_CADENA);
+ EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RETURN(NULL);
+        WHEN OTHERS THEN
+            RETURN NULL;
+END FN_Envia_Numeros;
+
+
+FUNCTION FN_Envia_Letras(UNACADENA VARCHAR2) RETURN VARCHAR2 IS
+ MI_CADENA VARCHAR2(100);
+ BEGIN
+   FOR I IN 1..LENGTH(UNACADENA) LOOP
+      IF (ASCII(SUBSTR(UNACADENA,I,1)) BETWEEN '65' AND '90') THEN
+        MI_CADENA:=MI_CADENA||SUBSTR(UNACADENA,I,1);
+      ELSIF ASCII(SUBSTR(UnaCadena,I,1))is null THEN
+         MI_CADENA:=MI_CADENA||SUBSTR(UNACADENA,I,1);
+      END IF;
+   END LOOP;
+   RETURN (MI_CADENA);
+
+  EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RETURN(NULL);
+        WHEN OTHERS THEN
+            RETURN NULL;
+  END Fn_Envia_Letras;
+
+ PROCEDURE PR_ValidarValorContacto(UnDato VARCHAR2, UnTipoContacto VARCHAR2) IS
+    BEGIN
+      IF UnTipoContacto IS NOT NULL AND UnDato IS NOT NULL THEN
+            IF UnTipoContacto IN ('TEL','CEL','FAX','AA') THEN
+                IF NOT FN_Valida_Numeros(UnDato) THEN
+                    RAISE_APPLICATION_ERROR(-20945,'');
+                END IF;
+      END IF;
+
+          IF LENGTH(UnDato) < 4  THEN
+              RAISE_APPLICATION_ERROR(-20944,'');
+          END IF;
+    END IF;
+    END PR_ValidarValorContacto;
+
+FUNCTION FN_Valida_Numeros(UnDato IN VARCHAR2) RETURN BOOLEAN IS
+MI_CADENA VARCHAR2(200);
+BEGIN
+              FOR I IN 1..LENGTH(UnDato) LOOP
+                 IF SUBSTR(UnDato,I,1) BETWEEN '0' AND '9' THEN
+                    MI_CADENA:=MI_CADENA||SUBSTR(UnDato,I,1);
+                 END IF;
+              END LOOP;
+              IF LENGTH(UnDato) = LENGTH(MI_CADENA) THEN
+               RETURN(TRUE);
+              ELSE
+                RETURN (FALSE);
+              END IF;
+ END FN_Valida_Numeros;
+
+FUNCTION FN_Valida_Identificacion(UnCodigoIdentificacion VARCHAR2,UnTipoIdentificacion VARCHAR2,UnPredecesor NUMBER) RETURN BOOLEAN IS
+
+        CURSOR CUR_Terceros_Iguales IS
+            SELECT count(1)
+            FROM TRC_TERCEROS
+            WHERE Codigo_identificacion = UnCodigoIdentificacion AND
+                Tipo_Identificacion = UnTipoIdentificacion AND
+                Predecesor = UnPredecesor;
+         Dummy number(1);
+
+      BEGIN
+                OPEN CUR_Terceros_Iguales;
+                 FETCH CUR_Terceros_Iguales INTO Dummy;
+                CLOSE CUR_Terceros_Iguales;
+
+              IF Dummy <= 0 THEN
+                    RETURN (TRUE);
+                ELSE
+                    RETURN (FALSE);
+                END IF;
+
+    EXCEPTION
+        WHEN OTHERS THEN
+        RETURN (FALSE);
+
+END FN_Valida_Identificacion;
+
+FUNCTION FN_Valida_Predecesor(UnCodigoIdentificacion VARCHAR2,UnTipoIdentificacion VARCHAR2,UnPredecesor NUMBER) RETURN BOOLEAN IS
+
+    CURSOR CUR_Predecesor IS
+            SELECT     Codigo_identificacion,Tipo_identificacion
+            FROM TRC_TERCEROS
+            WHERE Predecesor = UnPredecesor;
+            C1        CUR_Predecesor%ROWTYPE;
+ BEGIN
+      OPEN CUR_Predecesor;
+     FETCH CUR_Predecesor INTO C1;
+       IF UnCodigoIdentificacion = C1.Codigo_identificacion AND
+             UnTipoIdentificacion = C1.Tipo_identificacion THEN
+             RETURN (TRUE);
+           ELSE
+             RETURN (FALSE);
+           END IF;
+      CLOSE CUR_Predecesor;
+
+    EXCEPTION
+        WHEN OTHERS THEN
+        RETURN (FALSE);
+
+    END FN_Valida_Predecesor;
+
+
+ FUNCTION FN_Mensaje(UnCodigo IN NUMBER) RETURN VARCHAR2 IS
+ Mi_mensaje varchar2(2000);
+ BEGIN
+         SELECT ea_mensaje into Mi_mensaje
+         FROM trc_errores_aplicacion
+         WHERE ea_codigo = Uncodigo;
+    RETURN (MI_Mensaje);
+
+  EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RETURN(NULL);
+        WHEN OTHERS THEN
+            RETURN NULL;
+  END FN_Mensaje;
+
+
+FUNCTION FN_Valida_InfComercial(UnId NUMBER,UnBanco NUMBER,UnaCuenta VARCHAR2,UnTipoCuenta VARCHAR2) RETURN BOOLEAN IS
+
+    CURSOR CUR_InfCom_Igual IS
+            SELECT count(1)
+            FROM TRC_INFORMACION_COMERCIAL
+            WHERE Id = UnId AND
+                Ic_Cuenta =  UnaCuenta AND
+                Ic_Banco = UnBanco AND
+                Ic_Tipo_Cuenta = UnaCuenta;
+      Dummy number(1);
+      BEGIN
+                OPEN  CUR_InfCom_Igual;
+                 FETCH  CUR_InfCom_Igual INTO Dummy;
+                CLOSE CUR_InfCom_Igual;
+
+              IF Dummy <= 0 THEN
+                    RETURN (TRUE);
+                ELSE
+                    RETURN (FALSE);
+                END IF;
+
+    EXCEPTION
+        WHEN OTHERS THEN
+        RETURN (FALSE);
+
+END FN_Valida_InfComercial;
+
+FUNCTION FN_Valida_InfContacto(UnId NUMBER,UnTipoContacto NUMBER,UnValor VARCHAR2) RETURN BOOLEAN IS
+
+    CURSOR CUR_InfCom_Igual IS
+            SELECT count(1)
+            FROM TRC_CONTACTOS
+            WHERE Id = UnId AND
+                Co_tipo_contacto =  UnTipoContacto AND
+                Co_valor = UnValor ;
+      Dummy number(1);
+      BEGIN
+                OPEN  CUR_InfCom_Igual;
+                 FETCH  CUR_InfCom_Igual INTO Dummy;
+                CLOSE CUR_InfCom_Igual;
+
+              IF Dummy <= 0 THEN
+                    RETURN (TRUE);
+                ELSE
+                    RETURN (FALSE);
+                END IF;
+
+    EXCEPTION
+        WHEN OTHERS THEN
+        RETURN (FALSE);
+
+END FN_Valida_InfContacto;
+
+FUNCTION Fn_Estado_Ter(UnId NUMBER) RETURN BOOLEAN IS
+    CURSOR CUR_Estado IS
+            SELECT Estado
+            FROM TRC_TERCEROS
+            WHERE Id = UnId;
+      MiEstado varchar2(1);
+      BEGIN
+                OPEN  CUR_Estado;
+                 FETCH  CUR_Estado INTO MiEstado;
+                CLOSE CUR_Estado;
+
+              IF MiEstado = 'V' THEN
+                    RETURN (TRUE);
+                ELSE
+                    RETURN (FALSE);
+                END IF;
+    EXCEPTION
+        WHEN OTHERS THEN
+        RETURN (FALSE);
+END Fn_Estado_Ter;
+
+/**********************************************************************************************
+ Funcion: fn_Es_Alfa
+ RQ1717-2006   22/01/2007  Ayucuma
+ Descripcion: Verifica si el campo es alfabetico
+
+ Parametros:
+      Entrada = un_campo, Dato a verificar
+      Salida = Verdadero si el campo es alfabetico,
+               Falso en caso contrario
+***********************************************************************************************/
+FUNCTION fn_Es_Alfa(un_campo VARCHAR2) RETURN BOOLEAN IS
+    mi_long      NUMBER;
+    mi_caracter  VARCHAR2(1);
+    i            NUMBER := 1;
+BEGIN
+    mi_long := LENGTH(un_campo);
+    WHILE i <= mi_long LOOP
+      mi_caracter := SUBSTR(un_campo,i,1);
+      IF mi_caracter NOT BETWEEN CHR(65) AND CHR(90) AND
+         mi_caracter NOT BETWEEN CHR(97) AND CHR(122) AND
+         mi_caracter != CHR(32) AND
+         mi_caracter != CHR(45) AND
+         mi_caracter != CHR(95) AND
+         mi_caracter != CHR(209) AND
+         mi_caracter != CHR(241) AND
+         mi_caracter != CHR(193) AND
+         mi_caracter != CHR(201) AND
+         mi_caracter != CHR(205) AND
+         mi_caracter != CHR(211) AND
+         mi_caracter != CHR(218) AND
+         mi_caracter != CHR(225) AND
+         mi_caracter != CHR(233) AND
+         mi_caracter != CHR(237) AND
+         mi_caracter != CHR(243) AND
+         mi_caracter != CHR(250) THEN
+         RETURN(FALSE);
+      END IF;
+      i := i + 1;
+    END LOOP;
+   RETURN(TRUE);
+END fn_Es_Alfa;
+
+
+--RQ1717-2006 22/01/2007  Ayucuma
+--Verifica si existe un nombre (Razon Social) igual para la naturaleza juridica
+FUNCTION FN_Existe_razon_social (UnaRazon trc_informacion_basica.ib_primer_nombre%TYPE) RETURN BOOLEAN IS
+   mi_existe   VARCHAR2(5);
+BEGIN
+  SELECT DECODE(COUNT(9), 0, 'FALSE', 'TRUE')
+    INTO mi_existe
+    FROM trc_informacion_basica f
+   WHERE f.ib_primer_nombre = UnaRazon
+     AND f.ib_fecha_final IS NULL;
+
+  IF mi_existe = 'TRUE' THEN
+    RETURN True;
+  ELSE
+    RETURN False;
+  END IF;
+
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    RETURN False;
+  WHEN TOO_MANY_ROWS THEN
+    RETURN True;
+  WHEN OTHERS THEN
+    RETURN False;
+END FN_Existe_razon_social;
+
+--RQ1717-2006 22/01/2007  Ayucuma
+--Verifica si existe un nombre (Razon Social) igual para la naturaleza juridica
+FUNCTION FN_Existe_razon_social (UnaRazon trc_informacion_basica.ib_primer_nombre%TYPE,
+                                 UnId trc_informacion_basica.id%TYPE) RETURN BOOLEAN IS
+   mi_existe   VARCHAR2(5);
+BEGIN
+  SELECT DECODE(COUNT(9), 0, 'FALSE', 'TRUE')
+    INTO mi_existe
+    FROM trc_informacion_basica f
+   WHERE f.ib_primer_nombre = UnaRazon
+     AND f.id != UnId
+     AND f.ib_fecha_final IS NULL;
+
+  IF mi_existe = 'TRUE' THEN
+    RETURN True;
+  ELSE
+    RETURN False;
+  END IF;
+
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    RETURN False;
+  WHEN TOO_MANY_ROWS THEN
+    RETURN True;
+  WHEN OTHERS THEN
+    RETURN False;
+END FN_Existe_razon_social;
+
+
+--RQ1717-2006 22/01/2007  Ayucuma
+--Valida los nombres de acuerdo a la naturaleza
+PROCEDURE PR_Valida_Nombre (UnPrimerNombre trc_informacion_basica.ib_primer_nombre%TYPE,
+                            UnSegundoNombre  trc_informacion_basica.ib_segundo_nombre%TYPE,
+                            UnPrimerApellido trc_informacion_basica.ib_primer_apellido%TYPE,
+                            UnSegundoApellido trc_informacion_basica.ib_segundo_apellido%TYPE,
+                            una_naturaleza trc_informacion_basica.ib_naturaleza%TYPE,
+                            UnId trc_informacion_basica.id%TYPE) IS
+
+BEGIN
+  --El Primer Nombre no puede estar en Blanco
+  IF UnPrimerNombre IS NULL THEN
+     RAISE_APPLICATION_ERROR(-20931,'');
+  END IF;
+  --Para persona natural
+  IF una_naturaleza = 'N' THEN
+  --El primer apellido no puede estar en Blanco')
+    IF UnPrimerApellido IS NULL THEN
+        RAISE_APPLICATION_ERROR(-20930,'');
+    END IF;
+    --El primer nombre no puede ser menor de 3 digitos
+    IF UnPrimerNombre IS NOT NULL AND LENGTH(UnPrimerNombre) < 3 THEN
+        RAISE_APPLICATION_ERROR(-20929,'');
+    END IF;
+    --El primer apellido no puede ser menor de 3 digitos
+    IF UnPrimerApellido IS NOT NULL AND LENGTH(UnPrimerApellido) < 3 THEN
+       RAISE_APPLICATION_ERROR(-20928,'');
+    END IF;
+    --El segundo nombre no puede ser menor de 3 digitos
+    IF UnSegundoNombre IS NOT NULL AND LENGTH(UnSegundoNombre) < 3 THEN
+        RAISE_APPLICATION_ERROR(-20927,'');
+    END IF;
+    --El segundo apellido no puede ser menor de 3 digitos
+    IF UnSegundoApellido IS NOT NULL AND LENGTH(UnSegundoApellido) < 3 THEN
+       RAISE_APPLICATION_ERROR(-20926,'');
+    END IF;
+    --El Primer Apellido debe ser alfabetico
+    IF NOT fn_Es_Alfa(UnPrimerApellido) THEN
+       RAISE_APPLICATION_ERROR(-20925,'');
+    END IF;
+    --El Primer Nombre debe ser alfabetico
+    IF NOT fn_Es_Alfa(UnPrimerNombre) THEN
+       RAISE_APPLICATION_ERROR(-20924,'');
+    END IF;
+    --El Segundo Apellido debe ser alfabetico
+    IF NOT fn_Es_Alfa(UnSegundoApellido) THEN
+       RAISE_APPLICATION_ERROR(-20923,'');
+    END IF;
+    --El Segundo Nombre debe ser alfabetico
+    IF NOT fn_Es_Alfa(UnSegundoNombre) THEN
+       RAISE_APPLICATION_ERROR(-20922,'');
+    END IF;
+  --Persona Juridica
+  ELSE
+    --El primer nombre no puede ser menor de 2 digitos
+    IF UnPrimerNombre IS NOT NULL AND LENGTH(UnPrimerNombre) < 2 THEN
+        RAISE_APPLICATION_ERROR(-20921,'');
+    END IF;
+    --El primer nombre debe ser alfanumerico y no debe ser SOLO numerico
+    IF NOT trc_pg_basicas.Fn_Es_Alfanumerico(UnPrimerNombre) OR trc_pg_basicas.Fn_Es_Numero(UnPrimerNombre) THEN
+       RAISE_APPLICATION_ERROR(-20920,'');
+    END IF;
+    --El primer nombre no puede estar repetido
+    IF UnId IS NULL THEN
+       --Esta creando Terceros
+       IF FN_Existe_razon_social (UnPrimerNombre) THEN
+         RAISE_APPLICATION_ERROR(-20919,'');
+      END IF;
+    ELSE
+      --Esta actualizando Terceros
+      IF FN_Existe_razon_social (UnPrimerNombre,UnId) THEN
+         RAISE_APPLICATION_ERROR(-20919,'');
+      END IF;
+    END IF;
+  END IF;
+END PR_Valida_Nombre;
+
+/**********************************************************************************************
+ Funcion: TBuscar
+ Descripcion: Devuelve el valor del campo resultado para los parametros suministrados
+              en bintablas
+  RQ1717-2006  22/01/2007 ayucuma
+ Parametros:
+      Entrada = Argumento, Grupo, Nombre, Vigencia
+      Salida = Resultado
+***********************************************************************************************/
+FUNCTION TBuscar(Argumento Varchar2,    Grupo Varchar2,
+                    Nombre Varchar2, Vigencia Varchar2)    RETURN Varchar2 IS
+
+        tResultado    BinTablas.Resultado%TYPE;
+        fVigencia    DATE;
+        CURSOR CResulBinTab (Var_Argumento Varchar2,
+                 Var_Grupo Varchar2,
+           Var_Nombre Varchar2,
+                 Var_Vigencia DATE) IS
+        SELECT Resultado
+    FROM BinTablas
+        WHERE Grupo = Var_Grupo AND
+                Nombre = Var_Nombre AND
+                Argumento = Var_Argumento AND
+                Vig_Inicial <= Var_Vigencia AND
+                (Vig_Final >= Var_Vigencia OR
+                 Vig_final IS NULL);
+    BEGIN
+        tResultado := NULL;
+        fVigencia := TO_DATE(Vigencia, 'dd/mm/yyyy');
+        OPEN CResulBinTab(Argumento, Grupo, Nombre, fVigencia);
+        FETCH CResulBinTab INTO tResultado;
+        CLOSE CResulBinTab;
+        Return tResultado;
+END TBuscar;
+
+/**********************************************************************************************
+ Funcion: TBuscarArgumento
+ Descripcion: Devuelve el valor del campo argumento para los parametros suministrados
+              en bintablas
+  RQ1717-2006  22/01/2007 ayucuma
+ Parametros:
+      Entrada = Argumento, Grupo, Nombre, Vigencia
+      Salida = Resultado
+
+***********************************************************************************************/
+FUNCTION TBuscarArgumento(Argumento Varchar2,    Grupo Varchar2,
+                    Nombre Varchar2, Vigencia Varchar2)    RETURN Varchar2 IS
+
+        tArgumento    BinTablas.Argumento%TYPE;
+        fVigencia    DATE;
+        CURSOR CResulBinTab (Var_Argumento Varchar2,
+                 Var_Grupo Varchar2,
+           Var_Nombre Varchar2,
+                 Var_Vigencia DATE) IS
+        SELECT Argumento
+    FROM BinTablas
+        WHERE Grupo = Var_Grupo AND
+                Nombre = Var_Nombre AND
+                Argumento = Var_Argumento AND
+                Vig_Inicial <= Var_Vigencia AND
+                (Vig_Final >= Var_Vigencia OR
+                 Vig_final IS NULL);
+    BEGIN
+        tArgumento := NULL;
+        fVigencia := TO_DATE(Vigencia, 'dd/mm/yyyy');
+        OPEN CResulBinTab(Argumento, Grupo, Nombre, fVigencia);
+        FETCH CResulBinTab INTO tArgumento;
+        CLOSE CResulBinTab;
+        Return tArgumento;
+END TBuscarArgumento;
+
+--RQ1269-2008 26-08-2008  <fmateus>
+--Verifica si existe la sucursal del parametro en la tabla trc_oficinas_banco_agrario
+FUNCTION FN_Existe_Suc_BanAgrario (UnCodSuc trc_oficinas_banco_agrario.codigo_oficina%TYPE) RETURN BOOLEAN IS
+   mi_existe   VARCHAR2(5);
+BEGIN
+  SELECT DECODE(COUNT(1), 0, 'FALSE', 'TRUE')
+    INTO mi_existe
+    FROM trc_oficinas_banco_agrario
+   WHERE codigo_oficina = UnCodSuc;
+
+  IF mi_existe = 'TRUE' THEN
+    RETURN True;
+  ELSE
+    RETURN False;
+  END IF;
+
+EXCEPTION
+  WHEN TOO_MANY_ROWS THEN
+    RETURN True;
+  WHEN OTHERS THEN
+    RETURN False;
+END FN_Existe_Suc_BanAgrario;
+
+END;

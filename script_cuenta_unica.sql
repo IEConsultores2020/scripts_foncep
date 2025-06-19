@@ -1,0 +1,53 @@
+ 
+ mi_BancoRef := p_bintablas.tbuscar('BANCO_REFERENCIA',   --BIN**-
+                                       'NOMINA',
+                                       'PARAMETROS NOMINA',
+                                       TO_CHAR(SYSDATE, 'dd/mm/yyyy'));
+
+
+  mi_pathweb_ra := p_bintablas.tbuscar('PATH_WEBANEXO_RA',  --BIN**-
+                                       'NOMINA',
+                                       'QUERY',
+                                       TO_CHAR(SYSDATE, 'dd/mm/yyyy'));
+
+--1. Actualizar y modifcar tabla
+
+  ALTER TABLE RH_DESCUENTOS_F ADD BAN_AGRA_ORIGEN VARCHAR2(6);
+
+  ALTER TABLE RH_DESCUENTOS_F ADD BAN_AGRA_DESTINO VARCHAR2(6);
+  
+   ALTER TABLE RH_DESCUENTOS_F ADD NUM_PROCESO VARCHAR2(23);
+  
+
+libreria
+Actualiza rhlm_ra
+;
+
+
+INSERT INTO rh_lm_centros_costo
+(CODIGO,DESCRIPCION,TABLA_DETALLE,CODIGO_MAESTRO,CODIGO_ALTERNO,DESCUENTO,CUENTA_SAP)
+VALUES
+(1,'NOMINA POR PAGAR','TRO_PERSONAS','2-5-05-03','PASIVO-NOMINAPORPAGAR','S','2511010001')
+;
+
+
+SELECT *
+FROM RH_LM_CENTROS_COSTO
+WHERE --CODIGO_ALTERNO = 'PASIVO-NOMINAPORPAGAR'
+--TABLA_DETALLE LIKE 'PERSONAS%'
+--WHERE CODIGO=1
+ DESCRIPCION IN (
+'NOMINA POR PAGAR',
+'NOMINA CESANTIAS',
+'INTERESES CESANTIAS')
+;
+
+SELECT *
+FROM 
+UPDATE BINTABLAS
+SET ARGUMENTO = 'PERSONAS'
+WHERE GRUPO='NOMINA'
+AND NOMBRE = 'RA_CC_TABLA_DETALLE'
+AND RESULTADO = 'TRO PERSONAS'  
+--FCP ARGUMENTO 'TIPO_FUNCIONARIO'
+--PRS ARGUMENTO 'PERSONAS'
