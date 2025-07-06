@@ -56,24 +56,35 @@ PROCEDURE PR_PLANOS_RA_SHD(una_compania      VARCHAR2,
     ;
 
   cursor reg40(un_nro_ra NUMBER) is
-    select COMPANIA,
-           VIGENCIA,
-           CODIGO_CONCEPTO_CC,
-           GRUPO_RA,
-           CONCEPTO_RUBRO,
-           CUENTA_DEBITO,
-           CUENTA_CREDITO,
-           STIPO_FUNCIONARIO,
-           MES,
-           VALOR_RUBRO,
-           REGISTRO,
-           POSPRES,
-           NRO_RA
-      from RH_LM_CUENTAS_RA
-     WHERE VIGENCIA = to_char(una_fecha_final, 'yyyy')
-       AND NRO_RA = un_nro_ra;
-    /*--PRUEBAS
-    AND CODIGO_CONCEPTO_CC=1 --*/
+    SELECT 
+      '7990990000' cuenta_credito,
+      sum(decode(regimen, '3', a.valor,'1',0,'2',0)) valor_rubro,
+      '5000001965' rp_doc_presupuestal,
+      decode(c.descripcion,'Sueldo básico','0001',c.codigo_nivel7) posicion_doc_presupuestal
+    FROM     rh_t_lm_valores a, rh_lm_cuenta b, pr_v_rubros c
+      WHERE tipo_ra             = '1' 
+      AND   grupo_ra            = '5'
+      AND   scompania           = una_compania
+      AND   stipo_funcionario   = stipofuncionario
+      AND   a.sconcepto         = b.sconcepto
+      AND   ncierre             = 1
+      AND   c.interno_rubro     = b.codigo_presupuesto
+      AND   c.vigencia          = extract(year from una_fecha_final)
+      AND   a.ntipo_nomina      = '0'
+      AND   dfecha_inicio_vig   <= una_fecha_final 
+      AND   (dfecha_final_vig   >= una_fecha_final OR dfecha_final_vig IS NULL) 
+      AND   b.codigo_presupuesto IS NOT NULL
+      AND   periodo             = una_fecha_final  --:P_FECHA_FINAL
+      --AND   nro_ra              = un_nro_ra            ---:P_NRORA
+      GROUP BY codigo_nivel1,
+                          codigo_nivel2,
+                          codigo_nivel3,
+                          codigo_nivel4,
+                          codigo_nivel7,
+                          codigo_nivel5 || '-' || codigo_nivel6 || '-' || codigo_nivel7 || '-' || codigo_nivel8,
+                          descripcion,
+                          interno_rubro
+      ORDER BY codigo_nivel5 || '-' || codigo_nivel6 || '-' || codigo_nivel7 || '-' || codigo_nivel8;
 
   CURSOR cur_anexos(un_cc number) IS
     SELECT b.codigo,
@@ -277,7 +288,7 @@ PROCEDURE PR_PLANOS_RA_SHD(una_compania      VARCHAR2,
        AND b.dfecha_inicio_vig <= una_fecha_final
        AND (b.dfecha_final_vig >= una_fecha_final OR
            b.dfecha_final_vig IS NULL)
-       AND b.cc = 7
+       AND b.cc = 6
     /*--PRUEBAS 2022
       and       a.nfuncionario IN (4966,4946) --*/
      GROUP BY stercero,
@@ -328,7 +339,7 @@ PROCEDURE PR_PLANOS_RA_SHD(una_compania      VARCHAR2,
        AND b.dfecha_inicio_vig <= una_fecha_final
        AND (b.dfecha_final_vig >= una_fecha_final OR
            b.dfecha_final_vig IS NULL)
-       AND b.cc = 7
+       AND b.cc = 6
     /*--PRUEBAS 2022
       and       a.nfuncionario IN (4966,4946) --*/
      GROUP BY a.stercero,
@@ -434,7 +445,7 @@ PROCEDURE PR_PLANOS_RA_SHD(una_compania      VARCHAR2,
   mi_szLinea                VARCHAR2(4000);
   mi_szLinea2               VARCHAR2(4000);
   mi_cursor                 EXEC_SQL.CURSTYPE;
-  nIgn                      PLS_INTEGER; --Variable para manejar el cursor dinámico
+  nIgn                      PLS_INTEGER; --Variable para manejar el cursor diná¡mico
   mi_consulta               VARCHAR2(2000) := NULL;
   mi_autoliq                BOOLEAN := TRUE;
   mi_id_error               text_io.file_type;
@@ -491,11 +502,16 @@ BEGIN
   mi_err := 0;
   --mi_file_debug_handle := pr_debug_activa;
   if :B_RA.cta_x_nomina = '999999999' then
-		mi_file_debug_path := p_bintablas.tbuscar('PATH_ANEXO_RA',
+  	If Get_Application_Property(OPERATING_SYSTEM) Like '%WIN%' Then
+  		mi_file_debug_path :='Z:\temp';
+  		mi_file_debug_path := mi_file_debug_path ||'\rh_lm_ra_form_log.txt';
+  	else
+			mi_file_debug_path := p_bintablas.tbuscar('PATH_ANEXO_RA',
                                        'NOMINA',
                                        'QUERY',
                                        TO_CHAR(SYSDATE, 'dd/mm/yyyy'));  
-	  mi_file_debug_path := mi_file_debug_path ||'/rh_lm_ra_form_log.txt';     
+     mi_file_debug_path := mi_file_debug_path ||'/rh_lm_ra_form_log.txt';
+    end if;    
    
 		mi_file_debug_handle := text_io.fopen(mi_file_debug_path, 'w'); 
   end if;
@@ -515,15 +531,19 @@ BEGIN
     mi_err := 1;
     RETURN;
   END IF;
-  mi_www_path   := p_bintablas.tbuscar('PATH_ANEXO_RA',
+  If Get_Application_Property(OPERATING_SYSTEM) Like '%WIN%' Then
+  	mi_www_path :='Z:\temp';
+  else
+  	mi_www_path   := p_bintablas.tbuscar('PATH_ANEXO_RA',
                                        'NOMINA',
                                        'QUERY',
                                        TO_CHAR(SYSDATE, 'dd/mm/yyyy'));
+  end if;
   mi_pathweb_ra := p_bintablas.tbuscar('PATH_WEBANEXO_RA',
                                        'NOMINA',
                                        'QUERY',
                                        TO_CHAR(SYSDATE, 'dd/mm/yyyy'));
-  /* Comentariar quitando los dos -- para pasar a producciòn
+  /* Comentariar quitando los dos -- para pasar a producciá²n
   pr_despliega_mensaje('AL_STOP_1','Modifique la ruta del codigo fuente antes de pasar a producción');
   mi_www_path :='Z:\Planossap'; --USAR SOLO PARA PROBAR LOCAL
   --*/
@@ -592,10 +612,20 @@ BEGIN
                   to_char(sysdate, 'yyyymmdd') || chr(09) || e.CLASEDOC ||
                   chr(09) || e.SOCIEDAD || chr(09) || e.FCONTAB || chr(09) ||
                   e.PERIODO || chr(09) || e.MONEDA || chr(09) || e.CAMBIO ||
-                  chr(09) || e.NRODOC || chr(09) || '10' || e.CABECERA;
+                  chr(09) || e.NRODOC || chr(09) || e.CABECERA;
     mi_texto   := 'NA '; --N/A'e.CABECERA||to_char(una_fecha_final,'yyyymm');
     Text_IO.Put_Line(mi_archivo_sap, mi_szLinea);
     pr_debug_registra(mi_file_debug_handle,'Linea 582 Text_IO.Put_Line(mi_archivo_sap, mi_szLinea)');
+  end loop;
+
+  for e in reg40(mi_nro_ra) loop
+  	  pr_debug_registra(mi_file_debug_handle,'reg40 posicion:valor_rubro ' 
+  	  									||e.posicion_doc_presupuestal||':'||e.VALOR_RUBRO);   
+      mi_szLinea     := 'P' || chr(09) || '40' || chr(09) ||
+                        e.cuenta_credito || chr(09) || chr(09) || chr(09) ||
+                        chr(09) || chr(09) || e.VALOR_RUBRO || chr(09) || ' ' ||
+                        chr(09) || e.rp_doc_presupuestal || chr(09) || e.posicion_doc_presupuestal  ; 
+      Text_IO.Put_Line(mi_archivo_sap, mi_szLinea);
   end loop;
 
   OPEN c_ra;
@@ -620,7 +650,7 @@ BEGIN
                                        TO_CHAR(SYSDATE, 'dd/mm/yyyy'));
     IF mi_BancoRef IS NULL THEN
       pr_despliega_mensaje('AL_STOP_1',
-                           'No se encuentra definido el parámetro NOMINA/PARAMETROS NOMINA/BANCO_REFERENCIA. Se generará un solo archivo para el pago a funcionarios.');
+                           'No se encuentra definido el pará¡metro NOMINA/PARAMETROS NOMINA/BANCO_REFERENCIA. Se generará¡ un solo archivo para el pago a funcionarios.');
       RETURN;
     END IF;
     mi_directorio_carga := p_bintablas.tbuscar('DIRECTORIO_PAGINA_CARGA',
@@ -629,7 +659,7 @@ BEGIN
                                                TO_CHAR(SYSDATE, 'dd/mm/yyyy'));
     IF mi_directorio_carga IS NULL THEN
       pr_despliega_mensaje('AL_STOP_1',
-                           'No se encuentra definido el parámetro DIRECTORIO_PAGINA_CARGA.  Por favor revise.');
+                           'No se encuentra definido el pará¡metro DIRECTORIO_PAGINA_CARGA.  Por favor revise.');
       RETURN;
     END IF;
     mi_pagina_carga := p_bintablas.tbuscar('WWW_PAGINA_CARGA',
@@ -638,7 +668,7 @@ BEGIN
                                            TO_CHAR(SYSDATE, 'dd/mm/yyyy'));
     IF mi_pagina_carga IS NULL THEN
       pr_despliega_mensaje('AL_STOP_1',
-                           'No se encuentra definido el parámetro WWW_PAGINA_CARGA.  Por favor revise.');
+                           'No se encuentra definido el pará¡metro WWW_PAGINA_CARGA.  Por favor revise.');
       RETURN;
     END IF;
     mi_grupo_ra := p_bintablas.tbuscar(un_grupo_ra,
@@ -685,15 +715,6 @@ BEGIN
     Text_IO.fClose(mi_id_error); --wn 20190515
     pr_debug_registra(mi_file_debug_handle,'670 Cierra Terceros con pagos negativos');
     mi_texto_nomina_mes :=  'Nomina '||TO_CHAR(SYSDATE, 'FMMONTH', 'NLS_DATE_LANGUAGE = Spanish');
-    for e in reg40(mi_ra_type.mi_nro_ra) loop
-      mi_consecutivo := mi_consecutivo + 1;
-      mi_szLinea     := 'P' || chr(09) || '40' || chr(09) ||
-                        e.cuenta_credito || chr(09) || chr(09) || chr(09) ||
-                        chr(09) || chr(09) || e.VALOR_RUBRO || chr(09) || ' ' ||
-                        chr(09) || e.REGISTRO || chr(09) || e.pospres || RPAD('',15,chr(09))
-                        ||mi_texto_nomina_mes; --||e.pospres||chr(09)      
-      Text_IO.Put_Line(mi_archivo_sap, mi_szLinea);
-    end loop;
     mi_cuentareg := 0;
   	
     mi_archivo_planosapfoncep := :B_RA_SEQ.secuencial || '-nominafoncep' ||
@@ -755,7 +776,7 @@ BEGIN
                               mi_tabla_detalle;*/
         pr_debug_registra(mi_file_debug_handle,'756 Inicia cur_anexos');
         if r.rubro in (9, 2, 3, 4, 5, 10, 11, 13, 14, 15, 18, 19, 20, 21) then
-          if r.rubro in (18 /*FTV20211205 ,21*/
+          if r.rubro in (16 /*FTV20211205 ,21*/
              ) then
             mi_viapago := 'C';
           else
@@ -815,8 +836,8 @@ BEGIN
                 exception
                   when others then
                     mi_basertfte  := ' ';
-                    mi_retefuente := 0;
-                    mi_asignacion := 0;
+                    mi_retefuente := ' ';
+                    mi_asignacion := ' ';
                 end;
               end loop;
             
@@ -869,7 +890,7 @@ BEGIN
                               chr(09) || mi_texto || chr(09) || mi_texto_nomina_mes ||
                               chr(09) || chr(09) || chr(09) || chr(09) ||
                               mi_viapago || chr(09) || chr(09) || chr(09) ||
-                              chr(09) || chr(09) || chr(09) ||
+                              chr(09) || chr(09) || chr(09) || chr(09) ||
                               lpad(mi_codbanco, 3, 0) || chr(09) ||
                               rpad(mi_funcionario_type.mi_numero_cuenta,
                                    20,
@@ -926,7 +947,7 @@ BEGIN
               END IF;
               IF mi_valor < 0 THEN
                 text_io.put_line(mi_id_error,
-                                 'Funcionario con pago negativo.  Cédula: ' ||
+                                 'Funcionario con pago negativo.  Cá©dula: ' ||
                                  mi_persona_type.mi_nro_doc || '. Valor: ' ||
                                  mi_valor);
                 text_io.put_line(mi_id_error,
@@ -1240,7 +1261,7 @@ BEGIN
           
             Text_IO.fClose(mi_archivo_path);
             
-            -- web.show_document(mi_pathweb_ra||mi_archivo_planoemb,'_blank');
+            web.show_document(mi_pathweb_ra||mi_archivo_planoemb,'_blank');
           
             ------------ otros embargos se adicionan al archivo de Nomina 20200708
             /*   mi_archivo_planoemb:=una_compania||'_'||mi_vigencia||'_'||mi_mes||'_'||to_char(sysdate,'yyyymmddhhmiss')||'_'||mi_ra_type.mi_nro_ra||'_'||'osnba.txt';
@@ -1595,7 +1616,7 @@ BEGIN
             --pr_muestra_varios_debug('La Consulta '||mi_consulta);
             pr_debug_registra(mi_file_debug_handle,mi_consulta);
             -- Text_IO.Put_Line( mi_archivo_sap, mi_consulta );
-            -- Se construye dinámicamente el cursor
+            -- Se construye diná¡micamente el cursor
             --FTV PRUEBA 202405 linea para mostrar en caso de error.
             mi_linea_ejecutada := 'EXEC_SQL.PARSE mi_consulta ' ||
                                   substr(mi_consulta, 1, 50);
@@ -2026,11 +2047,11 @@ BEGIN
                        /*(2, 3, 4, 11, 13, 14, 15, 16, 18, 21, 22, 23, 24)*/
                        /*   2	    APORTES A SEGURIDAD SOCIAL EN SALUD
                             3	    APORTES A FONDOS PENSIONALES
-                            11	    APORTE RIESGOS PROFESIONALES - ARP
-                            13	    APORTES PENSION VOLUNTARIOS
-                            16	    DESCUENTO CREDITO VIVIENDA
-                            17	    APORTE FONDO GARANTIA
-                            18	    CESANTIAS
+                            11	  APORTE RIESGOS PROFESIONALES - ARP
+                            13	  APORTES PENSION VOLUNTARIOS
+                            16	  DESCUENTO CREDITO VIVIENDA
+                            17	  APORTE FONDO GARANTIA
+                            18	  CESANTIAS
                             1316	APORTES SENA
                             1317	APORTES ICBF
                             1318	APORTES CAJA DE COMPENSACION
@@ -2614,7 +2635,7 @@ BEGIN
       IF mi_terceros_neg > 0 THEN
         text_io.fclose(mi_id_error);
         pr_despliega_mensaje('AL_STOP_1',
-                             'Existen terceros con pagos negativos.  Será rechazada la RA en OPGET.');
+                             'Existen terceros con pagos negativos.  Será¡ rechazada la RA en OPGET.');
         IF GET_APPLICATION_PROPERTY(USER_INTERFACE) = 'WEB' THEN
           web.show_document(mi_pagina_carga || '/' ||
                             mi_nombre_archivo_err,

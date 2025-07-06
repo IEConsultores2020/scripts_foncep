@@ -1,0 +1,33 @@
+   SELECT RUBRO_INTERNO
+               ,UNIDAD_EJECUTORA_PRESUPUESTO
+               ,DISPONIBILIDAD
+               ,VIGENCIA_PRESUPUESTO
+               ,TIPO_DOCUMENTO
+               ,UNIDAD_EJECUTORA
+               ,ENTIDAD
+               ,VIGENCIA
+               ,CONSECUTIVO
+               ,ENTIDAD_PRESUPUESTO
+               ,REGISTRO
+               ,VALOR_REGISTRO
+               ,ID_LIMAY_GIRO_PRESUPUESTAL
+               ,FECHA_GIRO_PRESUPUESTAL
+               ,USUARIO_GIRO_PRESUPUESTAL
+               ,ID_LIMAY_PAGO
+               ,FECHA_PAGO
+               ,USUARIO_PAGO
+               ,ID_LIMAY_ANULACION_GIRO
+               ,FECHA_ANULACION_GIRO
+               ,USUARIO_ANULACION_GIRO
+               ,ID_LIMAY_ANULACION_PAGO
+               ,FECHA_ANULACION_PAGO
+               ,USUARIO_ANULACION_PAGO
+           FROM OGT_REGISTRO_PRESUPUESTAL
+          WHERE /*REGISTRO >= MI_VALOR_CERO
+            AND TIPO_DOCUMENTO = UN_TIPO_DOCUMENTO
+            AND DISPONIBILIDAD >= MI_VALOR_CERO
+            AND */CONSECUTIVO = 12 --UN_CONSECUTIVO
+            AND ENTIDAD = 206 --UNA_ENTIDAD
+            AND UNIDAD_EJECUTORA = '01' --UNA_UNIDAD_EJECUTORA
+            AND VIGENCIA = 2025 --UNA_VIGENCIA
+            ;

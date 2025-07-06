@@ -78,8 +78,8 @@ select distinct t.sconcepto, t.variable_valor, --t.cc,
 		STIPO_FUNCIONARIO, c.sconcepto, c.SCUENTA --, c.cc
 from ( select distinct sconcepto, variable_valor, cc
 		from rh_t_lm_valores 
-		where extract(year from periodo) >= 2024
-		and sconcepto not like 'PROV%' ) t,	 rh_lm_cuenta C
+		where extract(year from periodo) >= 2025
+		and sconcepto not like '%AFC%' ) t,	 rh_lm_cuenta C
 where  t.SCONCEPTO=c.SCONCEPTO 
 and stipo_funcionario='PLANTA'
 order by 1,2
@@ -88,10 +88,10 @@ order by 1,2
 
 select *
 from rh_lm_cuenta
-where sconcepto like '%NOMINA%PAG%'
+where sconcepto like '%AFC%'
 ;
 
-select 
+select *
 from RH_LM_CENTROS_COSTO cc
 group by cc.CODIGO 
 ;
@@ -294,28 +294,30 @@ SELECT nro_ra, aprobacion
 
 
 --Cursor rubros(un_nro_ra NUMBER) is
-    SELECT DISTINCT a.sconcepto, B.CC RUBRO, b.grupo_ra
+  
+    SELECT DISTINCT  B.CC RUBRO, b.grupo_ra
       FROM RH_T_LM_VALORES     a,
            RH_LM_CUENTA        b,
            --RH_LM_CENTROS_COSTO L,
            RH_FUNCIONARIO f
      WHERE b.stipo_funcionario = a.stipofuncionario
-       AND a.periodo = to_date('20250531','yyyymmdd') --una_fecha_final
+       AND a.periodo = '30-JUN-2025' --una_fecha_final
        AND a.ntipo_nomina = 0 --un_tipo_nomina
        AND a.sdevengado IN (0, 1)
-       AND a.nro_ra = 9 --un_nro_ra
+       AND a.nro_ra = 14 --un_nro_ra
        AND b.scompania = 206 --una_compania
        AND b.tipo_ra = 1 --un_tipo_ra
        AND b.ncierre = 1
-       and tipo_ra = 0 --un_tipo_ra
+    --   and tipo_ra = un_tipo_ra
        /*--PRUEBAS 2022
             and       a.nfuncionario IN (3428) --*/
-       AND b.dfecha_inicio_vig <= to_date('20250531','yyyymmdd') --una_fecha_final
-       AND (b.dfecha_final_vig >= to_date('20250531','yyyymmdd') OR --una_fecha_final OR
+       AND b.dfecha_inicio_vig <= '30-JUN-2025' --una_fecha_final
+       AND (b.dfecha_final_vig >= '30-JUN-2025' /*una_fecha_final*/ OR
            b.dfecha_final_vig IS NULL)
        AND f.Personas_interno = a.nFuncionario
+       AND B.CC IS NOT NULL
     UNION
-    SELECT DISTINCT a.sconcepto, B.CC RUBRO, b.grupo_ra
+    SELECT DISTINCT  B.CC RUBRO, b.grupo_ra
       FROM RH_T_LM_VALORES     a,
            RH_LM_CUENTA        b,
            --RH_LM_CENTROS_COSTO L,
@@ -323,20 +325,21 @@ SELECT nro_ra, aprobacion
      WHERE b.stipo_funcionario = a.stipofuncionario
      /*PRUEBAS
           AND      b.sconcepto         =   a.sconcepto --*/
-       AND a.periodo = to_date('20250531','yyyyMMDD') --una_fecha_final
-       AND a.ntipo_nomina = 0 --un_tipo_nomina
+       AND a.periodo = '30-JUN-2025' --una_fecha_final
+       AND a.ntipo_nomina =  0 --un_tipo_nomina
        AND a.sdevengado IN (2, 4)
-       AND a.nro_ra = 9 --un_nro_ra
+       AND a.nro_ra = 1 --un_nro_ra
        AND b.scompania = 206 --una_compania
        AND b.tipo_ra = 1 --un_tipo_ra
        AND b.ncierre = 1
        and tipo_ra = 1 --un_tipo_ra
           /*--PRUEBAS 2022
             and       a.nfuncionario IN (4966,4946) --*/
-       AND b.dfecha_inicio_vig <= to_date('20250531','yyyyMMDD') --una_fecha_final
-       AND (b.dfecha_final_vig >= to_date('20250531','yyyyMMDD') /*una_fecha_final*/ OR
+       AND b.dfecha_inicio_vig <= '30-JUN-2025' --una_fecha_final
+       AND (b.dfecha_final_vig >= '30-JUN-2025' /*una_fecha_final*/ OR
            b.dfecha_final_vig IS NULL)
        AND f.Personas_interno = a.nFuncionario
+       AND B.CC IS NOT NULL
     ;       
 
 
@@ -386,12 +389,12 @@ SELECT DISTINCT B.SCONCEPTO, B.CC RUBRO, b.grupo_ra
        AND b.scompania = 206 --una_compania
        AND b.tipo_ra = 1 --un_tipo_ra
        AND b.ncierre = 1
-       and tipo_ra =1 -- un_tipo_ra
-       AND b.dfecha_inicio_vig <= to_date('20250531','yyyymmdd') --una_fecha_final
-       AND (b.dfecha_final_vig >= to_date('20250531','yyyymmdd') OR --una_fecha_final OR
+       --and tipo_ra =2 -- un_tipo_ra
+       AND b.dfecha_inicio_vig <= to_date('20250228','yyyymmdd') --una_fecha_final
+       AND (b.dfecha_final_vig >= to_date('20250228','yyyymmdd') OR --una_fecha_final OR
            b.dfecha_final_vig IS NULL)
        AND B.CC IS NOT NULL
-       AND B.SCONCEPTO IN ('APORTEFONDOGARANTIA',
+      /* AND B.SCONCEPTO IN ('APORTEFONDOGARANTIA',
 'APORTEPENSION',
 'APORTEREGIMENSOLIDARIDAD',
 'APORTESALUD',
@@ -402,8 +405,8 @@ SELECT DISTINCT B.SCONCEPTO, B.CC RUBRO, b.grupo_ra
 'CPLANCOMPLEMENTARIO',
 'CSINDICATO',
 'RETENCIONFUENTE'
-)
-ORDER BY 1
+)*/
+ORDER BY rubro
        ;
 
 
@@ -440,3 +443,95 @@ ORDER BY 1
   ORDER BY 1              
 ;
 
+/* datos de retencion */
+--  cursor retefteperiodo(un_nro_ra NUMBER) IS
+    SELECT sum(retencion) retencion,
+           SUM(base) BASE,
+           sum(asignacion) asignacion
+      from (SELECT 0 retencion, abs(SUM(valor)) base, 0 Asignacion
+              FROM rh_t_lm_valores a
+             WHERE a.periodo = '30-JUN-2025' --una_fecha_final
+               AND a.ntipo_nomina = 0 --un_tipo_nomina
+               AND (a.sdevengado IN (0)
+                   --INI SINPROC 3320191 
+                   OR (a.sdevengado = 1 and variable_valor like 'NDV%'))
+                  --FIN SINPROC 3320191
+               AND a.nro_ra = 14 -- un_nro_ra
+            union
+            SELECT abs(SUM(valor)) retencion, 0 base, 0 Asignacion
+              FROM rh_t_lm_valores a
+             WHERE a.periodo = '30-JUN-2025' --una_fecha_final
+               AND a.ntipo_nomina = 0 --un_tipo_nomina
+               AND a.sdevengado IN (1)
+               AND SCONCEPTO LIKE 'RET%FUENTE%'
+               AND a.nro_ra = 14 --un_nro_ra
+            UNION
+            SELECT 0 retencion, 0 base, sum(ndcampo4) Asignacion
+              FROM RH_HISTORICO_NOMINA
+             WHERE nhash = 1128917309
+               AND dfechaefectiva >= '20250601'
+                   --to_char('202505' /*una_fecha_inicial*/, 'yyyymm') || '01')
+               AND dfechaefectiva <= '20250630' --to_char( '20250531' /*una_fecha_final*/, 'yyyymmdd')
+               and nretroactivo = 0
+               and ntipoconcepto = 1
+               AND nfuncionario in
+                   (select nfuncionario
+                      from RH_T_LM_VALORES
+                     where nro_ra = 14 --un_nro_ra
+                       AND PERIODO = '30-JUN-2025' /*una_fecha_final*/ ));
+
+select *
+from rh_concepto
+where codigo_hash = '1128917309'              ;
+;
+
+
+select nfuncionario, length(to_char(valor)) as largo
+from rh_t_lm_valores
+order by 2 desc
+where nfuncionario=44
+;
+
+ --CURSOR cur_nxp(un_nro_ra NUMBER, un_cc number) IS
+  
+    SELECT nfuncionario,abs(SUM(valor)) valor, f.CODIGO_BANCO CODIGO_BANCO
+      FROM rh_t_lm_valores a,
+           rh_lm_cuenta    b,
+           rh_funcionario f
+     WHERE b.stipo_funcionario = a.stipofuncionario
+       AND b.sconcepto = a.sconcepto
+       AND a.periodo = '30-JUN-2025' --una_fecha_final
+       AND a.ntipo_nomina = 0 --un_tipo_nomina
+       AND a.sdevengado IN (0, 1)
+       AND a.nro_ra = 14 --un_nro_ra
+       AND b.scompania = 206 --una_compania
+       AND b.tipo_ra = '1' --un_tipo_ra
+       AND b.grupo_ra IN ('5' /*un_grupo_ra*/ )
+       AND b.ncierre = 1
+       /*--PRUEBAS 2022
+          --  and      b.codigo_presupuesto=   un_cc
+            and       a.nfuncionario IN (4966,4946) --*/
+       AND b.dfecha_inicio_vig <= '30-JUN-2025' --una_fecha_final
+       AND (b.dfecha_final_vig >= '30-JUN-2025' /*una_fecha_final*/ OR
+           b.dfecha_final_vig IS NULL)
+       AND f.Personas_interno = a.nFuncionario
+      -- AND F.PERSONAS_INTERNO <> 44
+     GROUP BY nfuncionario, f.CODIGO_BANCO;
+
+--cur_anexos
+    select sconcepto,cc,variable_valor, sum(valor)
+		from rh_t_lm_valores 
+		where periodo = '30-JUN-2025'
+		--and sconcepto like '%AFC%' 
+    group by sconcepto,cc,variable_valor;
+
+        SELECT b.codigo,
+           b.descripcion,
+           'SAP' || a.archivo_plano,
+           b.tabla_detalle
+      FROM rh_lm_ra_cc a, rh_lm_centros_costo b
+     WHERE a.ra = un_tipo_ra
+       and a.cc = un_cc
+       /*--FTV PRUEBA 202405
+          AND a.cc  =   7  --*/
+       AND a.cc = b.codigo;
