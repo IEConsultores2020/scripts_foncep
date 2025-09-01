@@ -1,0 +1,873 @@
+CREATE OR REPLACE PACKAGE BODY "PK_SL_INTERFAZ_OPGET_CP"
+IS
+/***********************************************************************************************************
+* Este packages permite realizar la interfaz con el aplicativo de OPGET y SISLA
+* 06-03-2019 Edgar Osorio F.
+* 29-10-2019 Se modifica el packages para implementar la funcionalidad del volante de pago
+*
+***********************************************************************************************************/
+
+   /***********************************************************************************************
+   * Procedimiento que actualiza la tabla "sl_cuenta_cobro_cp_2017" y registra las novedades en la tabla "sl_novedad_x_cc_cp" como parametros los siguientes valores:
+   *      p_cuenta_cobro_volante   --  Numero de la cuenta de cobro o Volante de Pago
+   *      p_valor_pago    --  Valor del pago
+   *      p_fecha_pago    --  Fecha de consignacion
+   *      p_fecha_legalizacion  -- Fecha de legalizacion
+   *      p_acta_legalizacion   -- Numero Acta legalizacion
+   *      p_fase                -- Correspondiente a la fase RECAUDO
+   *      p_usuario_transaccion -- Usuario quien realizo la transaccion
+   *      p_respuesta_proceso   -- Respuesta cuando el numero y valor de la cuenta de cobro registrado en OPGET corresponden con los datos existentes en SISLA
+   *      p_bandera   -- Devuelve TRUE o FALSE si numero de la cuenta de cobro y/o volante de pago NO existe o el valor NO coincide en SISLA
+   *
+   ************************************************************************************************/
+   PROCEDURE pr_actualiza_interfaz_opget_cp (
+      p_cuenta_cobro_volante         NUMBER,
+      p_valor_pago                   NUMBER,
+      p_fecha_pago                   DATE,
+      p_fecha_legalizacion           DATE,
+      p_acta_legalizacion            VARCHAR2,
+      p_fase                         VARCHAR2,
+      p_usuario_transaccion          VARCHAR2,
+      p_respuesta_proceso      OUT   VARCHAR2
+   )
+   IS
+      v_entidad                 VARCHAR2 (10);
+      v_entidad_nombre          VARCHAR2 (200);
+      v_interno_persona         NUMBER;
+      v_id_factura              NUMBER;
+      v_fecha_inicial_factura   DATE;
+      v_fecha_final_factura     DATE;
+      v_valor_total_factura     NUMBER (15);
+      v_valor_credito           NUMBER (15);
+      v_valor_saldo             NUMBER (15);
+      v_existe_cuenta_cobro     VARCHAR2 (1)   := 'N';
+      v_existe_volante          VARCHAR2 (1)   := 'N';
+      v_existe_factura          VARCHAR2 (1)   := 'N';
+      v_tipo_log                VARCHAR2 (5)   := NULL;
+      v_valor_total             NUMBER (15);
+      v_mensaje                 VARCHAR2 (200);
+      v_error                   NUMBER;
+      v_valor_volante           NUMBER;
+   BEGIN
+seguimiento('PK_SL_INTERFAZ_OPGET paso 1 cta --> '||p_cuenta_cobro_volante);
+      IF SUBSTR (p_cuenta_cobro_volante, 1, 1) = 2
+      THEN
+         -- Verificamos si existe la factura en la tabla  sl_factura_cp_2017 por el parametro p_cuenta_cobro
+         BEGIN
+            SELECT 'S', fac.entidad_factura, fac.interno_persona,
+                   fac.id_factura, fac.fecha_ini_factura,
+                   fac.fecha_fin_factura, fac.vlr_total_factura,
+                   com.nombre
+              INTO v_existe_factura, v_entidad, v_interno_persona,
+                   v_id_factura, v_fecha_inicial_factura,
+                   v_fecha_final_factura, v_valor_total_factura,
+                   v_entidad_nombre
+              FROM sl_factura_cp_2017 fac, sl_compania com
+             WHERE fac.id_cuenta_cobro = p_cuenta_cobro_volante
+               AND fac.entidad_factura = com.codigo_compania
+               AND ROWNUM = 1;
+         EXCEPTION
+            WHEN NO_DATA_FOUND
+            THEN
+               v_existe_factura := 'N';
+         END;
+
+         -- Verificamos si existe la cuenta de cobro en la tabla  sl_cuenta_cobro_cp_2017 por el parametro p_cuenta_cobro
+         BEGIN
+            SELECT 'S', fac.vlr_total, fac.saldo
+              INTO v_existe_cuenta_cobro, v_valor_total,v_valor_saldo
+              FROM sl_cuenta_cobro_cp_2017 fac
+             WHERE id_cuenta_cobro = p_cuenta_cobro_volante;
+
+          --LMCH20241021ini RQ2024003748
+seguimiento('PK_SL_INTERFAZ_OPGET paso 2 saldo --> '||v_valor_saldo||' ; '||v_valor_total||' ; '||p_valor_pago);
+            IF v_valor_saldo > 0 THEN
+                IF v_valor_total = p_valor_pago
+                THEN
+                   v_existe_cuenta_cobro := 'S';
+                   p_respuesta_proceso :=
+                         'El numero de cuenta existe en SISLA y valor coinciden. Para la entidad '
+                      || v_entidad_nombre;
+                ELSE
+                   v_existe_cuenta_cobro := 'N';
+                   p_respuesta_proceso :=
+                         'El numero de cuenta existe en SISLA y valor NO coinciden.Para la entidad '
+                      || v_entidad_nombre;
+                END IF;
+
+            ELSE
+                v_existe_cuenta_cobro := 'N';
+                p_respuesta_proceso := 'La Cuenta de cobro ya fue totalmente pagada o presenta inconsistencia. Por favor verificar ';
+            END IF;
+          --LMCH20241021fin RQ2024003748
+
+
+         EXCEPTION
+            WHEN NO_DATA_FOUND
+            THEN
+               v_existe_cuenta_cobro := 'N';
+               p_respuesta_proceso :=
+                                    'El numero de cuenta NO existe en SISLA ';
+               v_tipo_log := 'ERROR';
+         END;
+seguimiento('PK_SL_INTERFAZ_OPGET paso 3 v_existe_cuenta_cobro --> '||v_existe_cuenta_cobro);
+
+         IF v_existe_cuenta_cobro = 'S'
+         THEN
+            ---  Actualizamos la tabla sl_cuenta_cobro_cp_2017 de acuerdo a los parametros recibidos
+            UPDATE sl_cuenta_cobro_cp_2017
+               SET fase = p_fase,                           -- Fase "Recaudo "
+                   fecha_cambio_fase = SYSDATE,
+                   usuario_cambio_fase = p_usuario_transaccion,
+                   recaudo = p_valor_pago,
+                   fecha_recaudo = p_fecha_pago,
+                   fecha_legalizacion = p_fecha_legalizacion,
+                   acta_legalizacion = p_acta_legalizacion
+             WHERE id_cuenta_cobro = p_cuenta_cobro_volante;
+
+            /*
+              pk_sl_novedades_cp.PR_ACTUALIZA_SALDOS_CP(p_cuenta_cobro,
+                               una_factura          sl_factura_cp_2017.id_factura%TYPE,
+                               una_valor_debito     sl_novedad_x_cc_cp.valor_debito%TYPE,
+                               una_valor_credito    sl_novedad_x_cc_cp.valor_credito%TYPE,
+                               una_mensaje          OUT varchar2,
+                               una_error            OUT number
+                              )
+            */
+            IF v_valor_total = p_valor_pago
+            THEN
+               UPDATE sl_cuenta_cobro_cp_2017
+                  SET fase = 11,                          -- Fase "Legalizada"
+                      fecha_cambio_fase = SYSDATE,
+                      usuario_cambio_fase = p_usuario_transaccion
+                WHERE id_cuenta_cobro = p_cuenta_cobro_volante;
+
+               FOR reg IN (SELECT fac.entidad_factura, fac.interno_persona,
+                                  fac.id_factura, fac.fecha_ini_factura,
+                                  fac.fecha_fin_factura,
+                                  fac.vlr_total_factura
+                             FROM sl_factura_cp_2017 fac
+                            WHERE id_cuenta_cobro = p_cuenta_cobro_volante)
+               LOOP
+                  SELECT nov.valor_saldo
+                    INTO v_valor_saldo
+                    FROM sl_novedad_x_cc_cp nov
+                   WHERE nov.interno_persona = reg.interno_persona
+                     AND nov.cod_entidad = reg.entidad_factura
+                     AND nov.id_cuenta_cobro = p_cuenta_cobro_volante
+                     AND nov.nro_liquidacion = reg.id_factura
+                     AND nov.fecha_creacion =
+                            (SELECT MAX (novx.fecha_creacion)
+                               FROM sl_novedad_x_cc_cp novx
+                              WHERE novx.interno_persona = reg.interno_persona
+                                AND novx.cod_entidad = reg.entidad_factura
+                                AND novx.id_cuenta_cobro =
+                                                        p_cuenta_cobro_volante
+                                --RQ2020003882 AND nov.nro_liquidacion = reg.id_factura
+                                AND novx.nro_liquidacion = reg.id_factura
+                                );
+
+                  pk_sl_novedades_cp.pr_insert_novedad_cc_cp
+                                            (reg.entidad_factura,
+                                             p_cuenta_cobro_volante,
+                                             reg.id_factura,
+                                             reg.interno_persona,
+                                             13,
+                                             reg.fecha_ini_factura,
+                                             reg.fecha_fin_factura,
+                                             reg.vlr_total_factura,
+                                             p_fecha_pago,
+                                             'Aplicacion Recaudo desde OPGET',
+                                             NULL,
+                                             p_acta_legalizacion,
+                                             p_fecha_legalizacion,
+                                             v_mensaje,
+                                             v_error
+                                            );
+               END LOOP;
+
+               p_respuesta_proceso := 'Proceso termino satisfactoriamente';
+               v_tipo_log := 'EXITO';
+            ELSE
+               v_tipo_log := 'ERROR';
+               p_respuesta_proceso :=
+                     'El valor de la cuenta de cobro es de ' || v_valor_total;
+            END IF;
+         END IF;
+
+         INSERT INTO sl.sl_log_opget_sisla
+                     (tipo_log, detalle_log, fecha_acta_legalizacion,
+                      id_cuenta_cobro, valor_pago,
+                      acta_legalizacion, fecha_creacion, usuario_creacion,
+                      entidad
+                     )
+              VALUES (v_tipo_log, p_respuesta_proceso, p_fecha_legalizacion,
+                      p_cuenta_cobro_volante, p_valor_pago,
+                      p_acta_legalizacion, SYSDATE, p_usuario_transaccion,
+                      v_entidad_nombre
+                     );
+      ELSE
+         IF SUBSTR (p_cuenta_cobro_volante, 1, 1) = 9
+         THEN
+            BEGIN
+               SELECT 'S', volpag.valor_volante
+                 INTO v_existe_volante, v_valor_volante
+                 FROM sl_volante_pago volpag
+                WHERE volpag.id_volante = p_cuenta_cobro_volante;
+
+            EXCEPTION
+               WHEN NO_DATA_FOUND
+               THEN v_existe_volante := 'N';
+            END;
+
+            IF v_existe_volante = 'S'
+            THEN
+               IF v_valor_volante = p_valor_pago
+               THEN
+                  --- Implementar procedimiento de volantes de pagos
+                  FOR reg IN (SELECT volpag.id_volante, volpag.fase,
+                                     volpag.fecha_creacion,
+                                     volpag.valor_volante,
+                                     cuecobweb.id_cta_cobro,
+                                     cuecobweb.valor_cta_cob_capital,
+                                     cuecobweb.valor_cta_cob_interes,
+                                     fac.id_cuenta_cobro,
+                                     detfacweb.id_factura,
+                                     detfacweb.valor_fac_capital,
+                                     detfacweb.valor_fac_interes,
+                                     detfacweb.valor_pag_capital,
+                                     detfacweb.valor_pag_interes,
+                                     fac.entidad_factura,
+                                     fac.interno_persona,
+                                     fac.fecha_ini_factura,
+                                     fac.fecha_fin_factura
+                                FROM sl_volante_pago volpag,
+                                     sl_cuenta_cobro_web cuecobweb,
+                                     sl_det_factura_web detfacweb,
+                                     sl_factura_cp_2017 fac
+                               WHERE volpag.id_volante = cuecobweb.id_volante
+                                 AND volpag.vigencia = cuecobweb.vigencia
+                                 AND cuecobweb.id_volante =  detfacweb.id_volante
+                                 AND cuecobweb.vigencia = detfacweb.vigencia
+                                 AND cuecobweb.id_cta_cobro = detfacweb.id_cta_cobro
+                                 AND fac.id_cuenta_cobro = detfacweb.id_cta_cobro
+                                 AND fac.id_factura = detfacweb.id_factura
+                                 AND volpag.id_volante = p_cuenta_cobro_volante
+                             )
+                  LOOP
+                      --- Saldo en Cero
+                     --DBMS_OUTPUT.put_line ('Ingreso al FOR: id_factura=' || reg.id_factura);
+                     pk_sl_novedades_cp.pr_insert_novedad_cc_cp
+                        (reg.entidad_factura,
+                         reg.id_cuenta_cobro,
+                         reg.id_factura,
+                         reg.interno_persona,
+                         13,                             -- Novedad de recaudo
+                         reg.fecha_ini_factura,
+                         reg.fecha_fin_factura,
+                         CASE
+                            WHEN reg.valor_pag_capital - reg.valor_fac_capital = 0
+                               THEN reg.valor_pag_capital
+                            WHEN reg.valor_pag_capital - reg.valor_fac_capital < 0
+                               THEN reg.valor_pag_capital
+                            WHEN reg.valor_pag_capital - reg.valor_fac_capital > 0
+                               THEN reg.valor_fac_capital            -- Exceso
+                         END,
+                         p_fecha_pago,
+                         'Aplicacion Recaudo desde OPGET - Volante de Pago',
+                         p_cuenta_cobro_volante,                 -- Id Volante
+                         p_acta_legalizacion,
+                         p_fecha_legalizacion,
+                         v_mensaje,
+                         v_error
+                        );
+
+                     IF (reg.valor_pag_capital - reg.valor_fac_capital > 0
+                        )                    -- Noovedad de Recaudo por Exceso
+                     THEN
+                        v_mensaje := NULL;
+                        v_error := NULL;
+                        pk_sl_novedades_cp.pr_insert_novedad_cc_cp
+                           (reg.entidad_factura,
+                            reg.id_cuenta_cobro,
+                            reg.id_factura,
+                            reg.interno_persona,
+                            28,               -- Novedad de Recaudo por Exceso
+                            reg.fecha_ini_factura,
+                            reg.fecha_fin_factura,
+                            reg.valor_pag_capital - reg.valor_fac_capital,
+                            p_fecha_pago,
+                            'Aplicacion Recaudo por Exceso desde OPGET - Volante de Pago',
+                            p_cuenta_cobro_volante,
+                            p_acta_legalizacion,
+                            p_fecha_legalizacion,
+                            v_mensaje,
+                            v_error
+                           );
+                     --DBMS_OUTPUT.put_line ('- Exceso despues: '|| v_mensaje || ' ; ' ||  v_error );
+                     END IF;
+                  END LOOP;
+
+                  IF v_error = 0
+                  THEN
+                     UPDATE sl_volante_pago vol
+                        SET vol.fase = 11
+                      WHERE vol.id_volante = p_cuenta_cobro_volante;
+                  END IF;
+               ELSE
+                  p_respuesta_proceso :=
+                        'El valor de pago recibido de OPGET es diferente al valor del volante: '
+                     || TO_CHAR (v_valor_volante, '999,999,999,999,999.00');
+
+                  INSERT INTO sl.sl_log_opget_sisla
+                              (tipo_log, detalle_log,
+                               fecha_acta_legalizacion, id_cuenta_cobro,
+                               valor_pago, acta_legalizacion, fecha_creacion,
+                               usuario_creacion, entidad
+                              )
+                       VALUES (v_tipo_log, p_respuesta_proceso,
+                               p_fecha_legalizacion, p_cuenta_cobro_volante,
+                               p_valor_pago, p_acta_legalizacion, SYSDATE,
+                               p_usuario_transaccion, v_entidad_nombre
+                              );
+               END IF;
+            ELSE
+               p_respuesta_proceso := 'Volante NO Existe';
+
+               INSERT INTO sl.sl_log_opget_sisla
+                           (tipo_log, detalle_log,
+                            fecha_acta_legalizacion, id_cuenta_cobro,
+                            valor_pago, acta_legalizacion, fecha_creacion,
+                            usuario_creacion, entidad
+                           )
+                    VALUES (v_tipo_log, p_respuesta_proceso,
+                            p_fecha_legalizacion, p_cuenta_cobro_volante,
+                            p_valor_pago, p_acta_legalizacion, SYSDATE,
+                            p_usuario_transaccion, v_entidad_nombre
+                           );
+            END IF;
+         ELSE
+            p_respuesta_proceso :=
+                      'La Cuenta de Cobro o Volante de Pago... NO EXISTE !!!';
+         END IF;
+      END IF;
+   END;
+
+
+
+/***********************************************************************************************
+* Procedimiento "pr_reversa_interfaz_opget_cp"
+* Cuando en contabilidad deshabiliten la contabilizacion de un ingreso debe identificar
+* si es un recaudos de SISLA debe dejar la cuenta de cobro en fase 4 radicada
+* y reversar todas las novedades registradas para las facturas que pertenecen a la cuenta de cobro
+* debe actualizar por novedad el saldo de novedad retrocediendo el recaudo
+* debe de actualizar el saldo de la factura
+* debe actualizar el saldo de la cuenta de cobro
+* parametros los siguientes valores:
+*      p_cuenta_cobro_volante --  Numero de la cuenta de cobro o Volante de Pago
+*      p_valor_pago    --  Valor del pago
+*      p_fecha_pago    --  Fecha de consignacion
+*      p_fecha_legalizacion  -- Fecha de legalizacion
+*      p_acta_legalizacion   -- Numero Acta legalizacion
+*      p_fase                -- Correspondiente a la fase RECAUDO
+*      p_usuario_transaccion -- Usuario quien realizo la transaccion
+*      p_respuesta_proceso   -- Respuesta cuando el nÿºmero y valor de la cuenta de cobro registrado en OPGET corresponden con los datos existentes en SISLA
+*
+************************************************************************************************/
+
+   PROCEDURE pr_reversa_interfaz_opget_cp (
+      p_cuenta_cobro_volante         NUMBER,
+      p_valor_pago                   NUMBER,
+      p_fecha_pago                   DATE,
+      p_fecha_legalizacion           DATE,
+      p_acta_legalizacion            VARCHAR2,
+      p_fase                         VARCHAR2,
+      p_usuario_transaccion          VARCHAR2,
+      p_respuesta_proceso      OUT   VARCHAR2
+   )
+   IS
+      v_entidad                 VARCHAR2 (10);
+      v_entidad_nombre          VARCHAR2 (200);
+      v_interno_persona         NUMBER;
+      v_id_factura              NUMBER;
+      v_fecha_inicial_factura   DATE;
+      v_fecha_final_factura     DATE;
+      v_valor_total_factura     NUMBER (15);
+      v_valor_credito           NUMBER (15);
+      v_valor_saldo             NUMBER (15);
+      v_existe_cuenta_cobro     VARCHAR2 (1)   := 'N';
+      v_existe_volante          VARCHAR2 (1)   := 'N';
+      v_existe_factura          VARCHAR2 (1)   := 'N';
+      v_tipo_log                VARCHAR2 (5)   := NULL;
+      v_valor_total             NUMBER (15);
+      v_mensaje                 VARCHAR2 (200);
+      v_error                   NUMBER;
+      v_valor_volante           NUMBER;
+   BEGIN
+      IF SUBSTR (p_cuenta_cobro_volante, 1, 1) = 2
+      THEN
+         -- Verificamos si existe la factura en la tabla  sl_factura_cp_2017 por el parametro p_cuenta_cobro
+         BEGIN
+            SELECT 'S', fac.entidad_factura, fac.interno_persona,
+                   fac.id_factura, fac.fecha_ini_factura,
+                   fac.fecha_fin_factura, fac.vlr_total_factura,
+                   com.nombre
+              INTO v_existe_factura, v_entidad, v_interno_persona,
+                   v_id_factura, v_fecha_inicial_factura,
+                   v_fecha_final_factura, v_valor_total_factura,
+                   v_entidad_nombre
+              FROM sl_factura_cp_2017 fac, sl_compania com
+             WHERE fac.id_cuenta_cobro = p_cuenta_cobro_volante
+               AND fac.entidad_factura = com.codigo_compania
+               AND ROWNUM = 1;
+         EXCEPTION
+            WHEN NO_DATA_FOUND
+            THEN
+               v_existe_factura := 'N';
+         END;
+
+         -- Verificamos si existe la cuenta de cobro en la tabla  sl_cuenta_cobro_cp_2017 por el parametro p_cuenta_cobro
+         BEGIN
+            SELECT 'S', fac.vlr_total, fac.saldo
+              INTO v_existe_cuenta_cobro, v_valor_total,v_valor_saldo
+              FROM sl_cuenta_cobro_cp_2017 fac
+             WHERE id_cuenta_cobro = p_cuenta_cobro_volante;
+         EXCEPTION
+            WHEN NO_DATA_FOUND
+            THEN
+               v_existe_cuenta_cobro := 'N';
+               p_respuesta_proceso :=
+                                    'El numero de cuenta NO existe en SISLA ';
+               v_tipo_log := 'ERROR';
+         END;
+
+         IF v_existe_cuenta_cobro = 'S'
+         THEN
+            ---  Actualizamos la tabla sl_cuenta_cobro_cp_2017 reversando el recaudo dejandolo en fase 4 enviada
+            UPDATE sl_cuenta_cobro_cp_2017
+               SET fase = 4,                           -- Fase "Enviado "
+                   fecha_cambio_fase = SYSDATE,
+                   usuario_cambio_fase = p_usuario_transaccion,
+                   recaudo = NULL,
+                   fecha_recaudo = NULL,
+                   fecha_legalizacion = NULL,
+                   acta_legalizacion = NULL
+             WHERE id_cuenta_cobro = p_cuenta_cobro_volante;
+
+
+            IF v_valor_total = p_valor_pago
+            THEN
+
+
+               FOR reg IN (SELECT fac.entidad_factura, fac.interno_persona,
+                                  fac.id_factura, fac.fecha_ini_factura,
+                                  fac.fecha_fin_factura,
+                                  fac.vlr_total_factura
+                             FROM sl_factura_cp_2017 fac
+                            WHERE id_cuenta_cobro = p_cuenta_cobro_volante)
+               LOOP
+                  SELECT nov.valor_saldo
+                    INTO v_valor_saldo
+                    FROM sl_novedad_x_cc_cp nov
+                   WHERE nov.interno_persona = reg.interno_persona
+                     AND nov.cod_entidad = reg.entidad_factura
+                     AND nov.id_cuenta_cobro = p_cuenta_cobro_volante
+                     AND nov.nro_liquidacion = reg.id_factura
+                     AND nov.fecha_creacion =
+                            (SELECT MAX (novx.fecha_creacion)
+                               FROM sl_novedad_x_cc_cp novx
+                              WHERE novx.interno_persona = reg.interno_persona
+                                AND novx.cod_entidad = reg.entidad_factura
+                                AND novx.id_cuenta_cobro =
+                                                        p_cuenta_cobro_volante
+                               --RQ2020003882 AND nov.nro_liquidacion = reg.id_factura
+                               AND novx.nro_liquidacion = reg.id_factura
+                                );
+
+                      pr_borra_novedad_cc_cp(reg.entidad_factura,
+                                             p_cuenta_cobro_volante,
+                                             reg.id_factura,
+                                             reg.interno_persona,
+                                             13,
+                                             reg.fecha_ini_factura,
+                                             reg.fecha_fin_factura,
+                                             reg.vlr_total_factura,
+                                             p_fecha_pago,
+                                             'Reversion Recaudo desde OPGET',
+                                             NULL,
+                                             p_acta_legalizacion,
+                                             p_fecha_legalizacion,
+                                             v_mensaje,
+                                             v_error
+                                            );
+               END LOOP;
+
+               p_respuesta_proceso := 'Proceso de reversion recaudo correcto';
+               v_tipo_log := 'EXITO';
+            ELSE
+               v_tipo_log := 'ERROR';
+               p_respuesta_proceso :=
+                     'El valor de la cuenta de cobro es de ' || v_valor_total;
+            END IF;
+         END IF;
+
+         INSERT INTO sl.sl_log_opget_sisla
+                     (tipo_log, detalle_log, fecha_acta_legalizacion,
+                      id_cuenta_cobro, valor_pago,
+                      acta_legalizacion, fecha_creacion, usuario_creacion,
+                      entidad
+                     )
+              VALUES (v_tipo_log, p_respuesta_proceso, p_fecha_legalizacion,
+                      p_cuenta_cobro_volante, p_valor_pago,
+                      p_acta_legalizacion, SYSDATE, p_usuario_transaccion,
+                      v_entidad_nombre
+                     );
+      ELSE
+         IF SUBSTR (p_cuenta_cobro_volante, 1, 1) = 9
+         THEN
+            BEGIN
+               SELECT 'S', volpag.valor_volante
+                 INTO v_existe_volante, v_valor_volante
+                 FROM sl_volante_pago volpag
+                WHERE volpag.id_volante = p_cuenta_cobro_volante;
+
+            EXCEPTION
+               WHEN NO_DATA_FOUND
+               THEN v_existe_volante := 'N';
+            END;
+
+            IF v_existe_volante = 'S'
+            THEN
+               IF v_valor_volante = p_valor_pago
+               THEN
+                  --- Implementar procedimiento de volantes de pagos
+                  FOR reg IN (SELECT volpag.id_volante, volpag.fase,
+                                     volpag.fecha_creacion,
+                                     volpag.valor_volante,
+                                     cuecobweb.id_cta_cobro,
+                                     cuecobweb.valor_cta_cob_capital,
+                                     cuecobweb.valor_cta_cob_interes,
+                                     fac.id_cuenta_cobro,
+                                     detfacweb.id_factura,
+                                     detfacweb.valor_fac_capital,
+                                     detfacweb.valor_fac_interes,
+                                     detfacweb.valor_pag_capital,
+                                     detfacweb.valor_pag_interes,
+                                     fac.entidad_factura,
+                                     fac.interno_persona,
+                                     fac.fecha_ini_factura,
+                                     fac.fecha_fin_factura
+                                FROM sl_volante_pago volpag,
+                                     sl_cuenta_cobro_web cuecobweb,
+                                     sl_det_factura_web detfacweb,
+                                     sl_factura_cp_2017 fac
+                               WHERE volpag.id_volante = cuecobweb.id_volante
+                                 AND volpag.vigencia = cuecobweb.vigencia
+                                 AND cuecobweb.id_volante =  detfacweb.id_volante
+                                 AND cuecobweb.vigencia = detfacweb.vigencia
+                                 AND cuecobweb.id_cta_cobro = detfacweb.id_cta_cobro
+                                 AND fac.id_cuenta_cobro = detfacweb.id_cta_cobro
+                                 AND fac.id_factura = detfacweb.id_factura
+                                 AND volpag.id_volante = p_cuenta_cobro_volante
+                             )
+                  LOOP
+                       pr_borra_novedad_cc_cp
+                        (reg.entidad_factura,
+                         reg.id_cuenta_cobro,
+                         reg.id_factura,
+                         reg.interno_persona,
+                         13,                             -- Novedad de recaudo
+                         reg.fecha_ini_factura,
+                         reg.fecha_fin_factura,
+                         CASE
+                            WHEN reg.valor_pag_capital - reg.valor_fac_capital = 0
+                               THEN reg.valor_pag_capital
+                            WHEN reg.valor_pag_capital - reg.valor_fac_capital < 0
+                               THEN reg.valor_pag_capital
+                            WHEN reg.valor_pag_capital - reg.valor_fac_capital > 0
+                               THEN reg.valor_fac_capital            -- Exceso
+                         END,
+                         p_fecha_pago,
+                         'Reversion Recaudo desde OPGET - Volante de Pago',
+                         p_cuenta_cobro_volante,                 -- Id Volante
+                         p_acta_legalizacion,
+                         p_fecha_legalizacion,
+                         v_mensaje,
+                         v_error
+                        );
+
+                     IF (reg.valor_pag_capital - reg.valor_fac_capital > 0
+                        )                    -- Noovedad de Recaudo por Exceso
+                     THEN
+                        v_mensaje := NULL;
+                        v_error := NULL;
+                        pr_borra_novedad_cc_cp
+                           (reg.entidad_factura,
+                            reg.id_cuenta_cobro,
+                            reg.id_factura,
+                            reg.interno_persona,
+                            28,               -- Novedad de Recaudo por Exceso
+                            reg.fecha_ini_factura,
+                            reg.fecha_fin_factura,
+                            reg.valor_pag_capital - reg.valor_fac_capital,
+                            p_fecha_pago,
+                            'Reversion Recaudo por Exceso desde OPGET - Volante de Pago',
+                            p_cuenta_cobro_volante,
+                            p_acta_legalizacion,
+                            p_fecha_legalizacion,
+                            v_mensaje,
+                            v_error
+                           );
+                     --DBMS_OUTPUT.put_line ('- Exceso despues: '|| v_mensaje || ' ; ' ||  v_error );
+                     END IF;
+                  END LOOP;
+
+                  IF v_error = 0
+                  THEN
+                     UPDATE sl_volante_pago vol
+                        SET vol.fase = 4 -- lo deja en fase 4 enviada
+                      WHERE vol.id_volante = p_cuenta_cobro_volante;
+                  END IF;
+               ELSE
+                  p_respuesta_proceso :=
+                        'El valor de pago recibido de OPGET es diferente al valor del volante: '
+                     || TO_CHAR (v_valor_volante, '999,999,999,999,999.00');
+
+                  INSERT INTO sl.sl_log_opget_sisla
+                              (tipo_log, detalle_log,
+                               fecha_acta_legalizacion, id_cuenta_cobro,
+                               valor_pago, acta_legalizacion, fecha_creacion,
+                               usuario_creacion, entidad
+                              )
+                       VALUES (v_tipo_log, p_respuesta_proceso,
+                               p_fecha_legalizacion, p_cuenta_cobro_volante,
+                               p_valor_pago, p_acta_legalizacion, SYSDATE,
+                               p_usuario_transaccion, v_entidad_nombre
+                              );
+               END IF;
+            ELSE
+               p_respuesta_proceso := 'Volante NO Existe';
+
+               INSERT INTO sl.sl_log_opget_sisla
+                           (tipo_log, detalle_log,
+                            fecha_acta_legalizacion, id_cuenta_cobro,
+                            valor_pago, acta_legalizacion, fecha_creacion,
+                            usuario_creacion, entidad
+                           )
+                    VALUES (v_tipo_log, p_respuesta_proceso,
+                            p_fecha_legalizacion, p_cuenta_cobro_volante,
+                            p_valor_pago, p_acta_legalizacion, SYSDATE,
+                            p_usuario_transaccion, v_entidad_nombre
+                           );
+            END IF;
+         ELSE
+            p_respuesta_proceso :=
+                      'La Cuenta de Cobro o Volante de Pago... NO EXISTE !!!';
+         END IF;
+      END IF;
+   END;
+
+
+
+ /********************************************************************************************
+   Metodo: PR_BORRA_NOVEDAD_CC_CP
+   Objetivo: Elimina novedades de recaudos registradas desde la legalizacion del ingreso en OPGET
+   debe actualizar saldo de novedad, factura y cuenta de cobro
+
+   *********************************************************************************************/
+
+   PROCEDURE PR_BORRA_NOVEDAD_CC_CP(una_entidad           sl_novedad_x_cc_cp.cod_entidad%TYPE,
+                                  una_cuenta_cobro      sl_cuenta_cobro_cp_2017.id_cuenta_cobro%TYPE,
+                                  una_factura           sl_factura_cp_2017.id_factura%TYPE,
+                                  una_interno_persona   sl_novedad_x_cc_cp.interno_persona%TYPE,
+                                  una_id_novedad        sl_novedad_x_cc_cp.id_novedad%TYPE,
+                                  una_fecha_ini         sl_novedad_x_cc_cp.fecha_inicial%TYPE,
+                                  una_fecha_fin         sl_novedad_x_cc_cp.fecha_final%TYPE,
+                                  una_valor             sl_novedad_x_cc_cp.valor_debito%TYPE,
+                                  una_fecha_aplicacion  sl_novedad_x_cc_cp.fecha_aplicacion%TYPE,
+                                  una_observaciones     sl_novedad_x_cc_cp.observaciones%TYPE,
+                                  una_volante            sl_volante_pago.id_volante%type,
+                                  una_acta_legalizacion  sl_novedad_x_cc_cp.acta_legalizacion%type,
+                                  una_fecha_legalizacion SL_NOVEDAD_X_CC_CP.FECHA_legalizacion%type,
+                                  una_mensaje           OUT varchar2,
+                                  una_error             OUT number
+                                 ) is
+ BEGIN
+
+  una_error   := 0;
+  una_mensaje := null;
+ BEGIN
+ -- Actualiza saldo de la cuenta de cobro sumando el valor del recaudo
+ -- en nov_cre lo resta porque fue incrementado en el registro de la novedad del recaudo
+    update sl_cuenta_cobro_cp_2017
+    set    saldo         = nvl(saldo,0)         + nvl(una_valor,0) ,
+           vlr_total_nov = nvl(vlr_total_nov,0) + nvl(una_valor,0) ,
+           vlr_nov_cre   = nvl(vlr_nov_cre,0) - nvl(una_valor,0)--,
+    where  id_cuenta_cobro = una_cuenta_cobro;
+  EXCEPTION
+   WHEN OTHERS THEN
+     una_mensaje := 'Error actualizando saldos en la Cuenta Cobro: '||una_cuenta_cobro;
+     una_error := 1;
+  END;
+
+  BEGIN
+  -- Actualiza el saldo de la factura aumentando el valor del recaudo
+  -- disminuye nov_cre registrado en el recaudo
+    update sl_factura_cp_2017
+    set    vlr_total_nov = nvl(vlr_total_nov,0) + nvl(una_valor,0) ,
+           vlr_nov_cre   = nvl(vlr_nov_cre,0)   - nvl(una_valor,0)
+    where  id_cuenta_cobro = una_cuenta_cobro
+    and    id_factura = una_factura;
+  EXCEPTION
+   WHEN OTHERS THEN
+     una_mensaje := 'Error actualizando saldos en la Factura: '||una_factura||', Cuenta Cobro: '||una_cuenta_cobro;
+     una_error := 1;
+  END;
+
+
+-- Despues de actualizar saldos debe proceder a eliminar la novedad de recaudo
+
+      DELETE SL_NOVEDAD_X_CC_CP
+       WHERE COD_ENTIDAD=UNA_ENTIDAD
+         AND INTERNO_PERSONA=UNA_INTERNO_PERSONA
+         AND ID_NOVEDAD=UNA_ID_NOVEDAD
+         AND ID_CUENTA_COBRO=UNA_CUENTA_COBRO
+         AND NRO_LIQUIDACION=una_factura
+         AND FECHA_INICIAL=UNA_FECHA_INI
+         AND FECHA_FINAL=UNA_FECHA_FIN;
+
+  EXCEPTION
+   WHEN OTHERS THEN
+     una_mensaje := 'Error eliminando en sl_novedad_x_cc_cp Novedad: '||una_id_novedad||' , Factura: '||una_factura||', Cuenta Cobro: '||una_cuenta_cobro;
+     una_error := 1;
+  END;
+
+
+
+
+
+/*********************************************************************************************
+* Procedimiento pr_valida_recaudo
+* Recibe como parametros:
+*      p_cuenta_cobro_volante  --  Numero de la cuenta de cobro o Voalnte de Pago
+*      p_valor_pago    --  Valor del pago
+*      p_respuesta_proceso   -- Respuesta cuando el numero y valor de la cuenta de cobro registrado en OPGET corresponden con los datos existentes en SISLA
+*      p_bandera   -- Devuelve TRUE o FALSE si numero de la cuenta de cobro y/o volante de pago NO existe o el valor NO coincide en SISLA
+*
+**********************************************************************************************/
+   PROCEDURE pr_valida_recaudo (
+      p_cuenta_cobro_volante         NUMBER,
+      p_valor_pago                   NUMBER,
+      p_respuesta_proceso      OUT   VARCHAR2,
+      p_bandera                OUT   BOOLEAN
+   )
+   IS
+      v_entidad                 VARCHAR2 (10);
+      v_entidad_nombre          VARCHAR2 (200);
+      v_interno_persona         NUMBER;
+      v_id_factura              NUMBER;
+      v_fecha_inicial_factura   DATE;
+      v_fecha_final_factura     DATE;
+      v_valor_total_factura     NUMBER (15);
+      v_valor_credito           NUMBER (15);
+      v_valor_saldo             NUMBER (15);
+      v_existe_cuenta_cobro     VARCHAR2 (1)   := 'N';
+      v_existe_factura          VARCHAR2 (1)   := 'N';
+      v_tipo_log                VARCHAR2 (5)   := NULL;
+      v_valor_total             NUMBER (15);
+      v_valor_volante           NUMBER;
+      v_existe_volante          VARCHAR2 (1)   := 'N';
+      v_fase                    NUMBER := 0;
+   BEGIN
+-- Verificamos si existe la cuenta de cobro en la tabla  sl_cuenta_cobro_cp_2017 por el parametro p_cuenta_cobro
+      IF SUBSTR (p_cuenta_cobro_volante, 1, 1) = 2
+      THEN
+         BEGIN
+            SELECT 'S', fac.entidad_factura, fac.interno_persona,
+                   fac.id_factura, fac.fecha_ini_factura,
+                   fac.fecha_fin_factura, fac.vlr_total_factura,
+                   com.nombre
+              INTO v_existe_factura, v_entidad, v_interno_persona,
+                   v_id_factura, v_fecha_inicial_factura,
+                   v_fecha_final_factura, v_valor_total_factura,
+                   v_entidad_nombre
+              FROM sl_factura_cp_2017 fac, sl_compania com
+             WHERE fac.id_cuenta_cobro = p_cuenta_cobro_volante
+               AND fac.entidad_factura = com.codigo_compania
+               AND ROWNUM = 1;
+         EXCEPTION
+            WHEN NO_DATA_FOUND
+            THEN
+               v_existe_factura := 'N';
+         END;
+
+         BEGIN
+            SELECT 'S', ctacob.vlr_total, ctacob.saldo
+              INTO v_existe_cuenta_cobro, v_valor_total, v_valor_saldo
+              FROM sl_cuenta_cobro_cp_2017 ctacob
+             WHERE id_cuenta_cobro = p_cuenta_cobro_volante;
+
+            IF v_valor_saldo > 0 THEN
+                IF v_valor_total = p_valor_pago
+                THEN
+                   p_respuesta_proceso :=
+                         'El numero de cuenta existe en SISLA y valor coinciden. Para la entidad '
+                      || v_entidad_nombre;
+                   p_bandera := TRUE;
+                ELSE
+                   p_respuesta_proceso :=
+                         'El numero de cuenta existe en SISLA y valor NO coinciden.Para la entidad '
+                      || v_entidad_nombre;
+                   p_bandera := FALSE;
+                END IF;
+
+            ELSE
+                p_respuesta_proceso := 'La Cuenta de cobro ya fue totalmente pagada o presenta inconsistencia. Por favor verificar ';
+                   p_bandera := FALSE;
+            END IF;
+         EXCEPTION
+            WHEN NO_DATA_FOUND
+            THEN
+               v_existe_cuenta_cobro := 'N';
+               p_respuesta_proceso := 'El numero de cuenta NO existe en SISLA - Validacion ';
+               p_bandera := FALSE;
+         END;
+      ELSE
+         IF SUBSTR (p_cuenta_cobro_volante, 1, 1) = 9
+         THEN
+            BEGIN
+               SELECT 'S', volpag.valor_volante, volpag.fase
+                 INTO v_existe_volante, v_valor_volante, v_fase
+                 FROM sl_volante_pago volpag
+                WHERE volpag.id_volante = p_cuenta_cobro_volante;
+            EXCEPTION
+               WHEN NO_DATA_FOUND
+               THEN
+                  v_existe_volante := 'N';
+            END;
+
+            IF v_fase = 11 THEN
+                p_respuesta_proceso := 'El volante: '  || p_cuenta_cobro_volante || ', ya fue CANCELADO. Por favor verifique.';
+            ELSE
+                    IF v_existe_volante = 'S'
+                    THEN
+                       p_bandera := FALSE;
+
+                       IF v_valor_volante <> p_valor_pago
+                       THEN
+                          p_respuesta_proceso := 'El valor de pago recibido de OPGET es diferente al valor del volante: '  || TO_CHAR (v_valor_volante, '999,999,999,999,999.00');
+                          p_bandera := FALSE;
+                       END IF;
+                    ELSE
+                       p_respuesta_proceso := 'Volante NO Existe ...';
+                       p_bandera := FALSE;
+                    END IF;
+
+            END IF;
+
+         ELSE
+            p_respuesta_proceso := 'La Cuenta de Cobro o Volante de Pago... NO EXISTE !!!';
+         END IF;
+      END IF;
+   END;
+END;

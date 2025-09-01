@@ -172,7 +172,10 @@ begin
 
   -- Valor Total de OP registradas en el mes por el sistema OPGET
   
-/*CONSULTA OGT_ORDEN_PAGO
+/*SELECT NVL(SUM(VALOR_BRUTO), 0)
+      INTO mi_valor_op
+      FROM OGT_INFORMACION_EXOGENA A, OGT_ORDEN_PAGO B
+      ..INCLUYE RUBRO
     where  AND TO_CHAR(B.FECHA_APROBACION, 'YYYY') = TO_CHAR(una_vigencia)
     AND ESTADO= 1
 */
@@ -181,7 +184,8 @@ begin
   															'01', --:codigo_unidad_ejecutora,
   															6,    --TO_NUMBER(:p_mes),
   															1387) --										:rubro_interno);
-FROM dual                                
+FROM dual                
+;                
                                         
     
   -- Valor de Ordenes del mes anuladas en el mismos mes

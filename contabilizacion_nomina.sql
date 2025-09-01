@@ -1,5 +1,5 @@
 SELECT 
-    SCOMPANIA              COMP,
+   -- SCOMPANIA              COMP,
     VIGENCIA               VIGE,
     GRUPO_RA               GRA,
     VIGENCIA_PRESUPUESTO   VPTO,
@@ -7,8 +7,11 @@ SELECT
     ANO_PAC                APAC,
     NTIPO_NOMINA           TNOM,
     MES_PAC                MPAC,
+    DFECHA_INICIAL_PERIODO  FECHA_INI,
     TIPO_COMPROMISO        TC,
     NUMERO_COMPROMISO      NC,
+    NRO_RA                 NRA,
+    NRO_RA_OPGET           NRA_OGT,
     CASE TIPO_RA
         WHEN '1' THEN
             '1 - NOMINA'
@@ -19,10 +22,8 @@ SELECT
         ELSE
             TIPO_RA
     END                    TIPO_DE_RA,
-    NRO_RA                 NRA,
     DFECHA_INICIAL_PERIODO DFECINI,
     DFECHA_FINAL_PERIODO   DFECFIN,
-    NRO_RA_OPGET           NRA_OGT,
     APROBACION             A,
     ACTUALIZADO_CONTAB     AC,
     GEN_CXP_OPGET          GCXP,
@@ -66,30 +67,18 @@ WHERE
     DFECHA_INICIAL_PERIODO = '01-JUN-20';
 
 
-/*SELECT
-    DISTINCT SCONCEPTO,
-    VARIABLE_VALOR,
-    SUM(VALOR)     PERIODO*/
-   SELECT *
-    FROM
+SELECT sum(valor)
+FROM
     --UPDATE 
     RH_T_LM_VALORES
-    --SET STERCERO = 2319
-    WHERE
-        PERIODO = '31/MAY/2025'
-        AND NTIPO_NOMINA = 1
-        AND STIPOFUNCIONARIO = 'PLANTA'
-        AND nro_ra=12
-        and nfuncionario = 649
-        and sconcepto = 'PENSIONES'
-        and stercero = 2324
-     order by 1
- /*--AND SCONCEPTO LIKE '%INCAP%'
-    GROUP BY
-        SCONCEPTO,
-        VARIABLE_VALOR
-    ORDER BY
-        SCONCEPTO*/
+WHERE
+    EXTRACT(YEAR FROM PERIODO) = 2025 AND
+    STIPOFUNCIONARIO = 'PLANTA' AND
+    sconcepto like 'APORTE%' AND 
+    NRO_RA = 16
+GROUP BY PERIODO 
+    -- SCONCEPTO,    VARIABLE_VALOR */
+ORDER BY  1
 ;
 
 
@@ -97,8 +86,9 @@ WHERE
 
 
 select * from RH_PERSONAS
-where INTERNO_PERSONA in (250,579,589,592  );
-
+where NUMERO_IDENTIFICACION IN (40030681,1018432331) 
+--INTERNO_PERSONA in (250,579,589,592  );
+;
 
 select *
 from ogt_anexo_nomina

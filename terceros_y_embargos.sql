@@ -135,3 +135,22 @@ from rh_beneficiarios
 order by CODIGO_BENEFICIARIO desc;
 
 select sysdate from dual
+;
+
+
+ pk_sit_infbasica.sit_fn_id_identificacion(un_tipo_identificacion, una_identificacion, una_fecha);
+
+  SELECT shd_informacion_basica.id,shd_terceros.tro_compuesto,
+             RTRIM(RTRIM(ib_primer_nombre) || ' ' || RTRIM(ib_segundo_nombre) || ' ' ||
+             RTRIM(ib_primer_apellido) || ' ' || RTRIM(ib_segundo_apellido)) AS nombre,
+             shd_informacion_basica.ib_codigo_identificacion, 
+             shd_informacion_basica.ib_fecha_inicial,
+             shd_informacion_basica.ib_fecha_final
+                   FROM shd_informacion_basica, shd_terceros
+      WHERE shd_informacion_basica.ib_tipo_identificacion   = 'NIT'  and --un_tipo_identificacion AND
+            shd_informacion_basica.ib_codigo_identificacion = '830053700' and -- una_identificacion AND
+		        shd_informacion_basica.id = shd_terceros.id AND
+		        shd_informacion_basica.ib_fecha_inicial<=sysdate AND
+           (shd_informacion_basica.ib_fecha_final>=sysdate OR shd_informacion_basica.ib_fecha_final IS Null);
+
+             
