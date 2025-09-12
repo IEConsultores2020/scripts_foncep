@@ -143,3 +143,7 @@ AND ARGUMENTO ='CODIGO_FAVIDI';
 ROLLBACK;
 
 
+select *
+from rh_personas
+where numero_identificacion = 79315507 
+

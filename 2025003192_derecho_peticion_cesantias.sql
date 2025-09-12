@@ -25,7 +25,7 @@ from rh_personas p, rh_funcionario f,
 where p.interno_persona = f.personas_interno
 and p.interno_persona = hn.nfuncionario
 and f.personas_interno = hn.nfuncionario
-and p.numero_identificacion in ( 23495638, 45454959,79355621, 37891855, 
+and p.numero_identificacion in (51605363) 23495638, 45454959,79355621, 37891855, 
                                 79329628, 51753989, 79315507, 35325745, 
                                 51978047, 24022412, 39789074, 79489819, 
                                 51665925, 51605363, 52116283, 51841009, 
