@@ -1,5 +1,11 @@
 --Pruebas.
-   SET SERVEROUTPUT ON; 
+/*--Para probar abrir ventana sql y ejecutar las siguientes 4 lineas
+   SET ECHO OFF;
+   SET SERVEROUTPUT OFF;
+   SET SERVEROUTPUT ON  SIZE UNLIMITED;
+   spool imputacion.log; 
+   --ejecute el código de este archio
+   spool off --*/
 
 --Guardo estado previo del encabezado
 declare

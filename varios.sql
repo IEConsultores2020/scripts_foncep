@@ -15,7 +15,9 @@ WHERE
 
 SELECT *
 FROM BINTABLAS
-WHERE GRUPO=''
+WHERE GRUPO='OPGET'
+AND NOMBRE='PATH'
+;
 
 set serveroutput on ;
 DECLARE
@@ -146,4 +148,205 @@ ROLLBACK;
 select *
 from rh_personas
 where numero_identificacion = 79315507 
+;
 
+Select min(cuin_nid), max(cuin_nid) from lm_relacion_cuenta where extract(year from prio_dincio)=2025
+;
+
+Select *from lm_relacion_cuenta where cuin_nid=1180
+;
+
+
+select * from ogt_detalle_documento where doc_numero=54948
+;
+-----
+insert into ogt_documento (
+               numero,              tipo,                   estado, 
+               fecha,               ter_id_receptor,        unte_codigo, 
+               bin_tipo_cuenta,     bin_tipo_titulo,        cuba_numero, 
+               numero_timbre,       observaciones,          usuario_elaboro,
+               usuario_reviso,      con_id,                 bin_tipo_emisor_titulo
+               fecha_compra_titulo, fecha_emision_titulo,   fecha_ventimiento_titulo
+               tasa_cambio_titulo,  valor_actual_titulo,    valor_intereses_titulo,
+               valor_ingreso_titulo valor_esperado_titulo,  valor_compra_titulo,
+               numero_legal,        tipo_legal,             valor_reinversion_titulo,
+               numero_soporte,      tipo_soporte,           fecha_soporte,
+               ter_id_emiso,        ter_id_comprador,       bin_ciudad,
+               fecha_venta_titulo,  fecha_pacto_titulo,     forma_pago,
+               situacion_fondos,   destination_especifica,  descripcion,
+               entidad,             unidad_ejecutora,       numero_externo
+            ) values
+            (  mi_numero_documento,    'XYZ',               'RE',
+               sysdate,                p_rec_pago.id_banco, null,
+               null,                   null,                '482800043630',
+
+                 )
+;
+
+SELECT * FROM OGT_DOCUMENTO;
+
+SELECT * FROM SL_PCP_CUENTA_COBRO;
+
+SELECT * FROM SL_RELACION_TAC
+WHERE CODIGO_COMPA =107766
+;
+
+SELECT pk_sit_infentidades.sit_fn_id_entidad(107766, SYSDATE)
+FROM DUAL;
+
+
+select *
+from sl_pcp_cuenta_cobro
+;
+
+ SELECT descripcion
+ -- INTO   :ogt_detalle_documento.concepto
+  FROM   ogt_concepto_tesoreria
+  WHERE  id = 'RECAUDO A FAVOR DE TERCERO' --:ogt_detalle_documento.cote_id;
+
+
+
+ :ogt_detalle_documento.numero:=
+    p_bintablas.TBuscar(:ogt_detalle_documento.cote_id,'OPGET','IMPUESTO_CONCEPTO',to_char(SYSDATE,'DD/MM/YYYY'));
+
+select *
+from BINTABLAS
+where grupo ='OPGET'
+AND nombre='RECAUDO_TERCERO';
+
+select *
+from BINTABLAS
+where grupo ='OPGET'
+AND NOMBRE='IMPUESTO_CONCEPTO';    
+
+select *
+from BINTABLAS
+where grupo ='OPGET'
+AND NOMBRE='TERCERO_DESTINO';    
+
+select *
+from BINTABLAS
+where grupo ='OPGET'
+AND NOMBRE= 'RECAUDO_TERCERO';   
+
+select *
+from BINTABLAS
+where grupo ='OPGET'
+AND NOMBRE= 'CENTROS_COSTO_INGRESOS' ;   
+
+select *
+from BINTABLAS
+where grupo ='OPGET'
+AND NOMBRE= 'ESTADO_RECAUDO_SISLA' ;   
+
+SELECT *
+FROM OGT_DOCUMENTO 
+--WHERE NUMERO_SOPORTE='54948'
+ORDER BY NUMERO_SOPORTE DESC NULLS LAST ;
+
+s
+;
+
+select id, descripcion 
+from (
+SELECT id,
+               descripcion
+FROM ogt_concepto_tesoreria
+WHERE afecta_ingreso <> 8 AND concepto_hoja = 1 AND fecha_final IS NULL
+CONNECT BY PRIOR  id = cote_id
+START WITH id = (SELECT id
+   FROM ogt_concepto_tesoreria
+   WHERE cote_id IS NULL
+     AND ROWNUM = 1))
+where descripcion like '%RECAUDO%CUOTAS%PARTES%'     
+ORDER BY descripcion 
+;
+
+select * from ogt_concepto_tesoreria
+where  descripcion like 'RECAUDO%CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA'  
+
+/*
+    ID                      DESCRIPCION
+--00-02-37-11-00-00-00      RECAUDO CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA PA PENSIONES 2024
+*/
+
+ID   descripcion
+1-3-84-08-01    FIDUDAVIVIENDA
+1-3-84-08-01
+
+GRUPO   NOMBRE              ARGUMENTO                                   RESULTADO
+OPGET   IMPUTACION_PORTALP  RECAUDO_CAPITAL_CUOTASPARTES_POR_IMPUTAR    00-02-37-11-00-00-00
+OPGET   IMPUTACION_PORTALP  RECAUDO_INTERESES_CUOTASPARTES_POR_IMPUTAR  00-02-37-11-00-00-00
+
+insert into bintablas
+(grupo, recaudo_tercero, argumento, resultado,vig_inicial,vig_final)
+values
+('OPGET','IMPUTACION_PORTALP','RECAUDO_CAPITAL_CUOTASPARTES_POR_IMPUTAR','00-02-37-11-00-00-00','01-JAN-2025',NULL)
+
+
+select *
+from BINTABLAS
+where grupo ='OPGET'
+AND NOMBRE='IMPUTACION_PORTALP';   
+
+ insert into ogt_documento (numero) values (1);
+
+ rollback 
+
+
+select  from dual;
+
+select *
+from rh_personas
+where  nombres like 'MARGARITA%' --numero_identificacion= 79693028
+;
+
+
+    select substr(DESCRIPCION,1,20)
+    from ogt_concepto_tesoreria
+    where id = :concepto;
+
+    select *
+    from ogt_documento
+    where 54948 = numero or '54948'=numero_legal;
+
+    select *
+    from ogt_detalle_documento
+    where 54948 = doc_numero ;
+
+    select *
+    from ogt_ingreso
+    where doc_numero = '54948'
+    and doc_tipo ='XYZ';
+
+
+     SELECT NVL(ing.cuba_tipo,'0'),
+          NVL(ing.cote_id,'0'),
+          NVL(ing.unte_codigo,'0'),
+          NVL(ing.ter_id,0),
+          NVL(ing.tipo_titulo,'0'),
+          ing.valor,
+          NVL(doc.bin_tipo_emisor_titulo,'0'), 
+          DECODE('INGRESO' /*mi_tipo_transaccion_contable*/,'NO_AJUSTE',ing.doc_numero,ing.num_doc_legalizacion),
+          DECODE('INGRESO' /*mi_tipo_transaccion_contable*/,'NO_AJUSTE',ing.doc_tipo,ing.tipo_doc_legalizacion),
+          ing.ter_id_destino, 
+          ing.vigencia,
+          ing.fecha_consignacion,
+          ing.ing_id,
+          NVL(ing.cuba_numero,'0'),
+          NVL(ing.cuba_sucu_ter_id,0),
+          --RQ1885-2006 07-11-2006 campos para reintegros-reembolsos
+          doc.tipo_soporte,
+          doc.numero_soporte,
+          doc.fecha_soporte
+     FROM ogt_ingreso ing,
+          ogt_documento doc
+    WHERE DECODE('INGRESO' /*mi_tipo_transaccion_contable*/,'NO_AJUSTE',ing.doc_numero,ing.num_doc_legalizacion) = doc.numero
+      AND DECODE('INGRESO' /*mi_tipo_transaccion_contable*/,'NO_AJUSTE',ing.doc_tipo,ing.tipo_doc_legalizacion) = doc.tipo
+      AND ing.id = 507179; -- un_ingreso;    
+
+
+    select *
+    from ogt_detalle_pensionado;
+
+    

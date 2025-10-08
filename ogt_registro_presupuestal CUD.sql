@@ -281,7 +281,7 @@ mi_valor_sincroniza_cud := fn_valor_sincroniza_cud(
                                  un_numero_registro,
                                  un_numero_disponibilidad);
 
-function fn_valor_sincroniza_cud  una_vigencia          number,
+function fn_traer_valor_ss_patrono  una_vigencia          number,
                                  un_codigo_compania     number,
                                  un_codigo_unidad       varchar(2)
                                  un_tipo_ra             number,
@@ -336,3 +336,80 @@ select n.nro_ra_opget
    and n.tipo_ra = 1 --NOMINA
    and n.vigencia = 2025
             
+
+
+--- INICIO AGOSTO
+SELECT *  -- TIPO_RA, CONSECUTIVO, UNIDAD_EJECUTORA  --, SUM(APORTE_EMPLEADO)
+FROM OGT_ANEXO_NOMINA
+WHERE VIGENCIA=2025
+and entidad=206
+and consecutivo in (18)
+and codigo_centro_costos in (5,1285,1267)
+GROUP BY TIPO_RA, CONSECUTIVO, UNIDAD_EJECUTORA
+;
+----FIN AGOSTO
+
+
+---- INICIO. 202509 AJUSTE MANUAL REGISTRO PRESUPUESTAL
+--1. Desactive el trigger
+ALTER TRIGGER OGT.OGT_TRG_ACTUALIZA_RP DISABLE;
+
+
+--2. Consulte el valor a actualizar
+select sum(aporte_empleado)  --64.112.418
+  from ogt_anexo_nomina
+  where vigencia = 2025
+    and consecutivo = 20  --NRO RA JUNIO
+    and codigo_centro_costos 
+      in ( 5, 1285, 1267 );
+
+--3. Consulta el valor de la nómina actual
+SELECT SUM(VALOR_REGISTRO) --490.309.521
+  FROM                                 
+  OGT_REGISTRO_PRESUPUESTAL
+where REGISTRO        >=    0                         --MI_VALOR_CERO
+  AND TIPO_DOCUMENTO  =    'RA'    --UN_TIPO_DOCUMENTO
+  AND DISPONIBILIDAD  >=   0       --MI_VALOR_CERO
+  AND CONSECUTIVO     =     20      --UN_CONSECUTIVO NUMERO RA DE JULIO
+  AND ENTIDAD         =    206     --UNA_ENTIDAD
+  AND UNIDAD_EJECUTORA =  '01'     --UNA_UNIDAD_EJECUTORA
+  AND VIGENCIA        =    2025    --UNA VIGENCIA
+  AND registro        =     474     --CONFIRMADO CONSULTA ANTERIOR
+  AND rubro_interno   =    1547     --RUBRO VIGENCIA 2025
+;
+
+--4. Aplicar la actualización así:
+--  Si es RA de nómina, reste el valor
+--      Valor resultado esperado: 490.309.521 - 64.112.418 = 426.197.103
+--  Si es RA de prestaciones, sume el valor
+UPDATE 
+  OGT_REGISTRO_PRESUPUESTAL
+  SET VALOR_REGISTRO = VALOR_REGISTRO - (select sum(aporte_empleado)  --64.112.418
+                                          from ogt_anexo_nomina
+                                          where vigencia  = 2025
+                                          and consecutivo = 20  --NRO RA SEPTIEMBRE
+                                          and codigo_centro_costos in ( 5,
+                                                                      1285,
+                                                                      1267 )) --*/
+where REGISTRO >= 0                         --MI_VALOR_CERO
+  AND TIPO_DOCUMENTO =    'RA'    --UN_TIPO_DOCUMENTO
+  AND DISPONIBILIDAD >=   0       --MI_VALOR_CERO
+  AND CONSECUTIVO   =     20      --UN_CONSECUTIVO NUMERO RA DE JULIO
+  AND ENTIDAD =           206     --UNA_ENTIDAD
+  AND UNIDAD_EJECUTORA = '01'     --UNA_UNIDAD_EJECUTORA
+  AND VIGENCIA =          2025    --UNA VIGENCIA
+  AND registro =          474     --CONFIRMADO CONSULTA ANTERIOR
+  AND rubro_interno =    1547     --RUBRO VIGENCIA 2025
+
+ALTER TRIGGER OGT.OGT_TRG_ACTUALIZA_RP ENABLE;
+
+commit;
+
+
+select codigo_centro_costos, 
+                                          from ogt_anexo_nomina
+                                          where vigencia  = 2025
+                                          and consecutivo = 20  --NRO RA SEPTIEMBRE
+                                          and codigo_centro_costos in ( 5,
+                                                                      1285,
+                                                                      1267 )
