@@ -45,8 +45,8 @@ create or replace package pk_ogt_imputacion as
    --Tabla de tipo registro cuenta de cobro
    type type_tab_cuenta_cobro is
       table of type_rec_cuenta_cobro;
-   mi_code_id_capital varchar2(20); -- := fn_ogt_traer_code_concepto('RECAUDO CAPITAL CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA');
-   mi_code_id_interes varchar2(20); -- := fn_ogt_traer_code_concepto('RECAUDO INTERESES CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA');
+   mi_concepto_capital varchar2(20); -- := fn_ogt_traer_code_concepto('RECAUDO CAPITAL CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA');
+   mi_concepto_interes varchar2(20); -- := fn_ogt_traer_code_concepto('RECAUDO INTERESES CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA');
 
    --Procedimiento para procesar imputación
    procedure pr_procesar_imputacion (
@@ -58,7 +58,7 @@ create or replace package pk_ogt_imputacion as
 
    procedure pr_registrar_documento (
       p_acta_numero         varchar2, --ogt_documento.numero%type,
-      p_tipo_acta           varchar2, --ogt_documento.tipo%type,
+      p_acta_tipo           varchar2, --ogt_documento.tipo%type,
       p_nro_referencia_pago sl_pcp_pago.nro_referencia_pago%type,
       p_rec_pago            type_rec_pago,
       p_usuario             varchar2,
@@ -66,24 +66,30 @@ create or replace package pk_ogt_imputacion as
       p_procesado           out boolean
    );
 
-   procedure pr_registrar_detalle_documento (
+   procedure pr_registrar_detalle_docum (
+      p_id_cuenta_cobro         sl_pcp_cuenta_cobro.id%type,
       p_valor_capital           number,
-      p_valor_intereses         number,
+      p_valor_interes           number,
       p_doc_numero              varchar2, --30
       p_doc_tipo                varchar2, --10
-      p_id_tercero_origen       number,
-      p_id_tercero_destino      number,
-      p_vigencia                number,   --4,0
-      p_code_id                 varchar2, --30
+      p_unte_codigo             varchar2, --10
+      p_ter_id_origen           number,
+      p_ter_id_destino          number,
+      p_ter_id_recaudador       number,
+      p_ter_id_entidad_origen   number,
+      p_tipo_cuenta             varchar2, --3
+      p_cuba_numero             varchar2,
+      p_vigencia_ingreso        number,   --4,0
       p_info_numero             varchar2, --30
       p_fecha_recaudo           date,
       p_codigo_interno          number,   --10,2
       p_valor_base_impuestos    number,   --20
       p_unidad_ejecutora_origen varchar2, --6
       p_porcentaje              number,   --10,4
-      p_centro_costo            varchar2, --20
       p_numero_sisla            varchar2, --20
       p_estado_sisla            varchar2, --50
+      p_acta_tipo               varchar2, --10
+      p_acta_numero             number,
       p_resp                    out varchar2,
       p_procesado               out boolean
    );

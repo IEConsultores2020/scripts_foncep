@@ -6,16 +6,21 @@ SELECT *
 FROM
     BINCONSECUTIVO
 WHERE
-    GRUPO = 'RH'
-    AND NOMBRE = 'ACTOS_ADVOS'
+    GRUPO = 'OPGET'
+    AND NOMBRE = 'ACTA_LEGAL_ID'
     AND VIGENCIA = '0000'
     AND CODIGO_COMPANIA = '000'
     AND CODIGO_UNIDAD_EJECUTORA = '00'
     ;
 
+    SELECT NUMERO FROM OGT_DOCUMENTO
+    ORDER BY 1 DESC
+    ;
+
 SELECT *
 FROM BINTABLAS
-WHERE GRUPO='OPGET'
+WHERE GRUPO='NOMINA'
+AND RESULTADO ='CIERTO'
 AND NOMBRE='PATH'
 ;
 
@@ -306,9 +311,24 @@ where  nombres like 'MARGARITA%' --numero_identificacion= 79693028
     from ogt_concepto_tesoreria
     where id = :concepto;
 
+    --Consulta del acta
     select *
     from ogt_documento
-    where 54948 = numero or '54948'=numero_legal;
+    where numero in (15617,54948)
+      and tipo_legal = 'ALE' 
+      and unte_codigo = 'FINANCIERO'
+        ;
+
+    --Consulta documento
+    /*OGT_DOCUMENTO.NUM_LEGAL = OGT_ACTA.NUMERO AND
+    OGT_DOCUMENTO.TIPO_LEGAL = OGT_ACTA.TIPO*/
+    select *   54861 56715
+    from ogt_documento
+    where '15617' in (numero_soporte,numero_legal) 
+      or '54948' in (numero_soporte,numero_legal)
+      and tipo_legal = 'ALE' 
+        ;        
+        --or '54948'=numero_legal;
 
     select *
     from ogt_detalle_documento
@@ -319,8 +339,11 @@ where  nombres like 'MARGARITA%' --numero_identificacion= 79693028
     where doc_numero = '54948'
     and doc_tipo ='XYZ';
 
+    select *
+    from 
+    where numero_identificacion in (1030592799,79693028,20730522);
 
-     SELECT NVL(ing.cuba_tipo,'0'),
+    SELECT NVL(ing.cuba_tipo,'0'),
           NVL(ing.cote_id,'0'),
           NVL(ing.unte_codigo,'0'),
           NVL(ing.ter_id,0),
@@ -349,4 +372,9 @@ where  nombres like 'MARGARITA%' --numero_identificacion= 79693028
     select *
     from ogt_detalle_pensionado;
 
-    
+select id
+from ogt_concepto_tesoreria;
+
+
+  select cod_centro_costo
+        from ogt_tercero_cc;

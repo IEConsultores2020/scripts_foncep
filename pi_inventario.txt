@@ -1,29 +1,29 @@
 --Adicionó campo para el incluir información de pensionado en el acta.
-alter_tables_ogt.sql
+pi_alter_tables_ogt.sql
 --Script de modificación de las tablas del portal de pagos para adicionar el estado
-alter_tables_pcp.sql
+pi_alter_tablas_pcp.sql
 
 --Se crea tabla en OGT para registrar los pagos por pensionado
-ogt_crea_tabla_detalle_pensionado.sql
+pi_ogt_crea_tabla_detalle_pensionado.sql
 
+--Permisos a ogt
+pi_permisos.sql
 
 --Script de creación paquete almacenado de la imputación.
-pk_ogt_imputacion_spec.sql
-pk_ogt_imputacion_body.sql
+pi_pk_ogt_imputacion_spec.sql
+pi_pk_ogt_imputacion_body.sql
 
 --Script de creación trigger después de insertar en pagos y desde donde se dispara la imputación
-create_trigger_sl_pcp_tr_a_i_sl_pago.sql
+pi_create_trigger_sl_pcp_tr_a_i_sl_pago.sql
 
 --Inserción de conceptos de tesoreria para capital e intereses 
-insert_ogt_conceptos_tesoreria.sql
-
+pi_insert_ogt_conceptos_tesoreria.sql
 
 --Ejecutar pruebas.
 --1. Prueba básica que se dispara en el momento de crear un nuevo que se inserta con plsql command
-pruebas_imputacion.sql
+pi_prueba_dummy_imputacion.sql
 --2. Prueba de imputación acta, hace el llamado a una referencia de pago especifica
-pruebas_imputacion_acta.sql
+pi_pruebas_imputacion_acta.sql
 
-
---Permisos a ogt
-permisos.sql
+--3. Prueba imputacion trae cuentas de cobro
+pi_prueba_trae_cuentas_cobro

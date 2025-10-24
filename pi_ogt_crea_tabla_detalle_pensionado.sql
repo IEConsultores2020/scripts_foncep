@@ -44,3 +44,36 @@ CREATE TABLE ogt.ogt_detalle_pensionado
     GRANT SELECT, INSERT, UPDATE, DELETE ON OGT.OGT_DETALLE_PENSIONADO TO OGT_ADMIN;
 
     CREATE OR REPLACE PUBLIC SYNONYM OGT_DETALLE_PENSIONADO FOR OGT.OGT_DETALLE_PENSIONADO;
+
+    CREATE SEQUENCE OGT.OGT_DETALLE_PENSIONADO_SEQ
+    START WITH 1      -- The first ID generated will be 1
+    INCREMENT BY 1    -- Each subsequent ID will be 1 greater than the last
+    NOCACHE;     
+
+    CREATE OR REPLACE TRIGGER OGT.TRG_OGT_DETALLE_PENSION_BIU
+    BEFORE INSERT ON OGT_DETALLE_PENSIONADO
+    FOR EACH ROW
+    BEGIN
+        -- Check if the primary key column (:NEW.ID) is NULL.
+        -- This allows the application to optionally provide its own ID,
+        -- but if it doesn't, the sequence will provide one.
+        IF :NEW.ID IS NULL THEN
+            -- Assign the next sequential value to the ID column
+            :NEW.ID := OGT_DETALLE_PENSIONADO_SEQ.NEXTVAL;
+        END IF;
+    END;
+    /
+
+
+/*/
+    select *
+    from ogt_detalle_pensionado;
+
+    insert into ogt_detalle_pensionado (doc_numero) values ('999');
+
+    select * from 
+    --delete 
+    ogt_detalle_pensionado;
+
+    commit;
+*/
