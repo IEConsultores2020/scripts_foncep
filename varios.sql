@@ -41,10 +41,10 @@ BEGIN
 END;
 /
 
-select interno_persona, numero_identificacion
+select *
 from rh_personas
 where numero_identificacion in (1030592799,79693028) --651, 652
-or interno_persona= 588   --  20730522
+or interno_persona= 643   --  20730522
 --649 --1030575813
 ;
 
@@ -378,3 +378,21 @@ from ogt_concepto_tesoreria;
 
   select cod_centro_costo
         from ogt_tercero_cc;
+
+select *
+from all_constraints where constraint_name='INCU_DEIN_FK'
+;
+
+
+--Se actualiza a estado elaborado Solicitud Mario Chadid 10/31/2025
+
+select *
+from  --update
+ogt_documento
+--set estado = 'EL'
+where tipo='ALE'
+--and estado='AP'
+and unte_codigo='FINANCIERO'
+and numero in (56931);
+
+COMMIT;

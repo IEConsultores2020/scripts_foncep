@@ -32,8 +32,9 @@ create or replace package pk_ogt_imputacion as
    type type_rec_liquidacion is record (
          id                  sl_pcp_liquidaciones.id%type, 	--NUMBER(18,0) NOT NULL ENABLE, 
          id_det_cuenta_cobro sl_pcp_liquidaciones.id_det_cuenta_cobro%type, --NUMBER(18,0) NOT NULL ENABLE, 
-         interno_persona     sl_pcp_liquidaciones.interno_persona%type, --NUMBER(15,0) NOT NULL ENABLE, 
          id_factura          sl_pcp_liquidaciones.id_factura%type, --NUMBER(15,0) NOT NULL ENABLE, 
+         interno_persona     sl_pcp_liquidaciones.interno_persona%type, --NUMBER(15,0) NOT NULL ENABLE, 
+         fecha_periodo_ini   sl_pcp_liquidaciones.fecha_periodo_ini%type,
          fecha_periodo_fin   sl_pcp_liquidaciones.fecha_periodo_fin%type,
          saldo_factura       sl_pcp_liquidaciones.saldo_factura%type, --NUMBER(15,0) NOT NULL ENABLE, 
          valor_capital       sl_pcp_liquidaciones.valor_capital%type, --NUMBER(15,0) NOT NULL ENABLE, 
@@ -74,6 +75,7 @@ create or replace package pk_ogt_imputacion as
       p_doc_tipo                varchar2, --10
       p_unte_codigo             varchar2, --10
       p_ter_id_origen           number,
+      p_centro_costo            varchar2, --30
       p_ter_id_destino          number,
       p_ter_id_recaudador       number,
       p_ter_id_entidad_origen   number,
@@ -126,14 +128,15 @@ create or replace package pk_ogt_imputacion as
    );
 
    function fn_crear_acta (
-      un_documento    varchar2,   --ogt_documento.numero%type,
-      un_tipo         varchar2,   --ogt_documento.tipo%type,
-      una_fecha       date,       --ogt_documento.fecha%type :=SYSDATE,
-      un_estado       varchar2,   --ogt_documento.estado%type,
-      una_unidad      varchar2,   --ogt_documento.unte_codigo%type,
-      una_observacion varchar2,   --ogt_documento.observaciones%type,
-      un_usuario      varchar2,   --ogt_documento.usuario_elaboro%type,
-      un_valor        number      --ogt_documento.valor%type
+      un_documento      varchar2,   --ogt_documento.numero%type,
+      un_tipo           varchar2,   --ogt_documento.tipo%type,
+      una_fecha         date,       --ogt_documento.fecha%type :=SYSDATE,
+      un_estado         varchar2,   --ogt_documento.estado%type,
+      una_unidad        varchar2,   --ogt_documento.unte_codigo%type,
+      un_numero_externo varchar2,  --ogt_documento.numero_externo%type
+      una_observacion   varchar2,   --ogt_documento.observaciones%type,
+      un_usuario        varchar2,   --ogt_documento.usuario_elaboro%type,
+      un_valor          number      --ogt_documento.valor%type
    ) return number;
 
    procedure pr_actualizar_encabezado (
@@ -143,20 +146,35 @@ create or replace package pk_ogt_imputacion as
       p_procesado           in out boolean
    );
 
-   function sl_id_tercero (
-      p_codigo_compa sl_relacion_tac.codigo_compa%type,
-      p_resp         out varchar2
-   ) return sl_relacion_tac.id_limay%type;
+   procedure sl_id_tercero_y_centro_costo (
+      p_codigo_compa      sl_relacion_tac.codigo_compa%type,
+      p_id_tercero_origen out number,
+      p_centro_costo      out varchar2,
+      p_resp              out varchar2
+   );
 
    --Trae el code_id del concepto asociado
    function fn_ogt_traer_code_concepto (
       p_descripcion varchar
    ) return varchar2;
    
-   --Trea el centro de costo del tercero origen
+   --Trae el centro de costo del tercero origen
    function fn_ogt_traer_centro_costo (
       p_id_tercero_origen varchar2
    ) return varchar2;
+
+   --Trae el número del acta registrada para la referencia de pago ó -1 por defecto
+   function fn_traer_numero_acta (
+      un_tipo           varchar2,   --ogt_documento.tipo%type,
+      un_estado         varchar2,   --ogt_documento.estado%type,
+      una_unidad        varchar2,   --ogt_documento.unte_codigo%type,
+      un_numero_externo varchar2  --ogt_documento.numero_externo%type
+   ) return number;
+
+   --Trae el número del documento asociado al acta
+   function fn_traer_documento (
+      p_nro_referencia_pago sl_pcp_encabezado.nro_referencia_pago%type
+   ) return number;
 
 end pk_ogt_imputacion;
 /
