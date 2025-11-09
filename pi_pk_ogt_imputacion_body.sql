@@ -11,10 +11,9 @@ create or replace package body pk_ogt_imputacion as
       my_exception exception;
       mi_acta_numero        number;
       mi_tipo_acta          varchar2(10) /*ogt_documento.tipo%type*/ := 'ALE';
-      mi_estado_acta        varchar2(2) := 'AP';
+      mi_estado_acta        varchar2(2) := 'RE';
       mi_valor_pagado       number;
       mi_num_resp           number;
-      mi_numero             ogt_documento.numero%type;
    begin
       mi_concepto_capital := fn_ogt_traer_code_concepto('RECAUDO CAPITAL CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA');
       mi_concepto_interes := fn_ogt_traer_code_concepto('RECAUDO INTERESES CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA');
@@ -91,50 +90,33 @@ create or replace package body pk_ogt_imputacion as
                mi_num_resp = 1
                and mi_acta_numero is not null
             then --Se creo correctamente el acta o ya existe
-               mi_numero := fn_traer_documento(p_nro_referencia_pago => p_nro_referencia_pago);
-               if mi_numero is null then --No se ha creado... se procede a crear
-                  pr_registrar_documento(
-                     p_acta_numero         => mi_acta_numero,
-                     p_acta_tipo           => mi_tipo_acta,
+               pr_registrar_documento(
+                  p_acta_numero         => mi_acta_numero,
+                  p_acta_tipo           => mi_tipo_acta,
+                  p_estado              => mi_estado_acta,
+                  p_nro_referencia_pago => p_nro_referencia_pago,
+                  p_rec_pago            => mi_rec_pago,
+                  p_usuario             => p_usuario,
+                  p_resp                => p_resp,
+                  p_procesado           => p_procesado
+               );
+               if p_procesado = true then
+                  --Contabilizar y actualiza sisla
+                  /*
+                  pr_contabilizar_imputacion(
                      p_nro_referencia_pago => p_nro_referencia_pago,
-                     p_rec_pago            => mi_rec_pago,
                      p_usuario             => p_usuario,
                      p_resp                => p_resp,
                      p_procesado           => p_procesado
-                  );
-               else
-                  p_resp := p_resp
-                            || ' Documento ya existe con número '
-                            || mi_numero;
-                  p_procesado := true;
-               end if;
-               if p_procesado = true then
-                  --Actualiza encabezado y guarda o rechaza actualizaciones de acuerdo al resultado en p_procesado
-                  pr_actualizar_encabezado(
-                     p_nro_referencia_pago => p_nro_referencia_pago,
-                     p_proceso             => 'RA', --Registro Acta  
-                     p_resp                => p_resp,
-                     p_procesado           => p_procesado
-                  );
+                  );*/
                   if p_procesado = true then
-                     --Contabilizar y actualiza sisla
-                     pr_contabilizar_imputacion(
+                     --Actualiza encabezado y guarda o rechaza actualizaciones de acuerdo al resultado en p_procesado
+                     pr_actualizar_encabezado(
                         p_nro_referencia_pago => p_nro_referencia_pago,
-                        p_usuario             => p_usuario,
+                        p_proceso             => 'IMP', --Registro Limay
                         p_resp                => p_resp,
                         p_procesado           => p_procesado
                      );
-                     if p_procesado = true then
-                        --Actualiza encabezado y guarda o rechaza actualizaciones de acuerdo al resultado en p_procesado
-                        pr_actualizar_encabezado(
-                           p_nro_referencia_pago => p_nro_referencia_pago,
-                           p_proceso             => 'LM', --Registro Limay
-                           p_resp                => p_resp,
-                           p_procesado           => p_procesado
-                        );
-                     else
-                        rollback;
-                     end if;
                   else
                      rollback;
                   end if;
@@ -166,6 +148,7 @@ create or replace package body pk_ogt_imputacion as
    procedure pr_registrar_documento (
       p_acta_numero         varchar2, --ogt_documento.numero%type,
       p_acta_tipo           varchar2, --ogt_documento.tipo%type,
+      p_estado              varchar2,
       p_nro_referencia_pago sl_pcp_pago.nro_referencia_pago%type,
       p_rec_pago            type_rec_pago,
       p_usuario             varchar2,
@@ -175,15 +158,15 @@ create or replace package body pk_ogt_imputacion as
       mi_rec_cuenta_cobro   type_rec_cuenta_cobro;
       mi_cur_cuentas_cobro  sys_refcursor;
       mi_numero_documento   varchar2(30);
+      mi_tipo_documento     varchar2(3) := 'XYZ';
       mi_entidad            usuarios_compania.codigo_compania%type := 206;
       mi_id_tercero_destino number;
       mi_id_tercero_origen  number;
       mi_centro_costo       varchar2(30);
       mi_vigencia           number;
       mi_ingreso            number;
-      mi_tipo_documento     varchar2(3) := 'XYZ';
-      mi_estado_documento   varchar2(2) := 'AP';
-      mi_bin_tipo_cuenta    varchar2(3) := 'FID';
+      --mi_estado_documento   varchar2(2) := 'AP';
+      mi_bin_tipo_cuenta    varchar2(3) := 'FD';
       mi_unte_codigo        varchar2(10) := 'FINANCIERO';
       mi_cuba_numero        varchar2(12) := '482800043630';
       mi_tipo_soporte       varchar2(3) := 'NCR';
@@ -193,61 +176,74 @@ create or replace package body pk_ogt_imputacion as
         into mi_vigencia
         from dual;
       begin
-         --Trae secuencial para la tabla
-         mi_numero_documento := pk_secuencial.fn_traer_consecutivo(
-            'OPGET',
-            'DOC_NUM',
-            '2002',
-            '000'
-         ) + 1;
-         --Crea documento
-         if mi_numero_documento is null then
-            p_resp := p_resp
-                      || chr(10)
-                      || 'No fue posible obtener el consecutivo (DOC_NUM) para registrar el documento '
-                      || mi_rec_cuenta_cobro.id;
-            p_procesado := false;
+         mi_numero_documento := fn_traer_documento(p_nro_referencia_pago => p_nro_referencia_pago);
+         if mi_numero_documento is null then --No se ha creado... se procede a crear
+            --Trae secuencial para la tabla
+            mi_numero_documento := pk_secuencial.fn_traer_consecutivo(
+               'OPGET',
+               'DOC_NUM',
+               '2002',
+               '000'
+            ) + 1;
+            --Crea documento
+            if mi_numero_documento is null then
+               p_resp := p_resp
+                         || chr(10)
+                         || 'No fue posible obtener el consecutivo (DOC_NUM) para registrar el documento '
+                         || mi_rec_cuenta_cobro.id;
+               p_procesado := false;
+            else
+               insert into ogt_documento (
+                  numero,
+                  tipo,
+                  estado,
+                  fecha,
+                  fecha_emision_titulo,
+                  ter_id_receptor,
+                  unte_codigo,
+                  bin_tipo_cuenta,
+                  bin_tipo_titulo,
+                  cuba_numero,
+                  usuario_elaboro,
+                  usuario_reviso,
+                  numero_soporte,
+                  tipo_soporte,
+                  fecha_compra_titulo,
+                  fecha_soporte,
+                  numero_timbre,
+                  numero_legal,
+                  tipo_legal
+               ) values ( mi_numero_documento,
+                          mi_tipo_documento,
+                          p_estado,
+                          sysdate,
+                          trunc(
+                             sysdate,
+                             'mm'
+                          ),
+                          p_rec_pago.id_banco,
+                          mi_unte_codigo,
+                          mi_bin_tipo_cuenta,
+                          null,
+                          mi_cuba_numero,
+                          p_usuario,
+                          p_usuario,
+                          p_acta_numero,
+                          mi_tipo_soporte,
+                          p_rec_pago.fecha_autorizacion,
+                          p_rec_pago.fecha_autorizacion,
+                          mi_vigencia,
+                          p_acta_numero,
+                          p_acta_tipo );
+               ogt_pk_ingreso.pr_insertar_tercero(p_rec_pago.id_banco);
+               p_procesado := true;
+            end if; --if mi_numero_documento is null then
          else
-            insert into ogt_documento (
-               numero,
-               tipo,
-               estado,
-               fecha,
-               ter_id_receptor,
-               unte_codigo,
-               bin_tipo_cuenta,
-               bin_tipo_titulo,
-               cuba_numero,
-               usuario_elaboro,
-               usuario_reviso,
-               numero_soporte,
-               tipo_soporte,
-               fecha_compra_titulo,
-               fecha_soporte,
-               numero_timbre,
-               numero_legal,
-               tipo_legal
-            ) values ( mi_numero_documento,
-                       mi_tipo_documento,
-                       mi_estado_documento,
-                       sysdate,
-                       p_rec_pago.id_banco,
-                       mi_unte_codigo,
-                       mi_bin_tipo_cuenta,
-                       null,
-                       mi_cuba_numero,
-                       p_usuario,
-                       p_usuario,
-                       p_acta_numero,
-                       mi_tipo_soporte,
-                       p_rec_pago.fecha_autorizacion,
-                       p_rec_pago.fecha_autorizacion,
-                       mi_vigencia,
-                       p_acta_numero,
-                       p_acta_tipo );
-            ogt_pk_ingreso.pr_insertar_tercero(p_rec_pago.id_banco);
+            p_resp := p_resp
+                      || ' Documento ya existe con número '
+                      || mi_numero_documento;
             p_procesado := true;
-         end if; --if mi_numero_documento is null then
+         end if;
       exception
          when others then
             p_resp := p_resp
@@ -966,33 +962,6 @@ create or replace package body pk_ogt_imputacion as
          return null;
    end fn_ogt_traer_code_concepto;
 
-   function fn_ogt_traer_centro_costo (
-      p_id_tercero_origen varchar2
-   ) return varchar2 as
-      mi_result varchar2(30);
-   begin
-      select cod_centro_costo
-        into mi_result
-        from ogt_tercero_cc
-       where id_tercero = p_id_tercero_origen;
-
-      if mi_result is null then
-         select id_sisla
-           into mi_result
-           from sl_relacion_tac
-          where id_limay = p_id_tercero_origen;
-      end if;
-      return mi_result;
-   exception
-      when no_data_found then
-         select id_sisla
-           into mi_result
-           from sl_relacion_tac
-          where id_limay = p_id_tercero_origen;
-      when others then
-         return null;
-   end fn_ogt_traer_centro_costo;
-
    --Trae el número del acta registrada para la referencia de pago ó -1 por defecto
    function fn_traer_numero_acta (
       un_tipo           varchar2,   --ogt_documento.tipo%type,
@@ -1025,15 +994,19 @@ create or replace package body pk_ogt_imputacion as
       select numero
         into mi_numero
         from ogt_documento
-       where numero_legal in -- '55502'
-        (
+       where numero_legal
+             || '-'
+             || tipo_legal in -- '55502'
+              (
          select numero
+                || '-'
+                || tipo
            from --DELETE 
             ogt_documento
           where tipo = 'ALE'
-            and estado = 'AP'
+            --and estado = 'RE'
             and unte_codigo = 'FINANCIERO'
-            and numero_externo = '2025000001'
+            and numero_externo = p_nro_referencia_pago
       )
          and tipo = 'XYZ'
          and estado = 'RE';

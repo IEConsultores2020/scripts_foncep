@@ -60,6 +60,7 @@ create or replace package pk_ogt_imputacion as
    procedure pr_registrar_documento (
       p_acta_numero         varchar2, --ogt_documento.numero%type,
       p_acta_tipo           varchar2, --ogt_documento.tipo%type,
+      p_estado              varchar2, --ogt_documento.estado%type,
       p_nro_referencia_pago sl_pcp_pago.nro_referencia_pago%type,
       p_rec_pago            type_rec_pago,
       p_usuario             varchar2,
@@ -158,11 +159,6 @@ create or replace package pk_ogt_imputacion as
       p_descripcion varchar
    ) return varchar2;
    
-   --Trae el centro de costo del tercero origen
-   function fn_ogt_traer_centro_costo (
-      p_id_tercero_origen varchar2
-   ) return varchar2;
-
    --Trae el número del acta registrada para la referencia de pago ó -1 por defecto
    function fn_traer_numero_acta (
       un_tipo           varchar2,   --ogt_documento.tipo%type,

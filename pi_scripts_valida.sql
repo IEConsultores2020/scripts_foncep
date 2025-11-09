@@ -2,12 +2,14 @@
 select e.nro_referencia_pago,
        e.estado eest,
        e.valor_referencia evalor,
+       e.centro_costo centro_costo,
        cc.id ctac_id,
        cc.codigo_entidad centi,
+       cc.id_encabezado,
        cc.estado cest,
        cc.valor_capital cvcapital,
        cc.valor_intereses cvinteres,
-       e.*,
+      -- e.*,
        l.id li_id,
        l.estado li_est,
        l.interno_persona li_ipers,
@@ -19,34 +21,46 @@ select e.nro_referencia_pago,
  where e.id = cc.id_encabezado
    and cc.id = l.id_det_cuenta_cobro
    and e.nro_referencia_pago = p.nro_referencia_pago
-   and e.nro_referencia_pago = '2025000001';
+   and e.nro_referencia_pago in ('2025000001','2025000003');
+
+   select *
+   from sl_pcp_cuenta_cobro
 
 
 ----------------------------------------------------------------------
 ---VERIFICACIONES EN OPGET
 
 --Verifica si el acta ya fue creada
-select *
-from  
-ogt_documento
+select * 
+from  ogt_documento
 where tipo='ALE'
 --and estado='AP'
 and unte_codigo='FINANCIERO'
-and numero in (55502,54914)
---AND numero_externo = '2025000001'
+and numero in (55502,55503,54861)
+and numero_externo in ('2025000001','2025000003','2025000012')
+AND extract(year from fecha) IN (2025)
+
 ;
 
 --Verifica si el documento fue creado
-select ogt_documento.numero_legal acta_numero, ogt_documento.*
+select * /*ogt_documento.numero, ogt_documento.numero_legal, 
+          ogt_documento.numero, ogt_documento.tipo,
+          ogt_documento.fecha, ogt_documento.fecha_emision_titulo, 
+          ogt_documento.fecha_compra_titulo*/
 from ogt_documento
-where numero_legal in ('55502','54914')
+where numero_legal in ('55502','55503','54914','56826')
+--and  bin_tipo_cuenta = 'FD'
+AND  extract(year from fecha) IN (2025)
+AND extract(month from fecha) IN (10,11)
+;*/
+
      ( select numero
       from --DELETE 
       ogt_documento
       where tipo='ALE'
-      and estado='AP'
+      and estado='RE'
       and unte_codigo='FINANCIERO'
-      AND numero_externo = '2025000001')
+      AND numero_externo in ('2025000001','2025000003','2025000012'))
   and tipo='XYZ'
   and estado = 'RE'
 --and fecha = SYSDATE
@@ -54,17 +68,22 @@ where numero_legal in ('55502','54914')
 
 ---Post query documento
   select pk_sit_infbasica.sit_fn_existe_id(:ogt_documento.ter_id_receptor
-
-
+;
 
 
 --Verifica detalle documento
 select *
-from ogt_detalle_documento  where doc_numero =54914
-where doc_numero||'-'||doc_tipo in
-  (select numero_legal||'-'||tipo
-      from ogt_documento
-where numero_legal in ('55502','54914'))
+from ogt_detalle_documento --where valor = 822356068.70 
+where doc_numero in ('55503','55502','54861')
+where numero||'-'||tipo in
+  (select   
+          ogt_documento.numero||'-'||ogt_documento.tipo
+    from ogt_documento
+   
+    where numero_legal in ('55502','55503','54914','56826')
+    and extract(year from fecha) IN (2025)
+  )
+      ;
      ( select numero
       from --DELETE 
       ogt_documento
@@ -73,7 +92,7 @@ where numero_legal in ('55502','54914'))
       and unte_codigo='FINANCIERO'
       AND numero_externo = '2025000001')
       and tipo='XYZ'  
-      and estado = 'RE'
+    --  and estado = 'RE'
   )
 ;
 
@@ -84,7 +103,7 @@ from   ogt_ingreso
 where --id=68375 and
 /*doc_numero>='55502' and 
 doc_tipo='XYZ'*/
-doc_numero||'-'||doc_tipo in --= '55502-XYZ'
+doc_numero||'-'||doc_tipo in --('5502-XYZ','5503-XYZ')
   (select doc_numero||'-'||doc_tipo
     from ogt_detalle_documento 
     where doc_numero||'-'||doc_tipo in
@@ -97,7 +116,7 @@ doc_numero||'-'||doc_tipo in --= '55502-XYZ'
             where tipo='ALE'
             and estado='AP'
             and unte_codigo='FINANCIERO'
-            AND numero_externo = '2025000001')
+            AND numero_externo = '2025000003')
             and tipo='XYZ'  
             and estado = 'RE'
         )
@@ -186,7 +205,7 @@ where dp.id_ingreso in
               from --DELETE 
               ogt_documento
               where tipo='ALE'
-              and estado='AP'
+              and estado='RE'
               and unte_codigo='FINANCIERO'
               AND numero_externo = '2025000001')
               and tipo='XYZ'  
@@ -243,4 +262,45 @@ from binconsecutivo
 where grupo='OPGET'
 and nombre='DOC_NUM'
 and vigencia='2002'
-and codigo_compania='000'
+and codigo_compania='000';
+
+
+--sl_id_tercero_y_centro_costo( mi_rec_cuenta_cobro.codigo_entidad, mi_id_tercero_origen, mi_centro_costo,p_resp);
+select id_limay, id_sisla
+        from sl_relacion_tac
+       where codigo_compa = 107766;
+
+--Postquery 
+--pk_sit_infbasica.sit_fn_existe_id('1209')
+SELECT id
+FROM shd_terceros
+WHERE (id in (67896,5924))
+;
+
+--pk_sit_infbasica.sit_fn_nombre(:ogt_detalle_documento.ter_id_origen,SYSDATE);
+SELECT id, shd_informacion_basica.ib_primer_nombre,
+               shd_informacion_basica.ib_segundo_nombre,
+               shd_informacion_basica.ib_primer_apellido,
+               shd_informacion_basica.ib_segundo_apellido
+        FROM shd_informacion_basica
+        WHERE id IN (5924,400293) AND ib_fecha_inicial<=sysdate AND
+              (ib_fecha_final>=sysdate OR ib_fecha_final IS NULL)
+              ;
+
+--mi_inf_basica_origen:=pk_sit_infbasica.sit_fn_infbasica(:ogt_detalle_documento.ter_id_origen,SYSDATE);
+SELECT *
+FROM shd_informacion_basica
+WHERE id = 67869 AND ib_fecha_inicial <= sysdate AND
+      (ib_fecha_final >= sysdate OR ib_fecha_final IS NULL);      
+
+
+select * from ogt_documento
+where numero_legal||tipo_legal in
+(select numero||tipo
+           from --DELETE 
+            ogt_documento
+          where tipo = 'ALE'
+            --and estado = 'AP'
+            and unte_codigo = 'FINANCIERO'
+            and numero_externo = '2025000001' --p_nro_referencia_pago
+)

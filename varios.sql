@@ -19,10 +19,22 @@ WHERE
 
 SELECT *
 FROM BINTABLAS
-WHERE GRUPO='NOMINA'
-AND RESULTADO ='CIERTO'
-AND NOMBRE='PATH'
+WHERE GRUPO='GENERAL'
+AND NOMBRE='TIPO_CUENTA'
+AND RESULTADO  LIKE 'TIPO%'
 ;
+
+select *
+--update 
+from 
+  ogt_documento
+--set valor_actual_titulo = 999
+where numero_legal in ('55502','54914')
+--and  bin_tipo_cuenta = 'FD'
+and extract(year from fecha) in (2025)
+;
+
+commit;
 
 set serveroutput on ;
 DECLARE
@@ -273,7 +285,7 @@ where  descripcion like 'RECAUDO%CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA'
 /*
     ID                      DESCRIPCION
 --00-02-37-11-00-00-00      RECAUDO CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA PA PENSIONES 2024
-*/
+*/ 
 
 ID   descripcion
 1-3-84-08-01    FIDUDAVIVIENDA
@@ -385,14 +397,68 @@ from all_constraints where constraint_name='INCU_DEIN_FK'
 
 
 --Se actualiza a estado elaborado Solicitud Mario Chadid 10/31/2025
-
 select *
 from  --update
 ogt_documento
---set estado = 'EL'
+set estado = 'RE'
 where tipo='ALE'
---and estado='AP'
-and unte_codigo='FINANCIERO'
+and estado='EL'
+and  unte_codigo='FINANCIERO'
 and numero in (56931);
 
-COMMIT;
+--COMMIT;
+
+--concepto en el ingreso
+--Para la lista de valores 
+SELECT id,  descripcion
+FROM ogt_concepto_tesoreria
+WHERE afecta_ingreso <> 8 AND concepto_hoja = 1 AND fecha_final IS NULL
+CONNECT BY PRIOR  id = cote_id
+START WITH id = (SELECT id
+   FROM ogt_concepto_tesoreria
+   WHERE cote_id IS NULL
+     AND ROWNUM = 1)
+ORDER BY descripcion ;
+--00-02-30-09-00-00-00
+--00-02-30-09-00-00-00
+
+--Para traer la descripción
+  select id, descripcion
+  --INTO   :ogt_detalle_documento.concepto
+  from   ogt_concepto_tesoreria
+  where  id in  --:ogt_detalle_documento.cote_id;
+    (select cote_id
+    from ogt_detalle_documento  where doc_numero in  ('55502','54914')
+    )
+;
+
+--Ajuste portalp
+select *
+from  --update
+ogt_documento
+--set fecha_emision_titulo = trunc(fecha,'mm')
+--set estado='RE'
+where tipo='ALE'
+--and estado='EL'
+and  unte_codigo='FINANCIERO'
+and numero in (55502,55503)
+;
+
+commit;
+
+select to_date(to_char(trunc(sysdate,'mm')),'dd/mm/yyyy')
+from dual
+;
+
+select id_limay,  id_sisla
+        from sl_relacion_tac
+       where codigo_compa = 107766;
+
+update --select * from
+ ogt_detalle_documento 
+--set centro_costo = 1209,
+--set ter_id_origen= 400293
+where doc_numero='55502';
+
+
+commit;
