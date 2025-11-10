@@ -462,3 +462,50 @@ where doc_numero='55502';
 
 
 commit;
+
+select id_encabezado,  codigo_entidad, count(1)
+from sl_pcp_cuenta_cobro
+group by id_encabezado,  codigo_entidad
+having count( 1)>1;
+
+select *
+from sl_pcp_cuenta_cobro 
+where id_encabezado = 98
+;
+
+select *
+from 
+--update 
+sl_pcp_encabezado
+set estado='PAG'
+where nro_referencia_pago in ('2025000001');
+
+
+---tipo_id_origen
+--TER_ID_ORIGEN 401988 400293
+declare
+  mi_existe boolean;
+  mi_ter_id_origen number:=401988;
+  --mi_nombre varchar2
+  mi_inf_basica_origen  pk_sit_infbasica.infbasica_type;
+begin
+  mi_existe := pk_sit_infbasica.sit_fn_existe_id(mi_ter_id_origen);
+  if mi_existe = true then
+    dbms_output.put_line('Existe. ');
+  else
+    dbms_output.put_line('NO E. ');
+  end if;
+
+  mi_inf_basica_origen:=pk_sit_infbasica.sit_fn_infbasica(mi_ter_id_origen,SYSDATE);
+  dbms_output.put_line('mi tipo: '||mi_inf_basica_origen.mi_tipoid);
+  dbms_output.put_line('mi_codigo_id: '||mi_inf_basica_origen.mi_codigoid);
+end;
+
+select *
+from bintablas
+where grupo =  'GENERAL'
+and nombre = 'IDENTIFICACION'
+and argumento = 'NIT'
+;
+
+

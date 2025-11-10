@@ -71,26 +71,37 @@ delete --select * from
 --Borra ingreso
 delete --select * from   
  ogt_ingreso
+ --where id = 608377
  where doc_numero
        || '-'
        || doc_tipo in (
-   select numero_legal
+   select distinct doc_numero
+                   || '-'
+                   || doc_tipo
+     from ogt_detalle_documento 
+          --where doc_numero in ('55502','54861') --'55503'
+    where doc_numero
           || '-'
-          || tipo
-     from ogt_documento
-    where numero_legal in (
+          || doc_tipo in (
       select numero
+             || '-'
+             || tipo
         from ogt_documento
-       where tipo = 'ALE'
-                --and estado='RE'
-         and unte_codigo = 'FINANCIERO'
-         and numero in ( 55502,
-                         55503/*,
-                         54861 */ )
-                --and numero_externo in ('2025000001','2025000003','2025000012')
+       where numero_legal in (
+         select numero
+           from ogt_documento
+          where tipo = 'ALE'
+                          --and estado='RE'
+            and unte_codigo = 'FINANCIERO'
+                          --and numero in ( 55502, 55503,  54861 )
+            and numero_externo in ( '2025000001',
+                                    '2025000003',
+                                    '2025000012' )
+      )
+         and tipo = 'XYZ'
    )
-      and tipo = 'XYZ'
-            --and estado = 'RE'
+      and doc_tipo = 'XYZ'
+                      --and estado = 'RE'
 );
 
 
@@ -109,16 +120,20 @@ delete --select * from
       select numero
         from ogt_documento
        where tipo = 'ALE'
-            --and estado='RE'
+                --and estado='RE'
          and unte_codigo = 'FINANCIERO'
-         and numero in ( 55502,
-                         55503,
-                         54861 )
-            --and numero_externo in ('2025000001','2025000003','2025000012')
+                --and numero in ( 55502, 55503,  54861 )
+         and numero_externo in ( '2025000001',
+                                 '2025000003',
+                                 '2025000012' )
    )
       and tipo = 'XYZ'
+)
+   and doc_tipo = 'XYZ'
         --and estado = 'RE'
-);
+   ;
+
+rollback;
 
 --Borra documentos
 delete --select * from 
@@ -129,10 +144,10 @@ delete --select * from
     where tipo = 'ALE'
       --and estado='RE'
       and unte_codigo = 'FINANCIERO'
-      and numero in ( 55502/*,
-                      55503,
-                      54861 */ )
-      --and numero_externo in ('2025000001','2025000003','2025000012')
+      --and numero in ( 55502, 55503,  54861 )
+      and numero_externo in ( '2025000001',
+                              '2025000003',
+                              '2025000012' )
 )
    and tipo = 'XYZ'
    --and estado = 'RE'

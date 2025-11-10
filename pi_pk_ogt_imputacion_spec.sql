@@ -142,7 +142,7 @@ create or replace package pk_ogt_imputacion as
 
    procedure pr_actualizar_encabezado (
       p_nro_referencia_pago sl_pcp_encabezado.nro_referencia_pago%type,
-      p_proceso             varchar2,
+      p_nuevo_estado        varchar2,
       p_resp                out varchar2,
       p_procesado           in out boolean
    );
@@ -171,6 +171,12 @@ create or replace package pk_ogt_imputacion as
    function fn_traer_documento (
       p_nro_referencia_pago sl_pcp_encabezado.nro_referencia_pago%type
    ) return number;
+
+   --Trae el estado del encabezado
+   procedure pr_traer_estado_encabezado (
+      p_nro_referencia_pago sl_pcp_encabezado.nro_referencia_pago%type,
+      p_resp                out varchar2
+   );
 
 end pk_ogt_imputacion;
 /

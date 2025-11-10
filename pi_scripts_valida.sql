@@ -4,6 +4,7 @@ select e.nro_referencia_pago,
        e.valor_referencia evalor,
        e.centro_costo centro_costo,
        cc.id ctac_id,
+       cc.id_cuenta_cobro,
        cc.codigo_entidad centi,
        cc.id_encabezado,
        cc.estado cest,
@@ -13,7 +14,7 @@ select e.nro_referencia_pago,
        l.id li_id,
        l.estado li_est,
        l.interno_persona li_ipers,
-       p.*
+       l.*
   from sl_pcp_encabezado e,
        sl_pcp_cuenta_cobro cc,
        sl_pcp_liquidaciones l,
@@ -21,7 +22,7 @@ select e.nro_referencia_pago,
  where e.id = cc.id_encabezado
    and cc.id = l.id_det_cuenta_cobro
    and e.nro_referencia_pago = p.nro_referencia_pago
-   and e.nro_referencia_pago in ('2025000001','2025000003');
+   and e.nro_referencia_pago in ('2025000001'); --,'2025000003');
 
    select *
    from sl_pcp_cuenta_cobro
