@@ -1,20 +1,21 @@
 --CUENTAS DE COBRO EN SISLA
 select e.nro_referencia_pago,
-       e.estado eest,
+       --e.estado eest,
        e.valor_referencia evalor,
        e.centro_costo centro_costo,
-       cc.id ctac_id,
+       --cc.id ctac_id,
        cc.id_cuenta_cobro,
        cc.codigo_entidad centi,
-       cc.id_encabezado,
+       --cc.id_encabezado,
        cc.estado cest,
-       cc.valor_capital cvcapital,
-       cc.valor_intereses cvinteres,
+       --cc.valor_capital cvcapital,
+       --cc.valor_intereses cvinteres,
       -- e.*,
-       l.id li_id,
-       l.estado li_est,
-       l.interno_persona li_ipers,
-       l.*
+       --l.id li_id,
+      -- l.estado li_est,
+       l.interno_persona id_persona, 
+       l.valor_capital capital, l.valor_interes interes /*,
+       l.*, p.**/
   from sl_pcp_encabezado e,
        sl_pcp_cuenta_cobro cc,
        sl_pcp_liquidaciones l,
@@ -75,10 +76,10 @@ AND extract(month from fecha) IN (10,11)
 --Verifica detalle documento
 select *
 from ogt_detalle_documento --where valor = 822356068.70 
-where doc_numero in ('55503','55502','54861')
+where doc_numero in ('55502','54861')
 where numero||'-'||tipo in
-  (select   
-          ogt_documento.numero||'-'||ogt_documento.tipo
+  (select  * 
+         -- ogt_documento.numero||'-'||ogt_documento.tipo
     from ogt_documento
    
     where numero_legal in ('55502','55503','54914','56826')
@@ -305,3 +306,16 @@ where numero_legal||tipo_legal in
             and unte_codigo = 'FINANCIERO'
             and numero_externo = '2025000001' --p_nro_referencia_pago
 )
+;
+
+select id,
+             nro_referencia_pago,
+             id_banco,
+             cod_autorizacion,
+             fecha_autorizacion,
+             metodo_recaudo,
+             canal,
+             jornada,
+             codigo_oficina
+        from sl_pcp_pago
+       where nro_referencia_pago = '2025000001'

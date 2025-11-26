@@ -303,8 +303,13 @@ values
 
 select *
 from BINTABLAS
-where grupo ='OPGET'
-AND NOMBRE='IMPUTACION_PORTALP';   
+where grupo ='NOMINA'
+AND NOMBRE='INDICE'
+AND ARGUMENTO='CODIGO_SUPERBANCARIA';   
+
+INSERT INTO BINTABLAS (GRUPO,NOMBRE,ARGUMENTO,RESULTADO,VIG_INICIAL)
+VALUES ('NOMINA','INDICE','CODIGO_SUPERBANCARIA','CODIGO DE SUPERBANCARIA',SYSDATE)
+;
 
  insert into ogt_documento (numero) values (1);
 
@@ -478,34 +483,80 @@ from
 --update 
 sl_pcp_encabezado
 set estado='PAG'
-where nro_referencia_pago in ('2025000001');
-
-
----tipo_id_origen
---TER_ID_ORIGEN 401988 400293
-declare
-  mi_existe boolean;
-  mi_ter_id_origen number:=401988;
-  --mi_nombre varchar2
-  mi_inf_basica_origen  pk_sit_infbasica.infbasica_type;
-begin
-  mi_existe := pk_sit_infbasica.sit_fn_existe_id(mi_ter_id_origen);
-  if mi_existe = true then
-    dbms_output.put_line('Existe. ');
-  else
-    dbms_output.put_line('NO E. ');
-  end if;
-
-  mi_inf_basica_origen:=pk_sit_infbasica.sit_fn_infbasica(mi_ter_id_origen,SYSDATE);
-  dbms_output.put_line('mi tipo: '||mi_inf_basica_origen.mi_tipoid);
-  dbms_output.put_line('mi_codigo_id: '||mi_inf_basica_origen.mi_codigoid);
-end;
-
-select *
-from bintablas
-where grupo =  'GENERAL'
-and nombre = 'IDENTIFICACION'
-and argumento = 'NIT'
 ;
 
 
+select *
+from pr_rubro
+where interno = 1547
+;
+
+select *
+from bintablas
+where argumento like '%CENTRO%COSTO%'
+;
+
+select *
+from bintablas
+where resultado like 'LA ASESORA RESPONSABLE%' GRUPO='OPGET' and nombre = 'INDICE'
+AND ARGUMENTO=nombre = 'INDICE'
+;
+
+select DISTINCT GRUPO
+from binconsecutivo 
+where GRUPO = 'LIMAY' --nombre like '%TRC%' --secuencial = 413170
+
+select max(id)
+from shd_terceros   413195
+
+where grupo='OPGET' and nombre IN ('ACTA_LEGAL_ID','DOC_NUM')
+
+select codigo_entidad from sl_pcp_cuenta_cobro
+where id_encabezado  in (s
+select id from sl_pcp_encabezado  
+where nro_referencia_pago = 2025000001) --
+
+select *
+from --update
+ogt_detalle_documento 
+set ter_id_origen=31514
+where doc_numero||'-'|| doc_tipo in (
+select    numero|| '-'|| tipo
+     from ogt_documento
+    where numero_legal in (
+      select numero
+        from ogt_documento
+       where tipo = 'ALE'
+                --and estado='RE'
+         and unte_codigo = 'FINANCIERO'
+                --and numero in ( 55502, 55503,  54861 )
+         and numero_externo in ( '2025000001'/*,
+                                 '2025000003',
+                                 '2025000012'*/ )
+   )
+      and tipo = 'XYZ'
+)
+      ;
+
+--commit;
+
+select * from pre.pr_secuencia_etapas
+;
+
+set serveroutput off
+
+set serveroutput on
+
+select * from  ogt_DETALLE_PENSIONADO 
+order by id_ingreso WHERE doc_numero     = 98145      AND doc_tipo       = 'XYZ'
+;
+
+SELECT * FROM ogt_DETALLE_PENSIONADO  WHERE doc_numero     = '98156'   AND doc_tipo       = 'XYZ'
+
+
+SELECT CENTRO_COSTO 
+  FROM ogt_DETALLE_DOCUMENTO  
+  WHERE doc_numero     = '98132'   
+  AND doc_tipo       = 'XYZ'   
+  AND ter_id_destino = 53   
+  AND cote_id        = '00-02-37-18-00-00-00'

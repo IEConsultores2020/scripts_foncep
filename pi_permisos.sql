@@ -18,4 +18,5 @@ grant insert on ogt.ogt_documento to portalp;
 
 --connectado como shd
 grant execute,debug on shd.pk_sit_infentidades to sl with grant option;
+grant execute,debug on shd.pk_sit_infbasica to sl with grant option;
 grant execute,debug on shd.pk_secuencial to sl with grant option;

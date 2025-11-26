@@ -1,32 +1,11 @@
-/*
-select *  from sl_pcp_encabezado
- where nro_referencia_pago in ( select nro_referencia_pago from sl_pcp_pago);
-
-select * from SL_PCP_CUENTA_COBRO where id_encabezado in ('2')
-*/
-
-/*--Para probar abrir ventana sql y ejecutar las siguientes 4 lineas
-   SET ECHO OFF;
-   SET SERVEROUTPUT ON  SIZE UNLIMITED;
-   spool imputacion.log; 
-   Ejecute el código a continuación
-   spool off --*/
-
-select *
-from --update 
-   sl_pcp_pago  
---set id_banco=49
-where nro_referencia_pago='2025000001'
-;
 
 update --select * from
    sl_pcp_encabezado 
-   set estado='PAG'
+  set estado='PAG'
   where nro_referencia_pago =   '2025000001'
   ;
 
-commit;
-
+--commit;
 
 --Guardo estado previo del encabezado
 declare
@@ -37,16 +16,17 @@ declare
    mi_mensaje             varchar2(2000);
    mi_procesado           boolean;
 begin
-   dbms_output.put_line('>>>>>>> Iniciando prueba imputación acta '|| current_timestamp|| ' >>>>>');
+   dbms_output.put_line('>>>>>>> Iniciando prueba imputación contabilizacion '|| current_timestamp|| ' >>>>>');
 
    select estado
      into mi_estado
      from sl_pcp_encabezado
     where nro_referencia_pago = mi_nro_referencia_pago;
 
-   dbms_output.put_line('llamando pr_proceso_imputacion');
+   dbms_output.put_line('llamando pr_contabilizar_imputacion');
    --/*
-   pk_ogt_imputacion.pr_procesar_imputacion(
+
+   pk_ogt_imputacion.pr_contabilizar_imputacion(
       p_nro_referencia_pago => '2025000001', --mi_nro_referencia_pago,
       p_usuario             => 'IUSER',
       p_resp                => mi_mensaje,
@@ -54,7 +34,7 @@ begin
    );
    --*/
    if mi_procesado = true then
-      dbms_output.put_line('Fin normal del proceso de imputación: ' || mi_mensaje);
+      dbms_output.put_line('Fin normal del proceso de imputación contabilizacion: ' || mi_mensaje);
    else
       dbms_output.put_line('Revise mensaje' || mi_mensaje);
    end if;
@@ -70,7 +50,7 @@ begin
    
 
    commit;
-   dbms_output.put_line('<<<<< Fin prueba Imputación '|| current_timestamp  || ' <<<<<<< ');
+   dbms_output.put_line('<<<<< Fin prueba Imputación contabilizacion '|| current_timestamp  || ' <<<<<<< ');
                         --
    --spool off                        
 exception

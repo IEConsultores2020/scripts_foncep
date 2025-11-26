@@ -150,6 +150,7 @@ create or replace package pk_ogt_imputacion as
    procedure sl_id_tercero_y_centro_costo (
       p_codigo_compa      sl_relacion_tac.codigo_compa%type,
       p_id_tercero_origen out number,
+      p_nit_origen        out varchar2,
       p_centro_costo      out varchar2,
       p_resp              out varchar2
    );
