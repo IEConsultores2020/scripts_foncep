@@ -319,3 +319,14 @@ select id,
              codigo_oficina
         from sl_pcp_pago
        where nro_referencia_pago = '2025000001'
+
+
+-----spool off
+--Novedad 10,12,13 en id novedad
+select * from sl_novedad_x_cc_cp       
+where id_cuenta_cobro in (
+select cc.id_cuenta_cobro
+  from sl_pcp_encabezado e,
+       sl_pcp_cuenta_cobro cc
+ where e.id = cc.id_encabezado
+   and e.nro_referencia_pago in ('2025000001'));

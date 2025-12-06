@@ -359,7 +359,7 @@ ALTER TRIGGER OGT.OGT_TRG_ACTUALIZA_RP DISABLE;
 select sum(aporte_empleado)  --64.112.418
   from ogt_anexo_nomina
   where vigencia = 2025
-    and consecutivo = 20  --NRO RA JUNIO
+    and consecutivo = 24  --NRO RA JUNIO
     and codigo_centro_costos 
       in ( 5, 1285, 1267 );
 

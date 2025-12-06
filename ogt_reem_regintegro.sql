@@ -2,13 +2,15 @@ select rubro_interno,
        sum(valor)
   from ogt_detalle_actas
  where vigencia = 2025
-   and rubro_interno = 1941
+   and rubro_interno = 1491
  group by rubro_interno;
+
+consecutivo 
 
 select *
   from ogt_detalle_actas
  where vigencia = 2025
-   and consecutivo in (1,2,4,5,6)
+   and consecutivo in (1,2,4,5,6,7,8,9)
    and rubro_interno = 1491;
 
 select *

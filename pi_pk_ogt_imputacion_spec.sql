@@ -104,6 +104,12 @@ create or replace package pk_ogt_imputacion as
       p_procesado           out boolean
    );
 
+   procedure pr_legalizar_financiero (
+      p_nro_referencia_pago sl_pcp_pago.nro_referencia_pago%type,
+      p_resp                out varchar2,
+      p_procesado           out boolean
+   );    
+
    function fn_traer_valor_referencia_pago (
       p_nro_referencia_pago sl_pcp_pago.nro_referencia_pago%type
    ) return number;

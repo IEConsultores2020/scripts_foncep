@@ -5,8 +5,8 @@ select id_limay
 select nit from sl_compania com where com.codigo_compania = 107766       
     
 
-select id
-  from shd_informacion_basica
+select *
+  from shd_informacion_basica where id = 5816
  where shd_informacion_basica.ib_tipo_identificacion = nvl(
       :un_tipo_identificacion,
       shd_informacion_basica.ib_tipo_identificacion
@@ -52,3 +52,68 @@ SELECT  shd_informacion_entidades.id,
       (ie_fecha_final >= :una_fecha OR ie_fecha_final IS NULL)            
 
       select * from sit_terceros
+      ;
+
+
+--Consulta terceros funcionarios
+select en.tipo,
+       en.codigo
+  from rh.rh_entidad en
+ where en.tipo_servicio = 'BANCOS'
+   and en.descripcion = '5816';
+
+--Mirando desde funcinario
+--select *  from 
+   --update 
+   rh_funcionario
+   --set   codigo_banco = 1014
+ where codigo_banco = 1014 /*and/*personas_interno in (
+   select interno_persona
+     from rh_personas
+    where numero_identificacion = 46364040
+)*/
+   ;
+
+
+        commit;
+
+--Mirando desde personas
+select numero_identificacion
+  from rh_personas
+ where interno_persona in (
+   select personas_interno
+     from rh_funcionario
+    where forma_pago = 'C' --codigo_banco in ( 1014 )
+);
+
+        TRC_PG_SVCIO_INFCOMERCIAL.fn_infcomercial(un_id, TRUNC(SYSDATE));
+select * /* id, ic_banco, ic_tipo_cuenta, ic_cuenta, null, ic_fecha_inicial, null,
+               ic_sucursal, ic_tipo_pago, null, null, null, null, 0, null*/
+  from shd_informacion_comercial
+ where id = :un_id
+   and ic_fecha_inicial <= :una_fecha
+   and ( ic_fecha_final >= :una_fecha
+    or ic_fecha_final is null );
+
+select en.tipo,
+       en.codigo,
+       en.descripcion
+          -- INTO mi_tipo_banco, mi_codigo_banco
+  from rh.rh_entidad en
+ where en.tipo_servicio = 'BANCOS'
+   and en.descripcion = 'BANCO DE BOGOTA'; --:rh_funcionario.banco;   	
+
+ select id_tercero --INTO mi_tercero
+  from rh_terceros
+ where esquema = 'RH'
+   and rh_terceros.entidad_tipo = 'BANCO' --:rh_funcionario.tipo_banco
+   and rh_terceros.entidad_codigo = 1014 --:rh_funcionario.codigo_banco
+   ;
+
+select *
+from rh_terceros          
+where entidad_codigo = 1014;
+
+
+select *
+from rh_funcionario

@@ -111,7 +111,7 @@ delete --select * from
       select numero
         from ogt_documento
        where tipo = 'ALE'
-                --and estado='RE'
+         --and estado='RE'
          and unte_codigo = 'FINANCIERO'
         --and numero in ( 55503) --, 54861 )
          and numero_externo in ( '2025000001'/*, '2025000003', '2025000012'*/ )
@@ -119,7 +119,7 @@ delete --select * from
       and tipo = 'XYZ'
 )
    and doc_tipo = 'XYZ'
-        --and estado = 'RE'
+  --and estado = 'RE'
    ;
 
 
@@ -150,11 +150,6 @@ delete --select * from
    and extract(year from fecha) in ( 2025 );
 
 
-
-from 
---update sl_pcp_encabezado
-set estado ='PAG'
-where nro_referencia_pago = '2025000001'
-;
+--rollback;
 
 --commit;

@@ -19,9 +19,10 @@ WHERE
 
 SELECT *
 FROM BINTABLAS
-WHERE GRUPO='GENERAL'
-AND NOMBRE='TIPO_CUENTA'
-AND RESULTADO  LIKE 'TIPO%'
+WHERE GRUPO='PREDIS'
+AND NOMBRE='VIGENCIA'
+AND ARGUMENTO='VIG_EJEC'
+--
 ;
 
 select *
@@ -538,6 +539,7 @@ select    numero|| '-'|| tipo
 )
       ;
 
+
 --commit;
 
 select * from pre.pr_secuencia_etapas
@@ -552,11 +554,95 @@ order by id_ingreso WHERE doc_numero     = 98145      AND doc_tipo       = 'XYZ'
 ;
 
 SELECT * FROM ogt_DETALLE_PENSIONADO  WHERE doc_numero     = '98156'   AND doc_tipo       = 'XYZ'
+;
+
+SELECT TERCERO_PENSIONADO 
+FROM ogt_DETALLE_PENSIONADO  
+WHERE doc_numero     = 98169   
+AND doc_tipo       = 'XYZ'   
+AND cote_id        = '00-02-37-18-00-00-00'
 
 
-SELECT CENTRO_COSTO 
-  FROM ogt_DETALLE_DOCUMENTO  
-  WHERE doc_numero     = '98132'   
-  AND doc_tipo       = 'XYZ'   
-  AND ter_id_destino = 53   
-  AND cote_id        = '00-02-37-18-00-00-00'
+select * --tercero_pensionado
+from  ogt_DETALLE_PENSIONADO        
+  WHERE doc_numero     =98169
+     AND doc_tipo       = 'XYZ'
+     and id_ingreso = 608375
+     and cote_id = '00-02-37-18-00-00-00'
+     ;
+
+
+--No encuentra dto
+select * --tercero_pensionado
+  from ogt_detalle_pensionado
+ WHERE doc_numero     = '98174'   
+ AND doc_tipo       = 'XYZ'   
+ AND id_ingreso     = '608380'   
+ AND cote_id        = '00-02-37-18-00-00-00'
+ ;
+
+select *   --centro_costo
+  from ogt_detalle_documento
+ where doc_numero = '98174'
+   and doc_tipo = 'XYZ'
+   and ter_id_destino = 53
+   and cote_id = '00-02-37-18-00-00-00'
+   ;
+
+---CURSOR cur_tipo_ingreso IS
+   SELECT NVL(ing.cuba_tipo,'0'),
+          NVL(ing.cote_id,'0'),
+          NVL(ing.unte_codigo,'0'),
+          NVL(ing.ter_id,0),
+          NVL(ing.tipo_titulo,'0'),
+          ing.valor,
+          NVL(doc.bin_tipo_emisor_titulo,'0'), 
+          ing.doc_numero, --19/11/2025 NYROA
+          ing.ing_id,  --2/12/2025
+          DECODE('SISTEMA_FINANCIERO','NO_AJUSTE',ing.doc_numero,ing.num_doc_legalizacion),
+          ing.doc_tipo,--DECODE(mi_tipo_transaccion_contable,'NO_AJUSTE',ing.doc_tipo,ing.tipo_doc_legalizacion),  -- 21/11/2025 nyroa
+          ing.ter_id_destino, 
+          ing.vigencia,
+          ing.fecha_consignacion,
+          ing.ing_id,
+          NVL(ing.cuba_numero,'0'),
+          NVL(ing.cuba_sucu_ter_id,0),
+          --RQ1885-2006 07-11-2006 campos para reintegros-reembolsos
+          doc.tipo_soporte,
+          doc.numero_soporte,
+          doc.fecha_soporte
+     FROM ogt_ingreso ing,
+          ogt_documento doc
+    WHERE DECODE('SISTEMA_FINANCIERO','NO_AJUSTE',ing.doc_numero,ing.num_doc_legalizacion) = doc.numero
+      AND DECODE('SISTEMA_FINANCIERO','NO_AJUSTE',ing.doc_tipo,ing.tipo_doc_legalizacion) = doc.tipo
+      AND ing.id = un_ingreso;   
+
+
+
+select dd.numero_sisla, d1.fecha_soporte, d1.fecha,dd.valor --Numero_sisla, FECHA_SOPORTE, FECHA, VALOR
+from ogt_detalle_documento dd, ogt_documento d1
+where dd.DOC_NUMERO = d1.NUMERO
+and dd.DOC_TIPO = d1.TIPO
+and numero_legal in (
+  select numero
+    from ogt_documento
+  where tipo = 'ALE'
+    and estado='RE'
+    and unte_codigo = 'FINANCIERO'
+    and numero_externo = '2025000001'
+  )
+  and tipo = 'XYZ'
+and numero_sisla is not null
+and TER_ID_ORIGEN is not null;
+
+
+select numero
+                          from ogt_documento
+                        where tipo = 'ALE'
+                          and estado='RE'
+                          and unte_codigo = 'FINANCIERO'
+                          and numero_externo = '2025000001'
+                          ;
+
+select *
+from pre_usuarios_compania                          
