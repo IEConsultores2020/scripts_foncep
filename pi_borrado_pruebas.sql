@@ -114,7 +114,7 @@ delete --select * from
          --and estado='RE'
          and unte_codigo = 'FINANCIERO'
         --and numero in ( 55503) --, 54861 )
-         and numero_externo in ( '2025000001'/*, '2025000003', '2025000012'*/ )
+         and numero_externo in ( '2025000103'/*, '2025000003', '2025000012'*/ )
    )
       and tipo = 'XYZ'
 )

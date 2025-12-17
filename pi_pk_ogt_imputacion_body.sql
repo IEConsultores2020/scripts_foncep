@@ -1,5 +1,39 @@
 create or replace package body pk_ogt_imputacion as
 
+  /* Procedimiento para imputar pagos pendientes*/
+   procedure pr_imputaciones (    
+      p_usuario             varchar2,
+      p_resp                out varchar2,
+      p_procesado           out boolean
+   ) as
+   mi_cur_encabezados    sys_refcursor;
+   mi_nro_referencia_pago sl_pcp_pago.nro_referencia_pago%type;
+   begin
+      pr_traer_encabezados(
+         p_estado       => 'PAG',
+         p_resp         => p_resp,
+         p_ref_cursor   => mi_cur_encabezados
+      );
+     if mi_cur_encabezados is null Then
+        p_resp := 'No hay encabezados con estado PAG para procesar';
+        p_procesado := false;
+     else
+        loop
+           fetch mi_cur_encabezados into mi_nro_referencia_pago;
+           exit when mi_cur_encabezados%notfound;
+           dbms_output.put_line('Procesando referencia de pago: ' || mi_nro_referencia_pago);
+           pr_procesar_imputacion(
+              p_nro_referencia_pago => mi_nro_referencia_pago,
+              p_usuario             => p_usuario,
+              p_resp                => p_resp,
+              p_procesado           => p_procesado
+           );
+           seguimiento('Resultado referencia de pago ' || mi_nro_referencia_pago || ': ' || p_resp);
+        end loop;
+        close mi_cur_encabezados;
+     end if;
+   end pr_imputaciones;
+
    procedure pr_procesar_imputacion (
       p_nro_referencia_pago sl_pcp_pago.nro_referencia_pago%type,
       p_usuario             varchar2,
@@ -584,8 +618,8 @@ create or replace package body pk_ogt_imputacion as
                   un_soporte              => p_doc_numero,
                   un_tipo_soporte         => p_doc_tipo,
                   una_unidad              => p_unte_codigo,
-                  un_tercero_origen       => p_ter_id_origen,
-                  un_tercero_destino      => p_ter_id_destino,
+                  un_tercero_origen       => p_ter_id_destino, --20251217 Contablemente el origen del ingreso es el destino del recurso
+                  un_tercero_destino      => p_ter_id_origen,  --20251217 Contablemente el destino del ingreso es el origen del recurso
                   una_cuenta_bancaria     => p_cuba_numero,
                   un_tipo_cuenta_bancaria => p_tipo_cuenta,
                   una_sucursal            => null,
@@ -633,8 +667,8 @@ create or replace package body pk_ogt_imputacion as
                         un_soporte              => p_doc_numero,
                         un_tipo_soporte         => p_doc_tipo,
                         una_unidad              => p_unte_codigo,
-                        un_tercero_origen       => p_ter_id_origen,
-                        un_tercero_destino      => p_ter_id_destino,
+                        un_tercero_origen       => p_ter_id_destino, --20251217 Contablemente el origen del ingreso es el destino del recurso
+                        un_tercero_destino      => p_ter_id_origen,  --Contablemente el destino del ingreso es el origen del recurso
                         una_cuenta_bancaria     => p_cuba_numero,
                         un_tipo_cuenta_bancaria => p_tipo_cuenta,
                         una_sucursal            => null,
@@ -802,7 +836,7 @@ create or replace package body pk_ogt_imputacion as
                p_procesado := FALSE;
                exit;
             else
-               p_resp := p_resp  || chr(10) ||' Se legalizó ingreso : '||mi_ingreso.id||'. ';
+               p_resp := p_resp  || chr(10) ||' Se legalizó ingreso : '||mi_ingreso.id||'. Id_transaccion'||id_transaccion;
             end if;            
          end loop;
        /*  if p_procesado = TRUE THEN
@@ -862,6 +896,23 @@ create or replace package body pk_ogt_imputacion as
       p_procesado := FALSE;
 
    end pr_legalizar_financiero; 
+
+   procedure pr_traer_encabezados (
+      p_estado sl_pcp_encabezado.estado%type,      
+      p_resp                out varchar2,
+      p_ref_cursor          out sys_refcursor
+   ) as
+   begin
+      open p_ref_cursor for select id,
+                                   nro_referencia_pago,
+                                   estado,
+                                   centro_costo
+                             from sl_pcp_encabezado
+                             where estado = p_estado;
+   exception
+      when OTHERS then  
+         p_resp := 'Error al obtener los encabezados a procesar: ' || sqlerrm;
+   end pr_traer_encabezados;
 
    --Trae el valor pagado
    function fn_traer_valor_referencia_pago (

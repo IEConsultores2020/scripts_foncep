@@ -23,7 +23,7 @@ select e.nro_referencia_pago,
  where e.id = cc.id_encabezado
    and cc.id = l.id_det_cuenta_cobro
    and e.nro_referencia_pago = p.nro_referencia_pago
-   and e.nro_referencia_pago in ('2025000103'); 
+   and e.nro_referencia_pago in ('2025000105'); 
 
 
 select sum(l.valor_capital)+SUM(l.valor_interes) as total_liquidado
@@ -31,34 +31,39 @@ from sl_pcp_encabezado e
 inner join  sl_pcp_cuenta_cobro cc on e.id = cc.id_encabezado
 inner join sl_pcp_liquidaciones l on cc.id = l.id_det_cuenta_cobro 
 --inner join sl_pcp_pago p on e.nro_referencia_pago = p.nro_referencia_pago
-and e.nro_referencia_pago in ('2025000103'); 
+and e.nro_referencia_pago in ('2025000105'); 
 
 
 select *
 from sl_pcp_encabezado e
-where e.nro_referencia_pago = '2025000313'; 
+where e.nro_referencia_pago = '2025000105'; 
+
+select *
+from sl_pcp_pago p 
+order by id desc
+where p.nro_referencia_pago = '2025000107';
 
 select sum(cc.valor_capital)+sum(cc.valor_intereses) total_cuentas
 from sl_pcp_encabezado e
 inner join sl_pcp_cuenta_cobro cc on e.id = cc.id_encabezado
-and e.nro_referencia_pago in ('2025000103');
+and e.nro_referencia_pago in ('2025000105');
 
 
 select * --sum(l.valor_capital)+SUM(l.valor_interes) as total_liquidado
 from sl_pcp_encabezado e
 inner join  sl_pcp_cuenta_cobro cc on e.id = cc.id_encabezado
 inner join sl_pcp_liquidaciones l on cc.id = l.id_det_cuenta_cobro 
-inner join sl_pcp_pago p on e.nro_referencia_pago = p.nro_referencia_pago
-and e.nro_referencia_pago in ('2025000103'); 
+--inner join sl_pcp_pago p on e.nro_referencia_pago = p.nro_referencia_pago
+and e.nro_referencia_pago in ('2025000105'); 
 
 select * --sum(l.valor_capital)+SUM(l.valor_interes) as total_liquidado
 from sl_pcp_encabezado e
 inner join sl_pcp_pago p on e.nro_referencia_pago = p.nro_referencia_pago
-and e.nro_referencia_pago in ('2025000103'); 
+and e.nro_referencia_pago in ('2025000105'); 
 
-select *
+select fecha_autorizacion, fecha_autorizacion+
 from sl_pcp_pago 
-where nro_referencia_pago in ('2025000103'); 
+where nro_referencia_pago in ('2025000105'); 
 
 ----Cunsultar el acta del radicado
 select * from 
@@ -78,7 +83,7 @@ select * from
     where tipo = 'ALE'
       --and estado='RE'
       and unte_codigo = 'FINANCIERO'
-      and numero_externo in ( '2025000103')
+      and numero_externo in ( '2025000105')
 )
 and tipo = 'XYZ'   
 
@@ -89,3 +94,15 @@ and tipo = 'XYZ'
         -- and estado = un_estado
          and unte_codigo = 'FINANCIERO'
          and numero_externo = '2025000103';
+
+select * from tab_lch_segui   
+where mensaje like 'OGT%'      
+
+OPGET: Fallo al procesar la referencia de pago: 2025000105. 
+ Resp: Error al obtener información del pago: 2025000105.ORA-04091: table SL.SL_PCP_PAGO is mutating, trigger/function may not see it
+ No encuentro registros de pago para la referencia de pago 2025000105
+
+
+GRANT CREATE JOB TO SL; 
+GRANT MANAGE SCHEDULER TO SL;
+SELECT * FROM user_sys_privs WHERE privilege LIKE '%JOB%';

@@ -720,3 +720,9 @@ set estado = 'RE'
    and extract(year from fecha) in ( 2025 );  
 
 COMMIT;
+
+
+select id, ing_id from   
+         ogt_ingreso 
+         where num_doc_legalizacion = 55513;
+

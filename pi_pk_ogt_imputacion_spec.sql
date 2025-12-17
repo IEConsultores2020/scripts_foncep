@@ -28,6 +28,13 @@ create or replace package pk_ogt_imputacion as
          codigo_oficina      sl_pcp_pago.codigo_oficina%type
    );   
 
+   type type_rec_encabezado is record (
+         id                  sl_pcp_encabezado.id%type,
+         nro_referencia_pago sl_pcp_encabezado.nro_referencia_pago%type,
+         estado              sl_pcp_encabezado.estado%type,
+         centro_costo        sl_pcp_encabezado.centro_costo%type
+   );
+
    --Registro de cuentas de cobro
    type type_rec_liquidacion is record (
          id                  sl_pcp_liquidaciones.id%type, 	--NUMBER(18,0) NOT NULL ENABLE, 
@@ -109,6 +116,12 @@ create or replace package pk_ogt_imputacion as
       p_resp                out varchar2,
       p_procesado           out boolean
    );    
+
+   procedure pr_traer_encabezados (
+      p_estado sl_pcp_encabezado.estado%type,      
+      p_resp                out varchar2,
+      p_ref_cursor          out sys_refcursor
+   );
 
    function fn_traer_valor_referencia_pago (
       p_nro_referencia_pago sl_pcp_pago.nro_referencia_pago%type
