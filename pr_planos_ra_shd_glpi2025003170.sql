@@ -15,7 +15,7 @@ PROCEDURE PR_PLANOS_RA_SHD(una_compania      VARCHAR2,
           El banco Lulo Bank el código es 070 y en el plano figura 107 para el NIT 800126785 de Emermédica el banco es Bancolombia código 00
           Al NIT 830070784 se le consigna 1.000.000 por AVP y la vía de pago es M, en el plano aparece vía de pago C
 2025004504 	V5 	20251023 FTORRESV Corrección error al generar archivo plano de seguridad social
-2025005004  V6   20251128 FTORRESV a
+2025005004  V6   20251212 FTORRESV a
           Validar lo que se pasó a produccion en V5 y la V4 no se había pasado de hacerse merge y validar.
           El código del Banco de Bogotá los trae como 000 siendo lo correcto 001
           En la información presupuestal está tomando los valores de la RA pero solamente los de la columna Regimen Antiguo 
@@ -912,9 +912,8 @@ BEGIN
                               chr(09) || mi_texto || chr(09) || mi_texto_nomina_mes ||
                               chr(09) || chr(09) || chr(09) || chr(09) ||
                               mi_viapago || chr(09) || chr(09) || chr(09) ||
-                              chr(09) || chr(09) || 
+                              chr(09) || chr(09) || chr(09) || 
                               --INI 2025005004 
-                              --chr(09) 
                               '999'
                               --FIN 2025005004 
                               || chr(09) ||

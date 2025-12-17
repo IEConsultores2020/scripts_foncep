@@ -44,10 +44,7 @@ begin
          p_nro_referencia_pago => :new.nro_referencia_pago,
          p_estado              => 'PIM'
       );*/
-      dbms_output.put_line('Fallo al procesar la referencia de pago: '
-                           || :new.nro_referencia_pago
-                           || '. Resp: '
-                           || mi_resp);
+      dbms_output.put_line('Fallo al procesar la referencia de pago: '|| :new.nro_referencia_pago || '. Resp: '|| mi_resp);
    end if;
 exception
    when others then -- exception handling (optional)

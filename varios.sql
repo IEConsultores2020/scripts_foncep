@@ -1,4 +1,5 @@
 --pk_secuencial.fn_traer_consecutivo('RH','ACTOS_ADVOS','0000','0')
+select * from pk_secuencial.fn_traer_consecutivo( 'OPGET', 'ACTA_LEGAL_ID', '0000', '000' )
 
 
 SELECT *
@@ -54,10 +55,14 @@ BEGIN
 END;
 /
 
-select *
-from rh_personas
-where numero_identificacion in (1030592799,79693028) --651, 652
-or interno_persona= 643   --  20730522
+
+select * from rh_maestro_personas
+where nfuncionario in 
+(select * --interno_persona, numero_identificacion, nombres, primer_apellido, segundo_apellido
+ from rh_personas
+--where nombres ='DIANA MARCELA' and primer_apellido='SANABRIA'
+where numero_identificacion in (52116283)) --651, 652
+--or interno_persona= 643   --  20730522
 --649 --1030575813
 ;
 
@@ -142,8 +147,8 @@ ogt_tipo_transaccion
 
 select *
 from bintablas
-where grupo='PREDIS'
-AND ARGUMENTO LIKE '%REPOR%';
+where grupo='OPGET'
+AND ARGUMENTO LIKE '%PATH%';
 --'Parametros archivo favidi'
 
 

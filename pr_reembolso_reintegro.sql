@@ -70,20 +70,26 @@ select *
 
 --Reverse el detalle de acuerdo a los docs_consecutivos identicados en la consulta anterior.
 --Asigne temporalmente a doc_entidad el 999, una vez grabada la disponbilidad, reversar el cambio
-select sum(valor)
+select  sum(valor) --consecutivo_det_acta det_acta, entidad, unidad_ejecutora unidad, vigencia, doc_consecutivo, rubro_interno rubro, valor
   from ogt_detalle_actas
  where tipo_documento = 'AR'
    and vigencia = 2025
    and unidad_ejecutora = '01'
    and entidad = 206
    and doc_entidad = 206
-   and doc_consecutivo in ( --( 2,70,1279,1470,1080,1686,314,887 )
+   and doc_consecutivo in ( 
    select doc_consecutivo
   from ogt_detalle_actas
  where vigencia = 2025
-   --and consecutivo in (1,2,4,5,6,7,8,9)
-   and rubro_interno = 1491); --parqueaderos
-;
+   and rubro_interno = 1491
+   ); --parqueaderos
+
 
 select *
-from pr_secuencia_etapas
+from pr_secuencia_etapas;
+
+
+select *
+from pr_rubro
+where vigencia = 2025 and 
+interno = 1491;

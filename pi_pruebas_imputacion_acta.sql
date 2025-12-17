@@ -14,7 +14,7 @@ select * from SL_PCP_CUENTA_COBRO where id_encabezado in ('2')
 
 select estado
 from sl_pcp_encabezado 
-where nro_referencia_pago =   '2025000001'
+where nro_referencia_pago =   '2025000103'
 ;
 
 update --select * from
@@ -26,11 +26,11 @@ update --select * from
 commit;
 
 
---Guardo estado previo del encabezado
+
 declare
    mi_estado              sl_pcp_encabezado.estado%type;
    mi_nuevo_estado        sl_pcp_encabezado.estado%type;
-   mi_nro_referencia_pago sl_pcp_encabezado.nro_referencia_pago%type := '2025000001';
+   mi_nro_referencia_pago sl_pcp_encabezado.nro_referencia_pago%type := '2025000103';
    num_registros          number;
    mi_mensaje             varchar2(2000);
    mi_procesado           boolean;
@@ -45,7 +45,7 @@ begin
    dbms_output.put_line('llamando pr_proceso_imputacion');
    --/*
    pk_ogt_imputacion.pr_procesar_imputacion(
-      p_nro_referencia_pago => '2025000001', --mi_nro_referencia_pago,
+      p_nro_referencia_pago => mi_nro_referencia_pago,
       p_usuario             => 'IUSER',
       p_resp                => mi_mensaje,
       p_procesado           => mi_procesado

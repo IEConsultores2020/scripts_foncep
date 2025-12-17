@@ -1,16 +1,10 @@
-/*
-select *  from sl_pcp_encabezado
- where nro_referencia_pago in ( select nro_referencia_pago from sl_pcp_pago);
-
-select * from SL_PCP_CUENTA_COBRO where id_encabezado in ('2')
-*/
-
-/*--Para probar abrir ventana sql y ejecutar las siguientes 4 lineas
-   SET ECHO OFF;
-   SET SERVEROUTPUT ON  SIZE UNLIMITED;
-   spool imputacion.log; 
-   Ejecute el código a continuación
-   spool off --*/
+select * from 
+ ogt_documento
+ where tipo = 'ALE'
+   and estado = 'RE'
+   and unte_codigo = 'FINANCIERO'
+   and numero_externo in ( '20250000477') 
+   and extract(year from fecha) in ( 2025 );
 
 select estado
 from sl_pcp_encabezado 

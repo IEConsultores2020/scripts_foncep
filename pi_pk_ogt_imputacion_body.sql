@@ -26,7 +26,7 @@ create or replace package body pk_ogt_imputacion as
          pr_traer_estado_encabezado(
             p_nro_referencia_pago => p_nro_referencia_pago,
             p_resp                => mi_estado_encabezado );
-         if mi_estado_encabezado not in ('PAG','REG') then
+         if mi_estado_encabezado not in ('PAG','REG','DIS') then
             p_resp := p_resp|| chr(10)|| 
                      ' No se realiza el proceso de imputación. El estado de la factura no se encuentra PAGada o REGistrada: '
                       || p_resp;
@@ -48,7 +48,7 @@ create or replace package body pk_ogt_imputacion as
                   p_resp := p_resp|| chr(10)|| 
                      ' Existe inconsistencia en el proceso de imputacion. Cuando la factura se encuentra REGistrada, debe existir un acta '
                      || mi_estado_encabezado;
-               elsif mi_acta_numero = -1 and mi_estado_encabezado = 'PAG' then --El acta no ha sido creada, se procede a crearla 
+               elsif mi_acta_numero = -1 and mi_estado_encabezado in ('PAG','DIS') then --El acta no ha sido creada, se procede a crearla 
                   -- Inicio registro acta
                   mi_acta_numero := pk_secuencial.fn_traer_consecutivo( 'OPGET', 'ACTA_LEGAL_ID', '0000', '000' ) + 1;
                   dbms_output.put_line('IMP. Consecutivo acta legal: ' || mi_acta_numero);
@@ -94,7 +94,7 @@ create or replace package body pk_ogt_imputacion as
                p_resp := p_resp ||' Acta número '||mi_acta_numero;
                dbms_output.put_line('Proceso de creación ó cargue acta '||p_resp);
                if p_procesado = true and nvl(mi_acta_numero,-1) > -1
-                  and mi_estado_encabezado = 'PAG'  then --Se procede a registar los documentos
+                  and mi_estado_encabezado in ('PAG','DIS') then --Se procede a registar los documentos
                   pr_registrar_documento(
                      p_acta_numero         => mi_acta_numero,
                      p_acta_tipo           => mi_tipo_acta,
@@ -120,9 +120,10 @@ create or replace package body pk_ogt_imputacion as
                      dbms_output.put_line(p_resp);
                      if p_procesado = true then
                         --Actualiza encabezado y guarda o rechaza actualizaciones de acuerdo al resultado en p_procesado
+                        mi_estado_encabezado := 'REG';
                         pr_actualizar_encabezado(
                            p_nro_referencia_pago => p_nro_referencia_pago,
-                           p_nuevo_estado        => 'REG', --Registro Limay
+                           p_nuevo_estado        => mi_estado_encabezado, --Registro Limay
                            p_resp                => p_resp,
                            p_procesado           => p_procesado
                         );
@@ -136,14 +137,10 @@ create or replace package body pk_ogt_imputacion as
                   end if; --if p_procesado = true then contabiliza
                elsif p_procesado = true and nvl(mi_acta_numero,-1) > -1 
                   and mi_estado_encabezado = 'REG' then
-                  p_resp := p_resp
-                           || chr(10)
-                           || ' El acta y el ingreso fueron generados previo al proceso actual';
+                  p_resp := p_resp || chr(10)  || ' El acta y el ingreso fueron generados previo al proceso actual';
                   p_procesado := true;
                else
-                  p_resp := p_resp
-                           || chr(10)
-                           || ' Revise que el acta se encuentre creada';
+                  p_resp := p_resp || chr(10) || ' Revise que el acta se encuentre creada';
                end if;  --if mi_num_resp = 1 and nvl(mi_acta_numero,-1) > -1 and mi_estado_encabezado = 'PAG' 
 
                --Se procede a legalizar
@@ -155,7 +152,7 @@ create or replace package body pk_ogt_imputacion as
                   );    
                   dbms_output.put_line(p_resp);
                end if; --if p_procesado = true and nvl(mi_acta_numero,-1) > -1    and mi_estado_encabezado = 'REG'  then
-               if p_procesado = true then
+               if p_procesado = true and mi_estado_encabezado = 'REG' then
                   --Actualiza encabezado y guarda o rechaza actualizaciones de acuerdo al resultado en p_procesado
                   pr_actualizar_encabezado(
                      p_nro_referencia_pago => p_nro_referencia_pago,
@@ -164,16 +161,13 @@ create or replace package body pk_ogt_imputacion as
                      p_procesado           => p_procesado
                   );
                else
-                  p_resp := p_resp
-                           || chr(10)
-                           || ' Reversando legalización';
+                  p_resp := p_resp || chr(10) || ' Reversando legalización';
                   p_procesado := true;
                   rollback;
                end if;
             else
                p_resp := p_resp
-                         || chr(10)
-                         || ' No encuentro registros de pago para la referencia de pago '
+                         || chr(10) || ' No encuentro registros de pago para la referencia de pago '
                          || p_nro_referencia_pago;
                p_procesado := false;
             end if; --if mi_rec_pago is null then
@@ -762,11 +756,12 @@ create or replace package body pk_ogt_imputacion as
       p_procesado           out boolean
       ) is
 
-      id_transaccion pls_integer :=0;
-      mi_numero_acta ogt_documento.numero%type;
-      mi_msg Varchar2(500);
-      mi_tipo_acta ogt_documento.tipo%TYPE := 'ALE';
-      mi_usuario varchar2(30);
+      id_transaccion    pls_integer :=0;
+      mi_numero_acta    ogt_documento.numero%type;
+      mi_msg            Varchar2(500);
+      mi_tipo_acta      ogt_documento.tipo%TYPE := 'ALE';
+      mi_usuario        varchar2(30);
+      mi_codigo_res     number;
 
       cursor c_ingreso IS 
          select id, ing_id from   
@@ -820,7 +815,7 @@ create or replace package body pk_ogt_imputacion as
                p_resp := p_resp  || chr(10) ||' Se legalizó ingreso : '||mi_ingreso.id||'. ';
             end if;            
          end loop;
-         if p_procesado = TRUE THEN
+       /*  if p_procesado = TRUE THEN
             For r_sis in (select dd.numero_sisla, d1.fecha_soporte, d1.fecha, dd.valor --Numero_sisla, FECHA_SOPORTE, FECHA, VALOR
                         from ogt_detalle_documento dd, ogt_documento d1
                         where dd.DOC_NUMERO = d1.NUMERO
@@ -844,13 +839,28 @@ create or replace package body pk_ogt_imputacion as
                   exit;
                end if;
             end Loop;
-         end if;
+         end if;*/
          if p_procesado = TRUE then
             update ogt_documento
                set estado='AP',usuario_reviso=mi_usuario
             where numero=mi_numero_acta
                and tipo=mi_tipo_acta;
-            commit;
+
+
+            pk_sl_interfaz_opget_cp.pr_actualiza_recaudo_pcp (p_referencia_pago     => p_nro_referencia_pago,
+                                     p_acta_legalizacion    => mi_numero_acta,
+                                     p_fecha_legalizacion   => sysdate,
+                                     p_cod_rta_proceso      => mi_codigo_res,
+                                     p_des_rta_proceso      => p_resp
+                                    );
+            if mi_codigo_res <> null then
+               p_resp := p_resp || chr(10) || ' No se actualizó el recaudo en PCP para la referencia de pago: ' || p_nro_referencia_pago || '. ' || p_resp;
+               p_procesado := FALSE;
+               rollback;
+            else
+               p_resp := p_resp || chr(10) || ' Se actualizó el recaudo en PCP para la referencia de pago: ' || p_nro_referencia_pago || '. '|| p_resp;
+               commit;
+            end if;
          else
             rollback;
          end if;
