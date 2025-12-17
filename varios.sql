@@ -651,3 +651,72 @@ select numero
 
 select *
 from pre_usuarios_compania                          
+
+
+
+update
+ --SELECT * FROM 
+ ogt_info_cuenta
+ set valor = 31115
+ where dein_cuco_codigo|| ''|| dein_ing_id||''||dein_id in 
+ (select cuco_codigo   ||''||       ing_id||''|| id
+   from ogt_detalle_ing --where valor in (70000,55000,150000,10000) order by id desc
+    where ing_id in (
+      select  id
+        from ogt_ingreso
+        -- where fecha_consignacion >= to_Date('01/10/2025','dd/mm/yyyy'))
+        where doc_numero||'-' || doc_tipo in (
+          select distinct numero|| '-'|| tipo
+            from ogt_documento
+          where numero_legal in (
+            select numero
+              from ogt_documento
+              where tipo = 'ALE'
+                        --and estado='RE'
+                and unte_codigo = 'FINANCIERO'
+                --and numero in ( 55503) --,  54861)
+                and numero_externo in ('2025000103') --,'2025000003','2025000012')
+          )
+            -- and tipo = 'XYZ'
+                    --and estado = 'RE'
+      )
+    )
+ ) and atr_nombre = 'ACUMULADOR CENTRO DE COSTO';
+
+ COMMIT;
+
+
+  -- cursor c_ingreso IS 
+         select id, ing_id from   
+         ogt_ingreso --where num_doc_legalizacion = 55502
+         where num_doc_legalizacion = 55513 
+         doc_numero ||'-' || doc_tipo in (  
+            select distinct doc_numero|| '-'|| doc_tipo
+            from ogt_detalle_documento 
+            where doc_numero||'-'|| doc_tipo in (
+               select  numero||'-'|| tipo
+                  from ogt_documento
+               where numero_legal = 55513
+                  and tipo = 'XYZ'
+            )
+               and doc_tipo = 'XYZ'
+               and estado = 'RE'
+         );
+
+select * from 
+ ogt_documento
+ where tipo = 'ALE'
+   --and estado = 'RE'
+   and unte_codigo = 'FINANCIERO'
+   and numero_externo in ( '2025000103') 
+   and extract(year from fecha) in ( 2025 );         
+
+   update  ogt_documento
+set estado = 'RE'
+ where tipo = 'ALE'
+   and estado = 'AP'
+   and unte_codigo = 'FINANCIERO'
+   and numero_externo in ( '2025000103') 
+   and extract(year from fecha) in ( 2025 );  
+
+COMMIT;

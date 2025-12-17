@@ -19,13 +19,29 @@ where nro_referencia_pago =   '2025000103'
 
 update --select * from
    sl_pcp_encabezado 
-   set estado='PAG'
-  where nro_referencia_pago =   '2025000001'
+   set estado='REG'
+  where nro_referencia_pago =   '2025000103'
   ;
 
 commit;
 
+select * from 
+ ogt_documento
+ where tipo = 'ALE'
+   --and estado = 'RE'
+   and unte_codigo = 'FINANCIERO'
+   and numero_externo in ( '2025000103') 
+   and extract(year from fecha) in ( 2025 );
 
+update  ogt_documento
+set estado = 'RE'
+ where tipo = 'ALE'
+   and estado = 'AP'
+   and unte_codigo = 'FINANCIERO'
+   and numero_externo in ( '2025000103') 
+   and extract(year from fecha) in ( 2025 );  
+
+COMMIT;
 
 declare
    mi_estado              sl_pcp_encabezado.estado%type;

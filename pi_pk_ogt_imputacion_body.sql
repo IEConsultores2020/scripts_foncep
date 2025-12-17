@@ -761,23 +761,13 @@ create or replace package body pk_ogt_imputacion as
       mi_msg            Varchar2(500);
       mi_tipo_acta      ogt_documento.tipo%TYPE := 'ALE';
       mi_usuario        varchar2(30);
-      mi_codigo_res     number;
+      mi_codigo_res     varchar2(30);
 
       cursor c_ingreso IS 
          select id, ing_id from   
-         ogt_ingreso --where num_doc_legalizacion = 55502
-         where doc_numero ||'-' || doc_tipo in (  
-            select distinct doc_numero|| '-'|| doc_tipo
-            from ogt_detalle_documento 
-            where doc_numero||'-'|| doc_tipo in (
-               select  numero||'-'|| tipo
-                  from ogt_documento
-               where numero_legal = mi_numero_acta
-                  and tipo = 'XYZ'
-            )
-               and doc_tipo = 'XYZ'
-               and estado = 'RE'
-         );
+         ogt_ingreso 
+         where num_doc_legalizacion = mi_numero_acta;
+         
       
    begin
       p_resp := p_resp || chr(10)||' Inicio proceso legalización financiero, para ref.pago: ' || p_nro_referencia_pago || '.';
@@ -806,7 +796,7 @@ create or replace package body pk_ogt_imputacion as
          -- Legalizar los ingresos seleccionados
          for mi_ingreso IN c_ingreso  loop
             id_transaccion := ogt_pk_ingreso.ogt_fn_Legalizar(mi_ingreso.id);
-            if id_transaccion = 0 then
+            if nvl(id_transaccion,0) = 0 then
                rollback;
                p_resp := p_resp  || chr(10) ||'No se legalizó. Verifique ingreso '||mi_ingreso.id||', legalización abortada.';
                p_procesado := FALSE;
@@ -847,12 +837,12 @@ create or replace package body pk_ogt_imputacion as
                and tipo=mi_tipo_acta;
 
 
-            pk_sl_interfaz_opget_cp.pr_actualiza_recaudo_pcp (p_referencia_pago     => p_nro_referencia_pago,
+       /*     pk_sl_interfaz_opget_cp.pr_actualiza_recaudo_pcp (p_referencia_pago     => p_nro_referencia_pago,
                                      p_acta_legalizacion    => mi_numero_acta,
                                      p_fecha_legalizacion   => sysdate,
                                      p_cod_rta_proceso      => mi_codigo_res,
                                      p_des_rta_proceso      => p_resp
-                                    );
+                                    );*/
             if mi_codigo_res <> null then
                p_resp := p_resp || chr(10) || ' No se actualizó el recaudo en PCP para la referencia de pago: ' || p_nro_referencia_pago || '. ' || p_resp;
                p_procesado := FALSE;
