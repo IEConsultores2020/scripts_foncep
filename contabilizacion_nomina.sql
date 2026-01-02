@@ -19,6 +19,8 @@ SELECT
             '2 - SEGURIDAD SOCIAL'
         WHEN '3' THEN
             '3 - CESANTIAS'
+        WHEN '4' THEN
+            '4 - CESANTIAS FONDOS'
         ELSE
             TIPO_RA
     END                    TIPO_DE_RA,
@@ -33,13 +35,17 @@ SELECT
 FROM
     RH_LM_RA -- SET /*ACTUALIZADO_CONTAB='N', */ GEN_CXP_OPGET = 'N' /*, CONTABILIZADO = 'N'*/, CONTABILIZAR = 'S'
 WHERE
-    SCOMPANIA = 206 --AND DFECHA_INICIAL_PERIODO = '01-SEP-24';
+    SCOMPANIA = 206 --AND DFECHA_INICIAL_PERIODO = '01-DEC-24';
     AND EXTRACT(YEAR FROM DFECHA_INICIAL_PERIODO) = 2025
     AND EXTRACT(MONTH FROM DFECHA_INICIAL_PERIODO) = :MES
    -- AND NRO_RA=12
 ORDER BY
     DFECHA_INICIAL_PERIODO DESC,
     TIPO_RA ASC;
+
+delete --select * from 
+RH_LM_RA
+where nro_ra IN (29,30) and ANO_PAC is null and vigencia_presupuesto=2025
 
 commit;
 rollback;
@@ -75,7 +81,7 @@ WHERE
     EXTRACT(YEAR FROM PERIODO) = 2025 AND
     STIPOFUNCIONARIO = 'PLANTA' AND
     sconcepto like 'APORTE%' AND 
-    NRO_RA = 16
+    NRO_RA in (28,29)
 GROUP BY PERIODO 
     -- SCONCEPTO,    VARIABLE_VALOR */
 ORDER BY  1

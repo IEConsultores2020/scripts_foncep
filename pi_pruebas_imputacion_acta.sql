@@ -1,36 +1,44 @@
-/*
-select *  from sl_pcp_encabezado
- where nro_referencia_pago in ( select nro_referencia_pago from sl_pcp_pago);
+--Actualizar estado del acta
+select * from 
+--update 
+--delete
+ogt_documento
+--set estado='RE'
+ where tipo = 'ALE'
+   --and estado = 'AP'
+   and unte_codigo = 'FINANCIERO'
+   and numero_externo in ( '2025000112') 
+   and extract(year from fecha) in ( 2025 );
 
-select * from SL_PCP_CUENTA_COBRO where id_encabezado in ('2')
-*/
-
-/*--Para probar abrir ventana sql y ejecutar las siguientes 4 lineas
-   SET ECHO OFF;
-   SET SERVEROUTPUT ON  SIZE UNLIMITED;
-   spool imputacion.log; 
-   Ejecute el código a continuación
-   spool off --*/
+select id,
+      nro_referencia_pago,
+      estado,
+      centro_costo
+from sl_pcp_encabezado
+where estado in ('PAG','REG')
+and nro_referencia_pago = '2025000114'
+;
 
 select estado
 from sl_pcp_encabezado 
-where nro_referencia_pago =   '2025000103'
+where nro_referencia_pago =   '2025000114'
 ;
 
 update --select * from
    sl_pcp_encabezado 
-   set estado='REG'
-  where nro_referencia_pago =   '2025000103'
+   set estado='PAG'
+  where nro_referencia_pago =   '2025000113'
   ;
 
 commit;
 
+--Consulta acta
 select * from 
  ogt_documento
  where tipo = 'ALE'
-   --and estado = 'RE'
+  -- and estado = 'AP'
    and unte_codigo = 'FINANCIERO'
-   and numero_externo in ( '2025000103') 
+   and numero_externo in ( '2025000112') 
    and extract(year from fecha) in ( 2025 );
 
 update  ogt_documento
@@ -38,7 +46,7 @@ set estado = 'RE'
  where tipo = 'ALE'
    and estado = 'AP'
    and unte_codigo = 'FINANCIERO'
-   and numero_externo in ( '2025000103') 
+   and numero_externo in ( '2025000112') 
    and extract(year from fecha) in ( 2025 );  
 
 COMMIT;
@@ -46,7 +54,7 @@ COMMIT;
 declare
    mi_estado              sl_pcp_encabezado.estado%type;
    mi_nuevo_estado        sl_pcp_encabezado.estado%type;
-   mi_nro_referencia_pago sl_pcp_encabezado.nro_referencia_pago%type := '2025000103';
+   mi_nro_referencia_pago sl_pcp_encabezado.nro_referencia_pago%type := '2025000114';
    num_registros          number;
    mi_mensaje             varchar2(2000);
    mi_procesado           boolean;
@@ -70,7 +78,7 @@ begin
    if mi_procesado = true then
       dbms_output.put_line('Fin normal del proceso de imputación: ' || mi_mensaje);
    else
-      dbms_output.put_line('Revise mensaje' || mi_mensaje);
+      dbms_output.put_line('Revise mensaje ' || mi_mensaje);
    end if;
 
     --Consulta el encabezado de la referncia de pago
@@ -93,3 +101,16 @@ exception
 end;
 /
 
+select * from tab_lch_segui   
+where fecha >= '24/dec/2025'
+order by consec desc   
+;
+
+
+select * from   
+ ogt_ingreso 
+ where doc_numero|| '-'||doc_tipo 
+  in (  select distinct doc_numero ||'-'|| doc_tipo
+        from ogt_detalle_documento
+        where doc_numero in (54758,55525,55526))
+        ;

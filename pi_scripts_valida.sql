@@ -23,7 +23,7 @@ select e.nro_referencia_pago,
  where e.id = cc.id_encabezado
    and cc.id = l.id_det_cuenta_cobro
    and e.nro_referencia_pago = p.nro_referencia_pago
-   and e.nro_referencia_pago in ('2025000001'); --,'2025000003');
+   and e.nro_referencia_pago in ('2025000003'); --,'2025000003');
 
    select *
    from sl_pcp_cuenta_cobro

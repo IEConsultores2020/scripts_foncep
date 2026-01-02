@@ -53,8 +53,9 @@ create or replace package pk_ogt_imputacion as
    --Tabla de tipo registro cuenta de cobro
    type type_tab_cuenta_cobro is
       table of type_rec_cuenta_cobro;
-   mi_concepto_capital varchar2(20); -- := fn_ogt_traer_code_concepto('RECAUDO CAPITAL CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA');
-   mi_concepto_interes varchar2(20); -- := fn_ogt_traer_code_concepto('RECAUDO INTERESES CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA');
+   mi_concepto_capital varchar2(20);        -- := fn_ogt_traer_code_concepto('RECAUDO CAPITAL CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA');
+   mi_concepto_interes varchar2(20);        -- := fn_ogt_traer_code_concepto('RECAUDO INTERESES CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA');
+   mi_concepto_causa_interes varchar2(20);  -- := fn_ogt_traer_code_concepto('CAUSACION INTERESES CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA');
 
   /* Procedimiento para imputar pagos pendientes*/
    procedure pr_imputaciones (    

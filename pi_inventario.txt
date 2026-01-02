@@ -10,14 +10,16 @@ pi_ogt_crea_tabla_detalle_pensionado.sql
 pi_permisos.sql
 
 --Script de creación paquete almacenado de la imputación.
-pi_pk_ogt_imputacion_spec.sql
-pi_pk_ogt_imputacion_body.sql
-
---Script de creación trigger después de insertar en pagos y desde donde se dispara la imputación
-pi_create_trigger_sl_pcp_tr_a_i_sl_pago.sql
+pi_pk_ogt_imputacion_c_spec.sql
+pi_pk_ogt_imputacion_c_body.sql
 
 --Inserción de conceptos de tesoreria para capital e intereses 
 pi_insert_ogt_conceptos_tesoreria.sql
+
+--Jobs
+pi_autoriza_crear_jobs.sql
+pi_sl_job_mputacion.sql
+
 
 --Ejecutar pruebas.
 --1. Prueba básica que se dispara en el momento de crear un nuevo que se inserta con plsql command
@@ -27,3 +29,4 @@ pi_pruebas_imputacion_acta.sql
 
 --3. Prueba imputacion trae cuentas de cobro
 pi_prueba_trae_cuentas_cobro
+

@@ -95,7 +95,7 @@ SET SERVEROUTPUT OFF;
 
 select IB.ID, IB.IB_PRIMER_NOMBRE, ib.IB_CODIGO_EMBARGO, ib.IB_CODIGO_BAN_AGRARIO
 from TRC_INFORMACION_BASICA ib
-where id IN (53,31115);
+where id IN (53,5550);
 where ib.IB_PRIMER_NOMBRE like '%JUZGADO%SESENTA%SEIS%'  --48816  110014003066
 or ib.IB_PRIMER_NOMBRE like '%JUZGADO%VEINTI%DOS%MUNIC%' --277019 110012041722
 ;
@@ -103,8 +103,8 @@ or ib.IB_PRIMER_NOMBRE like '%JUZGADO%VEINTI%DOS%MUNIC%' --277019 110012041722
 
 select * --T.ID, T.TIPO_IDENTIFICACION, T.CODIGO_IDENTIFICACION, T.CODIGO_ENTIDAD
 from trc_terceros T
-where id IN (53,31115);
-
+where id IN (53,5550);
+t.codigo_identificacion = '901104588'
 --ib.IB_CODIGO_EMBARGO= 110014003066
 
 select *
@@ -113,7 +113,7 @@ from trc_oficinas_banco_agrario ba
 
 select * from TRC_TERCEROS, TRC_INFORMACION_BASICA
 WHERE TRC_TERCEROS.ID = TRC_INFORMACION_BASICA.ID
-AND CODIGO_IDENTIFICACION='800093816';
+AND CODIGO_IDENTIFICACION='9011104588';
 
 select max(id)
 from trc_terceros;
@@ -133,6 +133,7 @@ WHERE NOMBRE LIKE '%TERCEROS%';
 
 select *
 from rh_beneficiarios
+where beneficiario like '%JUECES%'
 order by CODIGO_BENEFICIARIO desc;
 
 select sysdate from dual

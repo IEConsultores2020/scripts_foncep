@@ -4,7 +4,7 @@ select  from dual;
 
 select *
 from rh_personas
-where  nombres like 'MARGARITA%' --numero_identificacion= 79693028
+where  nombres like 'YAMILE AN%' --numero_identificacion= 79693028
 ;
 
 

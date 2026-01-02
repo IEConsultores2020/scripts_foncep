@@ -1,6 +1,6 @@
 --CUENTAS DE COBRO EN SISLA
 select e.nro_referencia_pago,
-       --e.estado eest,
+       e.estado eest,
        e.valor_referencia evalor,
        e.centro_costo centro_costo,
        --cc.id ctac_id,
@@ -14,8 +14,9 @@ select e.nro_referencia_pago,
        --l.id li_id,
       -- l.estado li_est,
        l.interno_persona id_persona, 
-       l.valor_capital capital, l.valor_interes interes /*,
-       l.*, p.**/
+       l.valor_capital capital, l.valor_interes interes,
+       p.id_banco, l.*
+      -- select p.*
   from sl_pcp_encabezado e,
        sl_pcp_cuenta_cobro cc,
        sl_pcp_liquidaciones l,
@@ -23,8 +24,18 @@ select e.nro_referencia_pago,
  where e.id = cc.id_encabezado
    and cc.id = l.id_det_cuenta_cobro
    and e.nro_referencia_pago = p.nro_referencia_pago
-   and e.nro_referencia_pago in ('2025000105'); 
+   --and e.estado = 'PAG'
+   and e.nro_referencia_pago in ('2025000115');
 
+   select id_sisla, id_tercero
+   from SL_RELACION_TERCEROS
+   where id_sisla in (16791,47125)
+
+   update sl_pcp_pago
+   set id_banco = 49
+   where id_banco = 51;
+
+   commit;
 
 select sum(l.valor_capital)+SUM(l.valor_interes) as total_liquidado
 from sl_pcp_encabezado e
@@ -36,7 +47,7 @@ and e.nro_referencia_pago in ('2025000105');
 
 select *
 from sl_pcp_encabezado e
-where e.nro_referencia_pago = '2025000105'; 
+where e.nro_referencia_pago = '2025000003'; 
 
 select *
 from sl_pcp_pago p 
@@ -71,7 +82,7 @@ select * from
  where tipo = 'ALE'
    and estado = 'RE'
    and unte_codigo = 'FINANCIERO'
-   and numero_externo in ( '2025000103') 
+   and numero_externo in ( '2025000112') 
    and extract(year from fecha) in ( 2025 );
 
 ---Consultar los documentos asociados al acta
@@ -83,26 +94,36 @@ select * from
     where tipo = 'ALE'
       --and estado='RE'
       and unte_codigo = 'FINANCIERO'
-      and numero_externo in ( '2025000105')
+      and numero_externo in ( '2025000112')
 )
 and tipo = 'XYZ'   
+;
 
-
-  select numero
-        from ogt_documento
-       where tipo = 'ALE'
-        -- and estado = un_estado
-         and unte_codigo = 'FINANCIERO'
-         and numero_externo = '2025000103';
 
 select * from tab_lch_segui   
-where mensaje like 'OGT%'      
+where fecha >= '31/dec/2025'
+--and mensaje like 'OPGET%2025000119%'
+order by consec DESC
+;
 
-OPGET: Fallo al procesar la referencia de pago: 2025000105. 
- Resp: Error al obtener información del pago: 2025000105.ORA-04091: table SL.SL_PCP_PAGO is mutating, trigger/function may not see it
- No encuentro registros de pago para la referencia de pago 2025000105
+delete tab_lch_segui
 
 
-GRANT CREATE JOB TO SL; 
-GRANT MANAGE SCHEDULER TO SL;
-SELECT * FROM user_sys_privs WHERE privilege LIKE '%JOB%';
+begin
+  pk_ogt_imputacion.pr_imputaciones (    
+      p_usuario     => user
+   ) ;
+end;   
+
+--1.Actualizar
+SELECT * FROM BINTABLAS
+WHERE GRUPO = 'OPGET'
+AND NOMBRE = 'LIMAY_INGRESO_PORTAL'
+AND ARGUMENTO ='CENTRO CONTABLE';
+
+--2. Verificar de donde el 31123, almacenar el número del ingreso.
+ogt_info_ing  en 
+ CURSOR cur_informacion_transaccion IS
+     SELECT atr_nombre,clmo_nombre,valor
+     FROM   ogt_info_ing
+     WHERE  ing_id= 608428 --un_ingreso;

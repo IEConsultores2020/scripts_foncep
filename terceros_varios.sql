@@ -112,7 +112,7 @@ select en.tipo,
 
 select *
 from rh_terceros          
-where entidad_codigo = 1014;
+where codigo in (47125,16791);
 
 
 select *

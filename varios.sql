@@ -659,7 +659,7 @@ update
  ogt_info_cuenta
  set valor = 31115
  where dein_cuco_codigo|| ''|| dein_ing_id||''||dein_id in 
- (select cuco_codigo   ||''||       ing_id||''|| id
+ (select * --cuco_codigo   ||''||       ing_id||''|| id
    from ogt_detalle_ing --where valor in (70000,55000,150000,10000) order by id desc
     where ing_id in (
       select  id
@@ -675,7 +675,7 @@ update
                         --and estado='RE'
                 and unte_codigo = 'FINANCIERO'
                 --and numero in ( 55503) --,  54861)
-                and numero_externo in ('2025000103') --,'2025000003','2025000012')
+                and numero_externo in ('2025000003') --,'2025000003','2025000012')
           )
             -- and tipo = 'XYZ'
                     --and estado = 'RE'
@@ -726,3 +726,109 @@ select id, ing_id from
          ogt_ingreso 
          where num_doc_legalizacion = 55513;
 
+select distinct(estado)
+from sl_pcp_encabezado 
+where estado in ('PAG,REG')
+;
+
+cursor cur_info_ccuenta is
+
+   SELECT clmo_nombre,nombre,clase_limay,tipo_limay,descripcion
+         FROM ogt_atributo
+        WHERE cltr_nombre=mi_clase_transaccion
+          AND titr_nombre=mi_tipo_transaccion
+          AND cuco_codigo=mi_cuenta
+          AND d_c=mi_naturaleza;
+
+      mi_clase_transaccion:=mi_cursor_cuenta.cltr_nombre;
+      mi_tipo_transaccion:=mi_cursor_cuenta.titr_nombre;
+      mi_tipo_operacion:=mi_cursor_cuenta.tiop_id;
+      mi_cuenta:=mi_cursor_cuenta.codigo;
+      mi_naturaleza:=mi_cursor_cuenta.d_c;
+
+--CURSOR cur_cuenta_afectable IS
+     SELECT /*+     full(top) */   
+     top.id tiop_id,top.titr_nombre titr_nombre,top.cltr_nombre cltr_nombre,caf.cuco_codigo codigo,caf.d_c d_c, top.destinacion_especifica
+      FROM ogt_tipo_operacion top,
+           ogt_cuenta_afectable caf
+     WHERE NVL(top.bin_tipo_cuenta,'0') = 'FD' --mi_tipo_cuenta_bancaria
+       AND NVL(top.cote_id,'0') = '00-02-37-17-00-00-00' --mi_concepto_ingreso
+       AND NVL(top.unte_codigo,'0') = 'FINANCIERO' --mi_unidad_ingreso
+       AND NVL(top.bin_tipo_titulo,'0') = 0 --mi_tipo_titulo
+       AND NVL(top.bin_tipo_emisor_titulo,'0') = 0 --mi_tipo_emisor   --NUEVO
+       AND NVL(top.tipo_resultado,'0') = 0 --mi_tipo_resultado --NUEVO
+       AND NVL(top.bin_vigencia_concepto,'0') = 0 --mi_vigencia_ingreso
+       --AND NVL(top.destinacion_especifica,'N' /*mi_destinacion_especifica*/) = 'N' --mi_destinacion_especifica
+       AND top.titr_nombre = DECODE('SISTEMA FINANCIERO' /*mi_tipo_transaccion_contable*/,'NO_AJUSTE',top.titr_nombre,'SISTEMA FINANCIERO'/*mi_tipo_transaccion_contable*/)  
+       AND top.titr_nombre NOT IN (DECODE('SISTEMA FINANCIERO' /*mi_tipo_transaccion_contable*/,'NO_AJUSTE','AJUSTE DE INGRESO','NO_AJUSTE'))
+       AND NVL(top.tipo_moneda,'N' /*mi_tipo_moneda*/) = 'N' --mi_tipo_moneda
+       AND caf.tiop_id = top.id
+       AND caf.d_c IN (1,0)
+  ORDER BY TO_NUMBER(SUBSTR(REPLACE(caf.cuco_codigo,'-',''),1,6));
+
+  select *
+  from ogt_cuenta_bancaria
+  where numero = 482800043630;
+
+
+select *
+from --delete  
+ogt_ingreso
+--order by id desc
+where num_doc_legalizacion = '55513'
+;
+
+delete --select * from 
+ ogt_detalle_ing --where valor in (70000,55000,150000,10000) order by id desc
+ where ing_id in (
+   select id
+   from ogt_ingreso
+where num_doc_legalizacion = '55513')
+;
+
+commit
+
+select * 
+from OGT_RELACION_AUTORIZACION
+where vigencia=2025 and mes = 11;
+
+select * 
+from OGT_DOCUMENTO_PAGO
+where OGT_DOCUMENTO_PAGO.vigencia=2025 and OGT_DOCUMENTO_PAGO.entidad=206 and 
+OGT_DOCUMENTO_PAGO.unidad_ejecutora=01 and OGT_DOCUMENTO_PAGO.consecutivo = 25 -- in (18,24,25)
+and tipo_documento
+
+
+select *
+from OGT_RELACION_AUTORIZACION, OGT_DOCUMENTO_PAGO
+where
+OGT_RELACION_AUTORIZACION.TIPO_DOCUMENTO = OGT_DOCUMENTO_PAGO.TIPO_DOCUMENTO AND
+OGT_RELACION_AUTORIZACION.ENTIDAD = OGT_DOCUMENTO_PAGO.ENTIDAD AND
+OGT_RELACION_AUTORIZACION.UNIDAD_EJECUTORA = OGT_DOCUMENTO_PAGO.unidad_ejecutora AND
+OGT_RELACION_AUTORIZACION.VIGENCIA = OGT_DOCUMENTO_PAGO.VIGENCIA AND
+OGT_RELACION_AUTORIZACION.CONSECUTIVO = OGT_DOCUMENTO_PAGO.CONSECUTIVO AND 
+OGT_DOCUMENTO_PAGO.vigencia=2025 and OGT_DOCUMENTO_PAGO.entidad=206 and 
+OGT_DOCUMENTO_PAGO.unidad_ejecutora=01 and OGT_DOCUMENTO_PAGO.consecutivo = 25 -- in (18,24,25)
+
+
+select * from fn_ogt_traer_code_concepto('CAUSACION INTERESES CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA');
+
+      select id
+        from ogt_concepto_tesoreria
+       where descripcion = 'CAUSACION INTERESES CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA';
+
+
+select *
+from rh_personas
+where numero_identificacion in (1049606827);
+/*
+JF 79355621 65 PUBLICO
+SUESCA 52316271 595 PRIVADO
+SANDOVAL 1049606827 607 PRIVADO
+*/
+
+
+select * 
+from rh_historico_nomina
+where dinicioperiodo = 20251201
+and ncorrida = 1

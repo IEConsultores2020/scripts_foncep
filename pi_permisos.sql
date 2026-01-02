@@ -16,7 +16,19 @@ grant execute,debug on ogt.ogt_pk_ingreso to sl with grant option;
 
 grant insert on ogt.ogt_documento to portalp;
 
+grant update, insert on ogt_ingreso to sl;
+
+grant execute on fn_actualiza_ejecutora to sl;
+
+create public synonym pk_ogt_imputacion FOR sl.pk_ogt_imputacion;
+
 --connectado como shd
 grant execute,debug on shd.pk_sit_infentidades to sl with grant option;
 grant execute,debug on shd.pk_sit_infbasica to sl with grant option;
 grant execute,debug on shd.pk_secuencial to sl with grant option;
+
+--jobs with system
+GRANT CREATE JOB TO SL;
+GRANT EXECUTE ON DBMS_SCHEDULER TO SL;
+-- Optional, but useful for full management capabilities
+GRANT MANAGE SCHEDULER TO SL; 

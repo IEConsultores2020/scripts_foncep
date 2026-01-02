@@ -58,6 +58,8 @@ create or replace package body pk_ogt_imputacion as
    begin
       mi_concepto_capital := fn_ogt_traer_code_concepto('RECAUDO CAPITAL CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA');
       mi_concepto_interes := fn_ogt_traer_code_concepto('RECAUDO INTERESES CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA');
+      --00-02-37-19-00-00-00
+      mi_concepto_causa_interes := fn_ogt_traer_code_concepto('CAUSACION INTERESES CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA');
       if
          mi_concepto_capital is not null
          and mi_concepto_interes is not null
@@ -86,7 +88,7 @@ create or replace package body pk_ogt_imputacion as
                   un_numero_externo => p_nro_referencia_pago,
                   un_estado         => mi_estado_acta,
                   un_acta_numero    => mi_acta_numero);
-               
+
                --Si encuentro el acta y esta en AProbada, no se procesa             
                if mi_acta_numero > 1 and mi_estado_acta = 'AP' then
                   p_resp := 'Ya estaba aprobada, acta '||mi_acta_numero||' referencia '||p_nro_referencia_pago;
@@ -555,6 +557,7 @@ create or replace package body pk_ogt_imputacion as
          --********************************
          --Registro intereses intereses
          if p_valor_interes > 0 then
+            --Recaudo de intereses
             insert into ogt_detalle_documento (
                cote_id,
                valor,
@@ -593,6 +596,45 @@ create or replace package body pk_ogt_imputacion as
                         p_codigo_interno,
                         'PL' --por legalizar
                         );
+            /*--Legalizacion de intereses
+            insert into ogt_detalle_documento (
+               cote_id,
+               valor,
+               ter_id_destino,
+               doc_numero,
+               doc_tipo,
+               ter_id_origen,
+               ter_id_recaudador,
+               ter_id_entidad_origen,
+               vigencia_ingreso,
+               info_numero,
+               fecha_recaudo,
+               codigo_interno,
+               valor_base_impuestos,
+               unidad_ejecutora_origen,
+               porcentaje,
+               centro_costo,
+               numero_sisla,
+               estado_sisla
+            ) values ( mi_concepto_causa_interes,
+                        p_valor_interes,
+                        p_ter_id_destino,
+                        p_doc_numero,
+                        p_doc_tipo,
+                        p_ter_id_origen,
+                        null,
+                        null,
+                        p_vigencia_ingreso,
+                        p_info_numero,
+                        p_fecha_recaudo,
+                        p_id_cuenta_cobro,
+                        null,
+                        null,
+                        0,
+                        p_centro_costo,
+                        p_codigo_interno,
+                        'PL' --por legalizar
+                        );            */
             --insertar los id de los terceros en la tabla de terceros de ingresos
             if ( p_ter_id_origen is not null ) then
                ogt_pk_ingreso.pr_insertar_tercero(p_ter_id_origen);
@@ -682,7 +724,7 @@ create or replace package body pk_ogt_imputacion as
                               mi_concepto_capital,
                               mi_rec_liquidacion.valor_capital );
                      if nvl(mi_rec_liquidacion.valor_interes ,0)>0 then
-                        --crear el ingreso del capital registrado
+                        --crear el ingreso de interes registrado
                         mi_id_ingreso_interes := ogt_pk_ingreso.fn_crear(
                            una_vigencia            => p_vigencia_ingreso,
                            una_fecha_legalizacion  => sysdate,
@@ -731,6 +773,55 @@ create or replace package body pk_ogt_imputacion as
                               mi_concepto_interes,
                               mi_rec_liquidacion.valor_interes );
                         end if; --if mi_id_ingreso_interes is null then
+                        --Crear causacion interes
+                        mi_id_ingreso_interes := ogt_pk_ingreso.fn_crear(
+                           una_vigencia            => p_vigencia_ingreso,
+                           una_fecha_legalizacion  => sysdate,
+                           una_fecha_consignacion  => sysdate,
+                           un_concepto             => mi_concepto_causa_interes,
+                           un_soporte              => p_doc_numero,
+                           un_tipo_soporte         => p_doc_tipo,
+                           una_unidad              => p_unte_codigo,
+                           un_tercero_origen       => p_ter_id_origen, 
+                           un_tercero_destino      => p_ter_id_destino,
+                           una_cuenta_bancaria     => p_cuba_numero,
+                           un_tipo_cuenta_bancaria => p_tipo_cuenta,
+                           una_sucursal            => null,
+                           una_entidad_financiera  => p_ter_id_recaudador,
+                           un_valor                => mi_rec_liquidacion.valor_interes,
+                           un_estado               => 'EL',
+                           un_tpo_doc_legaliza     => p_acta_tipo,
+                           un_nro_doc_legaliza     => p_acta_numero,
+                           una_situacion_fondos    => mi_situacion_fondos,
+                           una_unidad_ejecutora    => mi_unidad_ejecutora,
+                           una_entidad_pptal       => null,
+                           una_forma_recaudo       => 'E',
+                           un_reconocimiento       => 0
+                        );
+                        if mi_id_ingreso_interes is null then
+                           p_resp := 'OPGET:RDD:No registrar causacion interes de la cuenta de cobro '
+                                    || p_id_cuenta_cobro;
+                           seguimiento(p_resp);
+                           p_procesado := false;
+                        else
+                           insert into ogt_detalle_pensionado (
+                              --id,
+                              doc_numero,
+                              doc_tipo,
+                              id_ingreso,
+                              tercero_origen,
+                              tercero_pensionado,
+                              cote_id,
+                              valor
+                           ) values ( --mi_det_pen_num,
+                              p_doc_numero,
+                              p_doc_tipo,
+                              mi_id_ingreso_interes,
+                              p_ter_id_origen,
+                              mi_id_tercero,
+                              mi_concepto_causa_interes,
+                              mi_rec_liquidacion.valor_interes );
+                        end if; --if mi_id_cusacuib_interes is null then                        
                      end if; --if nvl(mi_rec_liquidacion.valor_interes ,0)>0 then
                   end if; --if p_procesado = false then --Encontro el tercero de trc desde id_tercero de sisla
                end if; --if mi_id_ingreso_capital is null then
@@ -828,8 +919,8 @@ create or replace package body pk_ogt_imputacion as
          select id, ing_id, entidad_pptal from   
          ogt_ingreso 
          where num_doc_legalizacion = mi_numero_acta;
-         
-      
+
+
    begin
       p_resp := 'OPGET:LEG:Inicio legalización referencia: ' || p_nro_referencia_pago || '.';
       seguimiento(p_resp);
@@ -854,9 +945,9 @@ create or replace package body pk_ogt_imputacion as
             seguimiento(p_resp);
             p_procesado := FALSE;  
       end;    
-      
+
       if p_procesado = TRUE then
-      
+
          -- Legalizar los ingresos seleccionados
          for mi_ingreso IN c_ingreso  loop
             id_transaccion := ogt_pk_ingreso.ogt_fn_Legalizar(mi_ingreso.id);
@@ -901,13 +992,13 @@ create or replace package body pk_ogt_imputacion as
             end if;            
             seguimiento (p_resp);
          end loop;
-         
+
          if p_procesado = TRUE then
             commit;
          else
             rollback;
          end if;
-         
+
          if p_procesado = TRUE then
             mi_codigo_res := null;
             update ogt_documento
@@ -1251,4 +1342,3 @@ create or replace package body pk_ogt_imputacion as
    end pr_traer_estado_encabezado;
 
 end pk_ogt_imputacion;
-/

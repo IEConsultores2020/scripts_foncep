@@ -18,7 +18,7 @@ delete --select *  from
                         --and estado='RE'
                 and unte_codigo = 'FINANCIERO'
                 --and numero in ( 55503) --,  54861)
-                and numero_externo in ('2025000103') --,'2025000003','2025000012')
+                and numero_externo in ('2025000115') --,'2025000003','2025000012')
           )
             -- and tipo = 'XYZ'
                     --and estado = 'RE'
@@ -39,7 +39,7 @@ where doc_numero||'-'||doc_tipo in
                     --and estado='RE'
             and unte_codigo = 'FINANCIERO'
             --and numero in ( 55503) --,  54861 )
-            and numero_externo in ( '2025000103') --/*, '2025000003',    '2025000012' */)
+            and numero_externo in ( '2025000115') --/*, '2025000003',    '2025000012' */)
       )
           and tipo = 'XYZ'
     )
@@ -63,7 +63,7 @@ delete --select * from
                     --and estado='RE'
             and unte_codigo = 'FINANCIERO'
             --and numero in ( 55503) --, 54861)
-            and numero_externo in ('2025000001') --,'2025000003','2025000012')
+            and numero_externo in ('2025000115') --,'2025000003','2025000012')
       )
         -- and tipo = 'XYZ'
                 --and estado = 'RE'
@@ -91,14 +91,13 @@ delete --select * from
                           --and estado='RE'
             and unte_codigo = 'FINANCIERO'
             --and numero in ( 55503)--, 54861 )
-            and numero_externo in ( '2025000001'/*,'2025000003',   '2025000012'*/ )
+            and numero_externo in ( '2025000115'/*,'2025000003',   '2025000012'*/ )
       )
          and tipo = 'XYZ'
    )
       and doc_tipo = 'XYZ'
                       --and estado = 'RE'
 );
-
 
 --Borra detalle documentos
 delete --select * from
@@ -114,7 +113,7 @@ delete --select * from
          --and estado='RE'
          and unte_codigo = 'FINANCIERO'
         --and numero in ( 55503) --, 54861 )
-         and numero_externo in ( '2025000103'/*, '2025000003', '2025000012'*/ )
+         and numero_externo in ( '2025000115'/*, '2025000003', '2025000012'*/ )
    )
       and tipo = 'XYZ'
 )
@@ -133,20 +132,21 @@ delete --select * from
       --and estado='RE'
       and unte_codigo = 'FINANCIERO'
       --and numero in ( 55503) --, 54861 )
-      and numero_externo in ( '2025000103')--,'2025000003','2025000012' )
+      and numero_externo in ( '2025000115')--,'2025000003','2025000012' )
 )
    and tipo = 'XYZ'
    --and estado = 'RE'
    ;
 
 ---Borra actas
-delete --select * from 
+--delete 
+--select * from 
  ogt_documento
  where tipo = 'ALE'
-   and estado = 'RE'
+   --and estado = 'RE'
    and unte_codigo = 'FINANCIERO'
    --and numero in (55503,55503,54861)
-   and numero_externo in ( '2025000103') /*,'2025000003', '2025000012' )*/
+   and numero_externo in ( '2025000119') 
    and extract(year from fecha) in ( 2025 );
 
 
@@ -154,3 +154,8 @@ delete --select * from
 
 --commit;
 
+update --select * from
+   sl_pcp_encabezado 
+   --set estado='PAG'
+  where nro_referencia_pago =   '2025000003'
+  ;
