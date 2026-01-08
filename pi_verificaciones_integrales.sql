@@ -25,7 +25,7 @@ select e.nro_referencia_pago,
    and cc.id = l.id_det_cuenta_cobro
    and e.nro_referencia_pago = p.nro_referencia_pago
    --and e.estado = 'PAG'
-   and e.nro_referencia_pago in ('2025000115');
+   and e.nro_referencia_pago in ('2026000010');
 
    select id_sisla, id_tercero
    from SL_RELACION_TERCEROS
@@ -80,10 +80,10 @@ where nro_referencia_pago in ('2025000105');
 select * from 
  ogt_documento
  where tipo = 'ALE'
-   and estado = 'RE'
+   --and estado = 'RE'
    and unte_codigo = 'FINANCIERO'
-   and numero_externo in ( '2025000112') 
-   and extract(year from fecha) in ( 2025 );
+   and numero_externo in ( '2026000002') 
+   and extract(year from fecha) in ( 2026 );
 
 ---Consultar los documentos asociados al acta
 select * from 
@@ -94,14 +94,14 @@ select * from
     where tipo = 'ALE'
       --and estado='RE'
       and unte_codigo = 'FINANCIERO'
-      and numero_externo in ( '2025000112')
+      and numero_externo in ( '2026000002')
 )
 and tipo = 'XYZ'   
 ;
 
 
 select * from tab_lch_segui   
-where fecha >= '31/dec/2025'
+--where fecha >= '05/JAN/2025'
 --and mensaje like 'OPGET%2025000119%'
 order by consec DESC
 ;
@@ -115,15 +115,11 @@ begin
    ) ;
 end;   
 
---1.Actualizar
-SELECT * FROM BINTABLAS
-WHERE GRUPO = 'OPGET'
-AND NOMBRE = 'LIMAY_INGRESO_PORTAL'
-AND ARGUMENTO ='CENTRO CONTABLE';
+update --select * from
+   sl_pcp_encabezado 
+   set estado='PAG'
+  where nro_referencia_pago =   '2026000002'
 
---2. Verificar de donde el 31123, almacenar el número del ingreso.
-ogt_info_ing  en 
- CURSOR cur_informacion_transaccion IS
-     SELECT atr_nombre,clmo_nombre,valor
-     FROM   ogt_info_ing
-     WHERE  ing_id= 608428 --un_ingreso;
+rollback;
+
+--commit;

@@ -18,7 +18,7 @@ delete --select *  from
                         --and estado='RE'
                 and unte_codigo = 'FINANCIERO'
                 --and numero in ( 55503) --,  54861)
-                and numero_externo in ('2025000115') --,'2025000003','2025000012')
+                and numero_externo in ('2026000002') --,'2025000003','2025000012')
           )
             -- and tipo = 'XYZ'
                     --and estado = 'RE'
@@ -39,7 +39,7 @@ where doc_numero||'-'||doc_tipo in
                     --and estado='RE'
             and unte_codigo = 'FINANCIERO'
             --and numero in ( 55503) --,  54861 )
-            and numero_externo in ( '2025000115') --/*, '2025000003',    '2025000012' */)
+            and numero_externo in ( '2026000002') --/*, '2025000003',    '2025000012' */)
       )
           and tipo = 'XYZ'
     )
@@ -63,7 +63,7 @@ delete --select * from
                     --and estado='RE'
             and unte_codigo = 'FINANCIERO'
             --and numero in ( 55503) --, 54861)
-            and numero_externo in ('2025000115') --,'2025000003','2025000012')
+            and numero_externo in ('2026000002') --,'2025000003','2025000012')
       )
         -- and tipo = 'XYZ'
                 --and estado = 'RE'
@@ -91,7 +91,7 @@ delete --select * from
                           --and estado='RE'
             and unte_codigo = 'FINANCIERO'
             --and numero in ( 55503)--, 54861 )
-            and numero_externo in ( '2025000115'/*,'2025000003',   '2025000012'*/ )
+            and numero_externo in ( '1'/*,'2025000003',   '2025000012'*/ )
       )
          and tipo = 'XYZ'
    )
@@ -113,7 +113,7 @@ delete --select * from
          --and estado='RE'
          and unte_codigo = 'FINANCIERO'
         --and numero in ( 55503) --, 54861 )
-         and numero_externo in ( '2025000115'/*, '2025000003', '2025000012'*/ )
+         and numero_externo in ( '2026000002'/*, '2025000003', '2025000012'*/ )
    )
       and tipo = 'XYZ'
 )
@@ -132,7 +132,7 @@ delete --select * from
       --and estado='RE'
       and unte_codigo = 'FINANCIERO'
       --and numero in ( 55503) --, 54861 )
-      and numero_externo in ( '2025000115')--,'2025000003','2025000012' )
+      and numero_externo in ( '2026000002')--,'2025000003','2025000012' )
 )
    and tipo = 'XYZ'
    --and estado = 'RE'
@@ -146,8 +146,8 @@ delete --select * from
    --and estado = 'RE'
    and unte_codigo = 'FINANCIERO'
    --and numero in (55503,55503,54861)
-   and numero_externo in ( '2025000119') 
-   and extract(year from fecha) in ( 2025 );
+   and numero_externo in ( '2026000002') 
+   and extract(year from fecha) in ( 2026 );
 
 
 --rollback;
@@ -159,3 +159,29 @@ update --select * from
    --set estado='PAG'
   where nro_referencia_pago =   '2025000003'
   ;
+
+
+--CUENTAS DE COBRO EN SISLA
+delete sl_pcp_pago p
+where exists
+      (select 1 from sl_pcp_encabezado e,
+       sl_pcp_cuenta_cobro cc,
+       sl_pcp_liquidaciones l
+        where e.id = cc.id_encabezado
+          and cc.id = l.id_det_cuenta_cobro
+          and e.nro_referencia_pago = p.nro_referencia_pago
+          --and e.estado = 'PAG'
+          and e.nro_referencia_pago like '2025%');
+
+
+delete sl_pcp_liquidaciones l
+where exists
+      (select 1 
+      from sl_pcp_encabezado e,
+           sl_pcp_cuenta_cobro cc
+        where e.id = cc.id_encabezado
+          and cc.id = l.id_det_cuenta_cobro
+          and e.nro_referencia_pago like '2025%');          
+
+--ORA-02292: integrity constraint (SL.SL_PCP_DET_INT_R01) violated - child record foun
+

@@ -71,7 +71,7 @@ create or replace package body pk_ogt_imputacion as
             p_nro_referencia_pago => p_nro_referencia_pago,
             p_resp                => mi_estado_encabezado );
          if mi_estado_encabezado not in ('PAG','REG','DIS') then
-            p_resp := 'OPGET: Imputación fallida. El estado debe ser PAGada o REGistrada: ';
+            p_resp := 'OPGET: Imputación fallida. El estado debe ser PAGada o REGistrada de la referencia: '|| p_nro_referencia_pago;
             seguimiento(p_resp);
             p_procesado := false;
          else
@@ -116,7 +116,7 @@ create or replace package body pk_ogt_imputacion as
                         mi_num_resp := fn_crear_acta(
                            un_documento      => mi_acta_numero,
                            un_tipo           => mi_tipo_acta,
-                           una_fecha         => sysdate,
+                           una_fecha         => mi_rec_pago.fecha_autorizacion,
                            un_estado         => mi_estado_acta,
                            una_unidad        => 'FINANCIERO',
                            un_numero_externo => to_char(p_nro_referencia_pago),
@@ -986,6 +986,7 @@ create or replace package body pk_ogt_imputacion as
                      p_resp := 'OGT:LEG:Actualiza Ejecutora: '||p_resp ;
                      p_procesado := true;
                   else
+                     p_resp := 'OGT:LEG:No fue posible actualizar la unidad ejecutora';
                      p_procesado := false;
                   end if;
                end if;
@@ -1048,6 +1049,7 @@ create or replace package body pk_ogt_imputacion as
                                    centro_costo
                              from sl_pcp_encabezado
                              where estado in ('PAG','REG')
+                             and  extract(year from fecha_sistema) > 2025
                              and nro_referencia_pago = nvl(p_nro_referencia,nro_referencia_pago); 
    exception
       when OTHERS then  

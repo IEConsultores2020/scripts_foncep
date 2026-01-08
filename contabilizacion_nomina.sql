@@ -1,13 +1,12 @@
 SELECT 
-   -- SCOMPANIA              COMP,
-    VIGENCIA               VIGE,
-    GRUPO_RA               GRA,
+   -- SCOMPANIA              COMP,  VIGENCIA               VIGE,
+   -- GRUPO_RA               GRA,
     VIGENCIA_PRESUPUESTO   VPTO,
-    UNIDAD_EJECUTORA       UE,
-    ANO_PAC                APAC,
+   -- UNIDAD_EJECUTORA       UE,
+   -- ANO_PAC                APAC,
     NTIPO_NOMINA           TNOM,
-    MES_PAC                MPAC,
-    DFECHA_INICIAL_PERIODO  FECHA_INI,
+   -- MES_PAC                MPAC,
+    --DFECHA_INICIAL_PERIODO  FECHA_INI,
     TIPO_COMPROMISO        TC,
     NUMERO_COMPROMISO      NC,
     NRO_RA                 NRA,
@@ -23,21 +22,21 @@ SELECT
             '4 - CESANTIAS FONDOS'
         ELSE
             TIPO_RA
-    END                    TIPO_DE_RA,
+    END                    TIPO_DE_RA /*,
     DFECHA_INICIAL_PERIODO DFECINI,
     DFECHA_FINAL_PERIODO   DFECFIN,
     APROBACION             A,
     ACTUALIZADO_CONTAB     AC,
     GEN_CXP_OPGET          GCXP,
     CONTABILIZADO          CTDO,
-    CONTABILIZAR           CTAR 
+    CONTABILIZAR           CTAR */
    -- UPDATE
 FROM
     RH_LM_RA -- SET /*ACTUALIZADO_CONTAB='N', */ GEN_CXP_OPGET = 'N' /*, CONTABILIZADO = 'N'*/, CONTABILIZAR = 'S'
 WHERE
     SCOMPANIA = 206 --AND DFECHA_INICIAL_PERIODO = '01-DEC-24';
     AND EXTRACT(YEAR FROM DFECHA_INICIAL_PERIODO) = 2025
-    AND EXTRACT(MONTH FROM DFECHA_INICIAL_PERIODO) = :MES
+     AND EXTRACT(MONTH FROM DFECHA_INICIAL_PERIODO) = :MES
    -- AND NRO_RA=12
 ORDER BY
     DFECHA_INICIAL_PERIODO DESC,

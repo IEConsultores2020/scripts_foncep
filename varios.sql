@@ -91,10 +91,6 @@ and unidad_ejecutora = '01'
 and entidad = 206
 ;
 
-
-
-
-
 select SUM (APORTE_EMPLEADO)
 from ogt_anexo_nomina
 where vigencia = 2025
@@ -508,9 +504,18 @@ where resultado like 'LA ASESORA RESPONSABLE%' GRUPO='OPGET' and nombre = 'INDIC
 AND ARGUMENTO=nombre = 'INDICE'
 ;
 
-select DISTINCT GRUPO
+select *
 from binconsecutivo 
-where GRUPO = 'LIMAY' --nombre like '%TRC%' --secuencial = 413170
+where GRUPO = 'OPGET' 
+and nombre = 'ACTA_LEGAL_ID' 
+and vigencia ='0000'
+and codigo_compania='000'  
+;
+
+select *
+from binconsecutivo where secuencial between 31129 and 31200;
+
+
 
 select max(id)
 from shd_terceros   413195
@@ -831,4 +836,18 @@ SANDOVAL 1049606827 607 PRIVADO
 select * 
 from rh_historico_nomina
 where dinicioperiodo = 20251201
-and ncorrida = 1
+and ncorrida = 1;
+
+   select resultado
+                  from bintablas
+                  where grupo = 'OPGET'
+                  and nombre = 'LIMAY_INGRESO_PORTAL'
+                  and argumento ='CENTRO CONTABLE';
+
+
+select *
+from ogt_ingreso 
+where num_doc_legalizacion = 55533;                  
+
+select *
+from sl_pcp_pago

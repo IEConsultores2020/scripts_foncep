@@ -27,7 +27,7 @@ where nro_referencia_pago =   '2025000114'
 update --select * from
    sl_pcp_encabezado 
    set estado='PAG'
-  where nro_referencia_pago =   '2025000113'
+  where nro_referencia_pago =   '2026000002'
   ;
 
 commit;
@@ -46,8 +46,8 @@ set estado = 'RE'
  where tipo = 'ALE'
    and estado = 'AP'
    and unte_codigo = 'FINANCIERO'
-   and numero_externo in ( '2025000112') 
-   and extract(year from fecha) in ( 2025 );  
+   and numero_externo in ( '2026000002') 
+   and extract(year from fecha) in ( 2026 );  
 
 COMMIT;
 
