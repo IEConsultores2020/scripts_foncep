@@ -54,7 +54,7 @@ COMMIT;
 declare
    mi_estado              sl_pcp_encabezado.estado%type;
    mi_nuevo_estado        sl_pcp_encabezado.estado%type;
-   mi_nro_referencia_pago sl_pcp_encabezado.nro_referencia_pago%type := '2025000114';
+   mi_nro_referencia_pago sl_pcp_encabezado.nro_referencia_pago%type := '2026000002';
    num_registros          number;
    mi_mensaje             varchar2(2000);
    mi_procesado           boolean;
@@ -114,3 +114,5 @@ select * from
         from ogt_detalle_documento
         where doc_numero in (54758,55525,55526))
         ;
+
+        

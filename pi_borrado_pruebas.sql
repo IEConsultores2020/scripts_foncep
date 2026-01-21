@@ -18,7 +18,7 @@ delete --select *  from
                         --and estado='RE'
                 and unte_codigo = 'FINANCIERO'
                 --and numero in ( 55503) --,  54861)
-                and numero_externo in ('2026000002') --,'2025000003','2025000012')
+                and numero_externo in ('2026000057') --,'2025000003','2025000012')
           )
             -- and tipo = 'XYZ'
                     --and estado = 'RE'
@@ -39,7 +39,7 @@ where doc_numero||'-'||doc_tipo in
                     --and estado='RE'
             and unte_codigo = 'FINANCIERO'
             --and numero in ( 55503) --,  54861 )
-            and numero_externo in ( '2026000002') --/*, '2025000003',    '2025000012' */)
+            and numero_externo in ( '2026000057') --/*, '2025000003',    '2025000012' */)
       )
           and tipo = 'XYZ'
     )
@@ -63,7 +63,7 @@ delete --select * from
                     --and estado='RE'
             and unte_codigo = 'FINANCIERO'
             --and numero in ( 55503) --, 54861)
-            and numero_externo in ('2026000002') --,'2025000003','2025000012')
+            and numero_externo in ('2026000057') --,'2025000003','2025000012')
       )
         -- and tipo = 'XYZ'
                 --and estado = 'RE'
@@ -78,11 +78,11 @@ delete --select * from
  --order by id desc  borrar los de fecha consignacion con mm/yyyy 11/2025
  --where doc_numero = 98114
  where doc_numero       || '-'       || doc_tipo in (  --'98113-XYZ','98114-XYZ')
-   select distinct doc_numero                   || '-'                   || doc_tipo
+   select distinct doc_numero || '-' || doc_tipo
      from ogt_detalle_documento 
           --where doc_numero in ('55502','54861') --'55503'
-    where doc_numero          || '-'          || doc_tipo in (
-      select numero             || '-'             || tipo
+    where doc_numero|| '-' || doc_tipo in (
+      select numero || '-' || tipo
         from ogt_documento
        where numero_legal in (
          select numero
@@ -91,7 +91,7 @@ delete --select * from
                           --and estado='RE'
             and unte_codigo = 'FINANCIERO'
             --and numero in ( 55503)--, 54861 )
-            and numero_externo in ( '1'/*,'2025000003',   '2025000012'*/ )
+            and numero_externo = '2026000057' 
       )
          and tipo = 'XYZ'
    )
@@ -113,14 +113,13 @@ delete --select * from
          --and estado='RE'
          and unte_codigo = 'FINANCIERO'
         --and numero in ( 55503) --, 54861 )
-         and numero_externo in ( '2026000002'/*, '2025000003', '2025000012'*/ )
+         and numero_externo in ( '2026000057'/*, '2025000003', '2025000012'*/ )
    )
       and tipo = 'XYZ'
 )
    and doc_tipo = 'XYZ'
   --and estado = 'RE'
    ;
-
 
 --Borra documentos
 delete --select * from 
@@ -132,7 +131,7 @@ delete --select * from
       --and estado='RE'
       and unte_codigo = 'FINANCIERO'
       --and numero in ( 55503) --, 54861 )
-      and numero_externo in ( '2026000002')--,'2025000003','2025000012' )
+      and numero_externo in ( '2026000057')--,'2025000003','2025000012' )
 )
    and tipo = 'XYZ'
    --and estado = 'RE'
@@ -146,7 +145,7 @@ delete --select * from
    --and estado = 'RE'
    and unte_codigo = 'FINANCIERO'
    --and numero in (55503,55503,54861)
-   and numero_externo in ( '2026000002') 
+   and numero_externo in ( '2026000054') 
    and extract(year from fecha) in ( 2026 );
 
 

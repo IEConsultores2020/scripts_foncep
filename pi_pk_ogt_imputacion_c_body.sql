@@ -100,13 +100,13 @@ create or replace package body pk_ogt_imputacion as
                   p_procesado := false;                    
                elsif mi_acta_numero = -1 and mi_estado_encabezado = 'REG' then --El acta debe existir
                   p_resp := 'OPGET: Inconsistencia en Imputacion. Para factura REGistrada, debe existir un acta '
-                     || mi_estado_encabezado;
+                     || mi_estado_encabezado || ' referencia ' || p_nro_referencia_pago;
                   seguimiento(p_resp);
                   p_procesado := false;
                elsif mi_acta_numero = -1 and mi_estado_encabezado in ('PAG','DIS') then --El acta no ha sido creada, se procede a crearla 
                   -- Inicio registro acta
                   mi_acta_numero := pk_secuencial.fn_traer_consecutivo( 'OPGET', 'ACTA_LEGAL_ID', '0000', '000' ) + 1;
-                  p_resp := 'OPGET: Consecutivo acta legal: ' || mi_acta_numero;
+                  p_resp := 'OPGET: Consecutivo acta legal: ' || mi_acta_numero|| ' para referencia ' || p_nro_referencia_pago;
                   seguimiento(p_resp);
                   if mi_acta_numero > 0 then --el acta aún no ha sido creada.
                      mi_valor_pagado := fn_traer_valor_referencia_pago(p_nro_referencia_pago => p_nro_referencia_pago);
@@ -184,7 +184,7 @@ create or replace package body pk_ogt_imputacion as
                            p_procesado           => p_procesado
                         );
                      else
-                        p_resp := 'OPGET: Reversado proceso registro';
+                        p_resp := 'OPGET: Reversado proceso registro acta'||mi_acta_numero;
                         seguimiento(p_resp);
                         rollback;
                      end if; --if p_procesado = true then
@@ -202,7 +202,13 @@ create or replace package body pk_ogt_imputacion as
                   p_resp := 'OPGET: Revise que el acta se encuentre creada';
                   seguimiento(p_resp);
                end if;  --if mi_num_resp = 1 and nvl(mi_acta_numero,-1) > -1 and mi_estado_encabezado = 'PAG' 
-
+               --Temporal para guardar detalle documento, quitar comentarios este bloque y comentariar bloque inferior
+               /*if p_procesado = true then
+                                       commit;
+                        p_resp := 'OPGET: Guardado registro acta'||mi_acta_numero;
+                        seguimiento(p_resp);
+               end if;*/
+               --/*Inicio comentariar bloque
                --Se procede a legalizar
                if p_procesado = true and nvl(mi_acta_numero,-1) > -1 and mi_estado_encabezado = 'REG'  then
                   pr_legalizar_financiero (
@@ -225,7 +231,8 @@ create or replace package body pk_ogt_imputacion as
                   seguimiento(p_resp);
                   p_procesado := false;
                   rollback;
-               end if;
+               end if; 
+               --Fin comentariar bloque */
             else
                p_resp := 'OPGET: No hay registros de pago para referencia ' || p_nro_referencia_pago;
                seguimiento(p_resp);
@@ -315,151 +322,148 @@ create or replace package body pk_ogt_imputacion as
             exit when mi_cur_cuentas_cobro%notfound;
             p_resp := 'OPGET:RD:ID Cuenta cobro= ' || mi_rec_cuenta_cobro.id;
             seguimiento(p_resp);
-            sl_id_tercero_y_centro_costo(
-               mi_rec_cuenta_cobro.codigo_entidad,
-               mi_id_tercero_tac,
-               mi_nit_origen,
-               mi_centro_costo,
-               p_resp
-            );
-            if mi_id_tercero_tac is null
-               or mi_centro_costo is null or mi_nit_origen is null then
-               p_procesado := false;
-               p_resp := 'OPGET:RD:No encuentra tercero tac de la id_cuenta_cobro '
-                         || mi_rec_cuenta_cobro.id;
-               seguimiento(p_resp);
-            else
-               mi_id_tercero_origen := pk_sit_infbasica.sit_fn_get_id('NIT',mi_nit_origen,sysdate);
-               if mi_id_tercero_origen is null then
+            if mi_rec_cuenta_cobro.valor_capital > 0 then
+               sl_id_tercero_y_centro_costo(
+                  mi_rec_cuenta_cobro.codigo_entidad,
+                  mi_id_tercero_tac,
+                  mi_nit_origen,
+                  mi_centro_costo,
+                  p_resp
+               );
+               if mi_id_tercero_tac is null
+                  or mi_centro_costo is null or mi_nit_origen is null then
                   p_procesado := false;
-                  p_resp := 'OPGET:RD:No encuentra tercero origen de la cuenta_cobro '
-                        || mi_rec_cuenta_cobro.id;
-                  seguimiento(p_resp);      
-               end if;
-            end if;
-            mi_numero_documento := pk_secuencial.fn_traer_consecutivo(
-               'OPGET', 'DOC_NUM', '2002', '000' ) + 1;
-            --Crea documento
-            if mi_numero_documento is null then
-               p_resp := 'OPGET:RD:No fue posible obtener el consecutivo (DOC_NUM) para registrar documento '
-                        || mi_rec_cuenta_cobro.id;
-               seguimiento(p_resp);   
-               p_procesado := false;
-               exit;
-            else
-               begin
-                  insert into ogt_documento (
-                     numero,
-                     tipo,
-                     estado,
-                     fecha,
-                     fecha_emision_titulo,
-                     ter_id_receptor,
-                     unte_codigo,
-                     bin_tipo_cuenta,
-                     bin_tipo_titulo,
-                     cuba_numero,
-                     usuario_elaboro,
-                     usuario_reviso,
-                     numero_soporte,
-                     tipo_soporte,
-                     fecha_compra_titulo,
-                     fecha_soporte,
-                     numero_timbre,
-                     numero_legal,
-                     tipo_legal
-                  ) values ( mi_numero_documento,
-                             mi_tipo_documento,
-                             p_estado,
-                             sysdate,trunc(sysdate,'mm'),
-                             p_rec_pago.id_banco,
-                             mi_unte_codigo,
-                             mi_bin_tipo_cuenta,
-                             null,
-                             mi_cuba_numero,
-                             p_usuario,
-                             p_usuario,
-                             p_acta_numero,
-                             mi_tipo_soporte,
-                             p_rec_pago.fecha_autorizacion,
-                             p_rec_pago.fecha_autorizacion,
-                             mi_vigencia,
-                             p_acta_numero,
-                             p_acta_tipo );
-                  ogt_pk_ingreso.pr_insertar_tercero(p_rec_pago.id_banco);
-                  p_procesado := true;
-               exception
-                  when others then
-                     p_resp :='OPGET:RD:No ingresó documento para cuenta de cobro:'
-                               || mi_rec_cuenta_cobro.id_cuenta_cobro|| '. '|| sqlerrm;
-                     seguimiento(p_resp);
+                  p_resp := 'OPGET:RD:No encuentra tercero tac de la id_cuenta_cobro '
+                           || mi_rec_cuenta_cobro.id;
+                  seguimiento(p_resp);
+               else
+                  mi_id_tercero_origen := pk_sit_infbasica.sit_fn_get_id('NIT',mi_nit_origen,sysdate);
+                  if mi_id_tercero_origen is null then
                      p_procesado := false;
-                     exit;
-               end;
-            end if; --if mi_numero_documento is null then
-
-            --Inserción en la tabla detalle documento
-            if p_procesado = true then
-               --extrae los 10 últimos caracteres
-               mi_id_cuenta_cobro10 := lpad(
-                  to_char(mi_rec_cuenta_cobro.id_cuenta_cobro),
-                  10,
-                  '0'
-               );
-               mi_id_cuenta_cobro10 := substr(
-                  mi_id_cuenta_cobro10,
-                  -10,
-                  10
-               );
-               --Crea detalle documento por liquidación.
-               begin
-                  --Registra capital e intereses
-                  pr_registrar_detalle_docum(
-                     p_id_cuenta_cobro         => mi_rec_cuenta_cobro.id,
-                     p_valor_capital           => mi_rec_cuenta_cobro.valor_capital,
-                     p_valor_interes           => mi_rec_cuenta_cobro.valor_intereses,
-                     p_doc_numero              => mi_numero_documento,
-                     p_doc_tipo                => mi_tipo_documento,
-                     p_unte_codigo             => mi_unte_codigo,
-                     p_ter_id_origen           => mi_id_tercero_origen,
-                     p_centro_costo            => mi_centro_costo,
-                     p_ter_id_destino          => mi_id_tercero_destino,
-                     p_ter_id_recaudador       => p_rec_pago.id_banco,
-                     p_ter_id_entidad_origen   => null,
-                     p_tipo_cuenta             => mi_bin_tipo_cuenta,
-                     p_cuba_numero             => mi_cuba_numero,
-                     p_vigencia_ingreso        => mi_vigencia,
-                     p_info_numero             => p_nro_referencia_pago,
-                     p_fecha_recaudo           => p_rec_pago.fecha_autorizacion,
-                     p_codigo_interno          => mi_rec_cuenta_cobro.id_cuenta_cobro,
-                     p_valor_base_impuestos    => null,
-                     p_unidad_ejecutora_origen => null,
-                     p_porcentaje              => 0,
-                     p_numero_sisla            => mi_id_cuenta_cobro10,
-                     p_estado_sisla            => 'PL', --por legalizar,
-                     p_acta_tipo               => p_acta_tipo, --10
-                     p_acta_numero             => p_acta_numero,
-                     p_resp                    => p_resp,
-                     p_procesado               => p_procesado
-                  );
-                  if p_procesado = false then
-                     p_resp := 'OPGET:RD:Fallido ingreso ocumento';
-                     seguimiento(p_resp);
-                     exit;
+                     p_resp := 'OPGET:RD:No encuentra tercero origen de la cuenta_cobro '
+                           || mi_rec_cuenta_cobro.id;
+                     seguimiento(p_resp);      
                   end if;
-               exception
-                  when others then
-                     p_resp := 'OPGET:RD:Fallido detalle del documento para cuenta de cobro:'
-                               || mi_rec_cuenta_cobro.id_cuenta_cobro
-                               || '. '
-                               || sqlerrm;
-                     seguimiento(p_resp);
-                     p_procesado := false;
-                     exit;
-               end;
-            else
-               exit;
-            end if;  --if p_procesado = true then
+               end if;
+               mi_numero_documento := pk_secuencial.fn_traer_consecutivo(
+                  'OPGET', 'DOC_NUM', '2002', '000' ) + 1;
+               --Crea documento
+               if mi_numero_documento is null then
+                  p_resp := 'OPGET:RD:No fue posible obtener el consecutivo (DOC_NUM) para registrar documento '
+                           || mi_rec_cuenta_cobro.id;
+                  seguimiento(p_resp);   
+                  p_procesado := false;
+                  exit;
+               else
+                  begin
+                     insert into ogt_documento (
+                        numero,
+                        tipo,
+                        estado,
+                        fecha,
+                        fecha_emision_titulo,
+                        ter_id_receptor,
+                        unte_codigo,
+                        bin_tipo_cuenta,
+                        bin_tipo_titulo,
+                        cuba_numero,
+                        usuario_elaboro,
+                        usuario_reviso,
+                        numero_soporte,
+                        tipo_soporte,
+                        fecha_compra_titulo,
+                        fecha_soporte,
+                        numero_timbre,
+                        numero_legal,
+                        tipo_legal
+                     ) values ( mi_numero_documento,
+                              mi_tipo_documento,
+                              p_estado,
+                              sysdate,trunc(sysdate,'mm'),
+                              p_rec_pago.id_banco,
+                              mi_unte_codigo,
+                              mi_bin_tipo_cuenta,
+                              null,
+                              mi_cuba_numero,
+                              p_usuario,
+                              p_usuario,
+                              p_acta_numero,
+                              mi_tipo_soporte,
+                              p_rec_pago.fecha_autorizacion,
+                              p_rec_pago.fecha_autorizacion,
+                              mi_vigencia,
+                              p_acta_numero,
+                              p_acta_tipo );
+                     ogt_pk_ingreso.pr_insertar_tercero(p_rec_pago.id_banco);
+                     p_procesado := true;
+                  exception
+                     when others then
+                        p_resp :='OPGET:RD:No ingresó documento para cuenta de cobro:'
+                                 || mi_rec_cuenta_cobro.id_cuenta_cobro|| '. '|| sqlerrm;
+                        seguimiento(p_resp);
+                        p_procesado := false;
+                        exit;
+                  end;
+               end if; --if mi_numero_documento is null then
+
+               --Inserción en la tabla detalle documento
+               if p_procesado = true then
+                  --extrae los 10 últimos caracteres
+                  mi_id_cuenta_cobro10 := lpad(
+                     to_char(mi_rec_cuenta_cobro.id_cuenta_cobro),
+                     10,'0');
+                  mi_id_cuenta_cobro10 := substr(
+                     mi_id_cuenta_cobro10,-10,10);
+                  --Crea detalle documento por liquidación.
+                  begin
+                     --Registra capital e intereses
+                     pr_registrar_detalle_docum(
+                        p_id_cuenta_cobro         => mi_rec_cuenta_cobro.id,
+                        p_valor_capital           => mi_rec_cuenta_cobro.valor_capital,
+                        p_valor_interes           => mi_rec_cuenta_cobro.valor_intereses,
+                        p_doc_numero              => mi_numero_documento,
+                        p_doc_tipo                => mi_tipo_documento,
+                        p_unte_codigo             => mi_unte_codigo,
+                        p_ter_id_origen           => mi_id_tercero_tac, --mi_id_tercero_origen,
+                        p_centro_costo            => mi_centro_costo,
+                        p_ter_id_destino          => mi_id_tercero_destino,
+                        p_ter_id_recaudador       => p_rec_pago.id_banco,
+                        p_ter_id_entidad_origen   => null,
+                        p_tipo_cuenta             => mi_bin_tipo_cuenta,
+                        p_cuba_numero             => mi_cuba_numero,
+                        p_vigencia_ingreso        => mi_vigencia,
+                        p_info_numero             => p_nro_referencia_pago,
+                        p_fecha_recaudo           => p_rec_pago.fecha_autorizacion,
+                        p_codigo_interno          => mi_rec_cuenta_cobro.id_cuenta_cobro,
+                        p_valor_base_impuestos    => null,
+                        p_unidad_ejecutora_origen => null,
+                        p_porcentaje              => 0,
+                        p_numero_sisla            => mi_id_cuenta_cobro10,
+                        p_estado_sisla            => 'PL', --por legalizar,
+                        p_acta_tipo               => p_acta_tipo, --10
+                        p_acta_numero             => p_acta_numero,
+                        p_resp                    => p_resp,
+                        p_procesado               => p_procesado
+                     );
+                     if p_procesado = false then
+                        p_resp := 'OPGET:RD:Fallido ingreso ocumento';
+                        seguimiento(p_resp);
+                        exit;
+                     end if;
+                  exception
+                     when others then
+                        p_resp := 'OPGET:RD:Fallido detalle del documento para cuenta de cobro:'
+                                 || mi_rec_cuenta_cobro.id_cuenta_cobro
+                                 || '. '
+                                 || sqlerrm;
+                        seguimiento(p_resp);
+                        p_procesado := false;
+                        exit;
+                  end;
+               else
+                  exit;
+               end if;  --if p_procesado = true then
+            end if; --if mi_rec_cuenta_cobro.valor_capital > 0 then
          end loop;
       end if;
       --cierro el cursor
@@ -503,10 +507,21 @@ create or replace package body pk_ogt_imputacion as
       mi_id_ingreso_interes number;
       mi_det_pen_num        number;
       mi_situacion_fondos   varchar2(1) := 'S';
-      mi_unidad_ejecutora   varchar2(2) := '01';
+      mi_unidad_ejecutora   varchar2(2) := '02';
       mi_id_tercero          sl_relacion_terceros.id_tercero%type; 
    begin
-      mi_unidad_ejecutora := '01'; --pk_permisos_entidad_unieje.fn_leer_unieje_actual('OPGET');
+      begin
+         select resultado
+         into mi_unidad_ejecutora
+         from bintablas
+         where grupo = 'OPGET'
+         and nombre = 'LIMAY_INGRESO_PORTAL'
+         and argumento ='CENTRO CONTABLE';
+      exception
+         when no_data_found then
+            p_resp := 'OPGET:RDD: No existe configuración LIMAY_INGRESO_PORTAL - CENTRO CONTABLE en BINTABLAS, se asigna valor por defecto 02';
+            mi_unidad_ejecutora := '02';
+      end;
       if p_valor_capital <= 0 then
          p_resp := 'OPGET:RDD:No hay capital a registrar cuenta de cobro '|| p_id_cuenta_cobro;
          seguimiento(p_resp);
@@ -596,45 +611,6 @@ create or replace package body pk_ogt_imputacion as
                         p_codigo_interno,
                         'PL' --por legalizar
                         );
-            /*--Legalizacion de intereses
-            insert into ogt_detalle_documento (
-               cote_id,
-               valor,
-               ter_id_destino,
-               doc_numero,
-               doc_tipo,
-               ter_id_origen,
-               ter_id_recaudador,
-               ter_id_entidad_origen,
-               vigencia_ingreso,
-               info_numero,
-               fecha_recaudo,
-               codigo_interno,
-               valor_base_impuestos,
-               unidad_ejecutora_origen,
-               porcentaje,
-               centro_costo,
-               numero_sisla,
-               estado_sisla
-            ) values ( mi_concepto_causa_interes,
-                        p_valor_interes,
-                        p_ter_id_destino,
-                        p_doc_numero,
-                        p_doc_tipo,
-                        p_ter_id_origen,
-                        null,
-                        null,
-                        p_vigencia_ingreso,
-                        p_info_numero,
-                        p_fecha_recaudo,
-                        p_id_cuenta_cobro,
-                        null,
-                        null,
-                        0,
-                        p_centro_costo,
-                        p_codigo_interno,
-                        'PL' --por legalizar
-                        );            */
             --insertar los id de los terceros en la tabla de terceros de ingresos
             if ( p_ter_id_origen is not null ) then
                ogt_pk_ingreso.pr_insertar_tercero(p_ter_id_origen);
@@ -970,13 +946,14 @@ create or replace package body pk_ogt_imputacion as
                  -- mi_unidad_ejecutora_limay  := '02';
                exception
                   when others then
-                     p_resp := 'Verifique que exista y sea unico el CENTRO CONTABLE en el grupo de OPGET nombre LIMAY_INGRESO_PORTAL';
+                     p_resp := 'Verifique que exista y sea unico el CENTRO CONTABLE en el grupo de OPGET nombre LIMAY_INGRESO_PORTAL argumentO CENTRO CONTABLE en bintablas.';
                      p_procesado:= false;
                end;
                if p_procesado = true then
                   update ogt_ingreso
                      set unidad_ejecutora_limay = mi_unidad_ejecutora_limay
                   where id = mi_ingreso.id;
+                  /* provisional ya no se usa.
                   p_resp := fn_actualiza_ejecutora(
                      mi_ingreso.entidad_pptal, 
                      'OPGET', 
@@ -989,6 +966,7 @@ create or replace package body pk_ogt_imputacion as
                      p_resp := 'OGT:LEG:No fue posible actualizar la unidad ejecutora';
                      p_procesado := false;
                   end if;
+                  */
                end if;
             end if;            
             seguimiento (p_resp);
@@ -999,7 +977,7 @@ create or replace package body pk_ogt_imputacion as
          else
             rollback;
          end if;
-
+         
          if p_procesado = TRUE then
             mi_codigo_res := null;
             update ogt_documento
@@ -1093,6 +1071,7 @@ create or replace package body pk_ogt_imputacion as
                                select id
                                  from sl_pcp_encabezado
                                 where nro_referencia_pago = p_nro_referencia_pago
+                                and valor_capital > 0
                             );
    exception
       when no_data_found then
@@ -1123,7 +1102,8 @@ create or replace package body pk_ogt_imputacion as
                                    fecha_sistema,
                                    estado
                                                     from sl_pcp_liquidaciones
-                             where id_det_cuenta_cobro = p_id_det_cuenta_cobro;
+                             where id_det_cuenta_cobro = p_id_det_cuenta_cobro
+                             and valor_capital > 0;
    exception
       when no_data_found then
          --p_ref_cursor := null;

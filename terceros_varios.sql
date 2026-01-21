@@ -6,7 +6,7 @@ select nit from sl_compania com where com.codigo_compania = 107766
     
 
 select *
-  from shd_informacion_basica where id = 5816
+  from shd_informacion_basica where id = 6112
  where shd_informacion_basica.ib_tipo_identificacion = nvl(
       :un_tipo_identificacion,
       shd_informacion_basica.ib_tipo_identificacion

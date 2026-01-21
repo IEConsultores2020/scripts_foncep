@@ -22,14 +22,14 @@ SELECT
             '4 - CESANTIAS FONDOS'
         ELSE
             TIPO_RA
-    END                    TIPO_DE_RA /*,
+    END                    TIPO_DE_RA ,
     DFECHA_INICIAL_PERIODO DFECINI,
     DFECHA_FINAL_PERIODO   DFECFIN,
     APROBACION             A,
     ACTUALIZADO_CONTAB     AC,
     GEN_CXP_OPGET          GCXP,
     CONTABILIZADO          CTDO,
-    CONTABILIZAR           CTAR */
+    CONTABILIZAR           CTAR 
    -- UPDATE
 FROM
     RH_LM_RA -- SET /*ACTUALIZADO_CONTAB='N', */ GEN_CXP_OPGET = 'N' /*, CONTABILIZADO = 'N'*/, CONTABILIZAR = 'S'

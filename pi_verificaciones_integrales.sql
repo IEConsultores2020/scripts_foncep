@@ -25,7 +25,7 @@ select e.nro_referencia_pago,
    and cc.id = l.id_det_cuenta_cobro
    and e.nro_referencia_pago = p.nro_referencia_pago
    --and e.estado = 'PAG'
-   and e.nro_referencia_pago in ('2026000010');
+   and e.nro_referencia_pago in ('2026000057');
 
    select id_sisla, id_tercero
    from SL_RELACION_TERCEROS
@@ -101,7 +101,7 @@ and tipo = 'XYZ'
 
 
 select * from tab_lch_segui   
---where fecha >= '05/JAN/2025'
+where fecha >= '20/JAN/2026'
 --and mensaje like 'OPGET%2025000119%'
 order by consec DESC
 ;
@@ -123,3 +123,28 @@ update --select * from
 rollback;
 
 --commit;
+
+
+  SELECT * FROM 
+  ogt_info_ing
+  WHERE VALOR= '31132';
+
+
+  ogt_fn_dinamica_actualiza (
+      mi_clase_info    => 'CONCEPTO_TESORERIA',
+      mi_tipo_info     => 'DESCRIPCION',
+      p_tipo_info => ' WHERE  id         =  ''00-02-37-19-00-00-00'' '
+   ) ;
+
+   SELECT NUMERO_LEGAL
+   FROM DOCUMENTO
+----
+--ID no  corresponde
+
+
+SELECT * FROM ogt_DOCUMENTO  WHERE numero = '55540'   AND tipo   = 'XYZ'
+
+SELECT * --numero, tipo, fecha_compra_titulo, numero_legal, tipo_legal 
+FROM ogt_DOCUMENTO  WHERE /*numero=98232 and*/ numero_legal = '55540'   AND tipo   = 'XYZ'
+
+select doc_numero from ogt_ingreso where doc_numero=98232 and doc_tipo='XYZ';

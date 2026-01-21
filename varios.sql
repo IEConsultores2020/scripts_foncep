@@ -19,12 +19,21 @@ WHERE
     ;
 
 SELECT *
-FROM BINTABLAS
-WHERE GRUPO='PREDIS'
-AND NOMBRE='VIGENCIA'
-AND ARGUMENTO='VIG_EJEC'
---
+FROM 
+--UPDATE 
+BINTABLAS
+--SET RESULTADO='RptSvr_seul_asinst_2'
+WHERE GRUPO in ('GENERAL')
+AND NOMBRE='IDENTIFICACION'
+--AND ARGUMENTO='REPORTSERVER'
+AND VIG_INICIAL <= SYSDATE
+AND (VIG_FINAL IS NULL OR VIG_FINAL >= SYSDATE)
 ;
+
+INSERT INTO BINTABLAS (GRUPO,NOMBRE,ARGUMENTO,RESULTADO,VIG_INICIAL)
+VALUES ('GENERAL','IDENTIFICACION','TAC','TAC',SYSDATE)
+
+commit;
 
 select *
 --update 
@@ -144,8 +153,16 @@ ogt_tipo_transaccion
 select *
 from bintablas
 where grupo='OPGET'
-AND ARGUMENTO LIKE '%PATH%';
+AND ARGUMENTO = 'REPORTSERVER'
+AND SYSDATE BETWEEN VIG_INICIAL AND NVL(VIG_FINAL,SYSDATE);
 --'Parametros archivo favidi'
+
+
+UPDATE bintablas
+SET RESULTADO = 'RPT10CM'
+where grupo='OPGET'
+AND ARGUMENTO = 'REPORTSERVER'
+AND SYSDATE BETWEEN VIG_INICIAL AND NVL(VIG_FINAL,SYSDATE);
 
 
 select PK_OGT_OP.FN_OGT_VALOR_BINTABLAS
@@ -851,3 +868,55 @@ where num_doc_legalizacion = 55533;
 
 select *
 from sl_pcp_pago
+;
+select max(id)
+
+  FROM ogt_ingreso;
+
+  select *
+  from rh_personas
+  where interno_persona in (624,61) --numero_identificacion = 1049606827
+  :
+
+sl_id_tercero_y_centro_costo(
+                  373, --mi_rec_cuenta_cobro.codigo_entidad,
+                  mi_id_tercero_tac,
+                  mi_nit_origen,
+                  mi_centro_costo,
+                  p_resp
+               );
+
+select * --id_limay, nit,id_sisla
+        --into p_id_tercero_origen, p_nit_origen,  p_centro_costo
+        from sl_relacion_tac
+       where codigo_compa = 373 --p_codigo_compa;
+
+select * from ogt_detalle_documento
+--update ogt_detalle_documento set ter_id_origen=400210
+ where doc_numero||'-'||doc_tipo in (
+   select numero ||'-'||tipo
+     from ogt_documento
+    where numero_legal in (
+      select numero
+        from ogt_documento
+       where tipo = 'ALE'
+         --and estado='RE'
+         and unte_codigo = 'FINANCIERO'
+        --and numero in ( 55503) --, 54861 )
+         and numero_externo in ( '2026000057'/*, '2025000003', '2025000012'*/ )
+   )
+      and tipo = 'XYZ'
+)
+   and doc_tipo = 'XYZ'       
+   and ter_id_origen= 69
+   ;
+
+
+INSERT INTO BINTABLAS (GRUPO,NOMBRE,ARGUMENTO,RESULTADO,VIG_INICIAL)
+VALUES ('GENERAL','IDENTIFICACION','TAC','TAC',SYSDATE)
+
+UPDATE BINTABLAS
+SET VIG_INICIAL = '01/JAN/2026'
+WHERE GRUPO='GENERAL' AND NOMBRE='IDENTIFICACION' AND ARGUMENTO='TAC';
+
+commit;
