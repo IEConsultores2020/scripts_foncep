@@ -1,7 +1,12 @@
 --Adicionó campo para el incluir información de pensionado en el acta.
 pi_alter_tables_ogt.sql
---Script de modificación de las tablas del portal de pagos para adicionar el estado
+
+--Modificación de las tablas del portal de pagos para adicionar el estado
 pi_alter_tablas_pcp.sql
+
+--Creación nuevo tipo documento. Tercero TAC en bintablas, para la forma OGT_ACTA_INGRESO
+insert into bintablas (grupo,nombre,argumento,resultado,vig_inicial)
+values ('GENERAL','IDENTIFICACION','TAC','TAC',TO_DATE('01/01/2026','DD/MM/YYYY'));
 
 --Se crea tabla en OGT para registrar los pagos por pensionado
 pi_ogt_crea_tabla_detalle_pensionado.sql
@@ -21,12 +26,9 @@ pi_autoriza_crear_jobs.sql
 pi_sl_job_mputacion.sql
 
 
---Ejecutar pruebas.
---1. Prueba básica que se dispara en el momento de crear un nuevo que se inserta con plsql command
-pi_prueba_dummy_imputacion.sql
---2. Prueba de imputación acta, hace el llamado a una referencia de pago especifica
-pi_pruebas_imputacion_acta.sql
+--Scripts verificaciones y borrado.
+pi_borrado_pruebas.sql
 
---3. Prueba imputacion trae cuentas de cobro
-pi_prueba_trae_cuentas_cobro
 
+--Scripts verificacoines integrales.
+pi_verificaciones_integrales.sql
