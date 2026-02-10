@@ -156,7 +156,7 @@ END;
 select pk_pr_compromisos.fn_pre_traer_compr_tipo(2025, --una_vigencia,
 	                                        206, --una_compania,
 	                                        '01', --una_unidad_ejecutora,
-	                                        '59')
+	                                        '01')
 from dual;
 
  /* -----------------------------------------------------------------------------------------
@@ -178,16 +178,16 @@ from dual;
   OPEN mi_cursor_contratos FOR SELECT UNIQUE PR_COMPROMISOS.numero_compromiso,PR_COMPROMISOS.objeto,PR_COMPROMISOS.tipo_compromiso,
                                              PR_REGISTRO_PRESUPUESTAL.numero_registro, PR_REGISTRO_PRESUPUESTAL.numero_disponibilidad
                                  FROM PR_COMPROMISOS,PR_REGISTRO_PRESUPUESTAL
-                                 WHERE PR_COMPROMISOS.vigencia = 2025 /*una_vigencia*/ AND
-                                 PR_COMPROMISOS.codigo_compania = 206 /*un_codigo_compania*/ AND
+                                 WHERE --PR_COMPROMISOS.vigencia = 2026 /*una_vigencia*/ AND
+                                 --PR_COMPROMISOS.codigo_compania = 206 /*un_codigo_compania*/ AND
                                  PR_COMPROMISOS.codigo_unidad_ejecutora = '01' /*un_codigo_unidad*/ AND
-                                -- PR_COMPROMISOS.tipo_compromiso IN ('59' /*un_tipo_compromiso*/) AND
+                                 PR_COMPROMISOS.tipo_compromiso IN ('01' /*un_tipo_compromiso*/) AND
                                  PR_COMPROMISOS.vigencia = PR_REGISTRO_PRESUPUESTAL.vigencia AND
                                  PR_COMPROMISOS.codigo_compania = PR_REGISTRO_PRESUPUESTAL.codigo_compania AND
                                  PR_COMPROMISOS.codigo_unidad_ejecutora = PR_REGISTRO_PRESUPUESTAL.codigo_unidad_ejecutora AND
                                  PR_COMPROMISOS.numero_registro = PR_REGISTRO_PRESUPUESTAL.numero_registro AND
                                  PR_REGISTRO_PRESUPUESTAL.estado <>  'ANULADO' AND /*mi_estado */ 
-                                 PR_COMPROMISOS.objeto like '%NOMINA%'; -- Por solicitud de Fany Malagon
+                                 PR_COMPROMISOS.objeto like '%NOMINA%ENERO%2026%'; -- Por solicitud de Fany Malagon
                                                                                     --con el fin de poder realizar el paralelo
                                                                                     --se comentarea lo correspondiente al estado
     RETURN(mi_cursor_contratos);
@@ -202,3 +202,182 @@ from dual;
 
   select *
   from pr_comun.pk_pr_compromisos
+
+  ---
+
+SELECT C.numero_compromiso,C.objeto,C.tipo_compromiso,
+      RP.numero_registro, RP.numero_disponibilidad,
+      c.*, rp.*
+FROM PR_COMPROMISOS C, PR_REGISTRO_PRESUPUESTAL RP 
+WHERE /*C.objeto like '%NÓMINA%ENERO%2026%'
+AND*/ C.VIGENCIA in (2025,2026) AND C.CODIGO_COMPANIA=206 AND C.CODIGO_UNIDAD_EJECUTORA='01'
+AND C.TIPO_COMPROMISO = '01' AND C.VIGENCIA = RP.VIGENCIA
+AND C.CODIGO_COMPANIA = RP.CODIGO_COMPANIA AND C.CODIGO_UNIDAD_EJECUTORA = RP.CODIGO_UNIDAD_EJECUTORA
+AND C.NUMERO_REGISTRO = RP.NUMERO_REGISTRO
+AND RP.ESTADO <> 'ANULADO'
+order by C.numero_compromiso
+;
+
+SELECT *
+FROM PR_REGISTRO_PRESUPUESTAL RP
+WHERE RP.VIGENCIA =2026
+AND RP.CODIGO_COMPANIA=206 AND RP.CODIGO_UNIDAD_EJECUTORA='01'
+AND RP.NUMERO_REGISTRO =128
+AND RP.ESTADO <> 'ANULADO';
+                                
+  CURSOR c_imputacion_ra_vig IS
+    SELECT * --NVL(SUM(valor_bruto),0)
+    FROM   rh_lm_ra_presupuesto
+    WHERE  compania             = 206
+    AND    vigencia             = 2026 --una_vigencia
+    AND    vigencia_presupuesto = una_vigencia
+    AND    unidad_ejecutora     = una_unidad_ejecutora
+    AND    nro_ra               = un_nro_ra;                                
+
+ /*FUNCTION fn_pre_trae_inf_un_compromiso(una_vigencia NUMBER,un_codigo_compania VARCHAR2,un_codigo_unidad_ejecutora VARCHAR2,un_tipo_compromiso VARCHAR2,un_numero_compromiso NUMBER,una_fecha_corte DATE) RETURN cur_informacion_contrato IS
+    mi_cursor_inf_contrato Pk_Pr_Compromisos.cur_informacion_contrato;
+  BEGIN
+
+  OPEN mi_cursor_inf_contrato FOR*/
+      SELECT PR_REGISTRO_PRESUPUESTAL.numero_disponibilidad,PR_REGISTRO_PRESUPUESTAL.numero_registro,
+      PR_REGISTRO_DISPONIBILIDAD.rubro_interno,PR_REGISTRO_DISPONIBILIDAD.valor valor_inicial,
+      Pk_Pr_Compromisos.fn_pre_traer_anulacion(PR_REGISTRO_PRESUPUESTAL.vigencia ,PR_REGISTRO_PRESUPUESTAL.codigo_compania,
+            PR_REGISTRO_PRESUPUESTAL.codigo_unidad_ejecutora ,PR_REGISTRO_PRESUPUESTAL.numero_registro ,
+            PR_REGISTRO_DISPONIBILIDAD.rubro_interno,'01/feb/2026' ) anulacion
+      FROM PR_REGISTRO_PRESUPUESTAL,PR_REGISTRO_DISPONIBILIDAD
+      WHERE PR_REGISTRO_PRESUPUESTAL.vigencia = PR_REGISTRO_DISPONIBILIDAD.vigencia AND
+      PR_REGISTRO_PRESUPUESTAL.codigo_compania = PR_REGISTRO_DISPONIBILIDAD.codigo_compania AND
+      PR_REGISTRO_PRESUPUESTAL.codigo_unidad_ejecutora = PR_REGISTRO_DISPONIBILIDAD.codigo_unidad_ejecutora AND
+      PR_REGISTRO_PRESUPUESTAL.numero_disponibilidad = PR_REGISTRO_DISPONIBILIDAD.numero_disponibilidad AND
+      PR_REGISTRO_PRESUPUESTAL.numero_registro = PR_REGISTRO_DISPONIBILIDAD.numero_registro AND
+      PR_REGISTRO_PRESUPUESTAL.vigencia = 2026 AND
+      PR_REGISTRO_PRESUPUESTAL.codigo_compania = 206 AND
+      PR_REGISTRO_PRESUPUESTAL.codigo_unidad_ejecutora = '01' AND
+      PR_REGISTRO_PRESUPUESTAL.tipo_compromiso ='01' AND
+      PR_REGISTRO_PRESUPUESTAL.numero_compromiso = 1 --un_numero_compromiso;
+
+  	     INSERT INTO RH_LM_RA_PRESUPUESTO
+  	       (compania,
+  	        vigencia,
+  	        vigencia_presupuesto,
+  	        unidad_ejecutora,
+  	        nro_ra,
+  	        registro_presupuestal,
+  	        disponibilidad,
+  	        interno_rubro,
+  	        valor_rp)
+            
+  	     VALUES
+  	       (206,
+  	        2026,
+  	        2026,  --vigencia presupuesto es la misma
+  	        '01',
+  	        1,
+  	        128,
+  	        39,
+  	        1804,
+  	        444864972);
+
+         
+              	     
+        INSERT INTO RH_LM_RA_PRESUPUESTO
+  	       (compania,
+  	        vigencia,
+  	        vigencia_presupuesto,
+  	        unidad_ejecutora,
+  	        nro_ra,
+  	        registro_presupuestal,
+  	        disponibilidad,
+  	        interno_rubro,
+  	        valor_rp)
+  	     VALUES
+  	       (una_compania,
+  	        una_vigencia,
+  	        una_vigencia,  --vigencia presupuesto es la misma
+  	        una_unidad_ejecutora,
+  	        un_nro_ra,
+  	        mi_informacion_compromiso.numero_registro,
+  	        mi_informacion_compromiso.numero_disponibilidad,
+  	        mi_informacion_compromiso.rubro_interno,
+  	        mi_informacion_compromiso.valor_inicial-mi_informacion_compromiso.valor_anulacion);
+
+
+    SELECT 206, 2026, 2026, '01',1,b.codigo_presupuesto, SUM(a.valor)
+    FROM   rh_t_lm_valores a, rh_lm_cuenta b
+    WHERE  b.stipo_funcionario = a.stipofuncionario
+    AND    b.sconcepto         = a.sconcepto
+    AND    a.periodo           = '31/JAN/2026' --una_fecha_final
+    AND    a.ntipo_nomina      = 0 --un_tipo_nomina
+    AND    a.nro_ra            = 1 --un_nro_ra
+    AND    b.scompania         = 206 --una_compania
+    AND    b.tipo_ra           = 1  --un_tipo_ra
+    AND    b.grupo_ra          = '5'  --un_grupo_ra
+    AND    b.ncierre           = 1
+    AND    b.codigo_presupuesto IS NOT NULL
+    -- RQ2523-2005   05/12/2005
+    AND   b.dfecha_inicio_vig <= '31/jan/2025'
+    AND  (b.dfecha_final_vig  >= '31/jan/2025' OR b.dfecha_final_vig IS NULL)
+    -- Fin RQ2523
+    GROUP BY b.codigo_presupuesto;
+
+    SELECT * --registro_presupuestal, disponibilidad, valor_rp, fuente, detalle_fuente, rowid
+    -- Fin RQ174-2007	
+   -- DELETE 
+   FROM  
+     rh_lm_ra_presupuesto
+    WHERE  compania             = 206
+    AND    vigencia             = 2026
+    AND    vigencia_presupuesto = 2026
+    AND    unidad_ejecutora     = '01'
+    AND    nro_ra               = 1
+    AND    interno_rubro        = 1548
+    ORDER BY valor_rp DESC;
+
+ INSERT INTO RH_LM_RA_PRESUPUESTO
+  	       (compania,
+  	        vigencia,
+  	        vigencia_presupuesto,
+  	        unidad_ejecutora,
+  	        nro_ra,
+  	        registro_presupuestal,
+  	        disponibilidad,
+  	        interno_rubro,
+  	        valor_rp)
+  	     VALUES
+
+ INSERT INTO RH_LM_RA_PRESUPUESTO
+  	       (compania,
+  	        vigencia,
+  	        vigencia_presupuesto,
+  	        unidad_ejecutora,
+  	        nro_ra,
+  	        registro_presupuestal,
+  	        disponibilidad,
+  	        interno_rubro,
+  	        valor_rp, valor_bruto)
+
+ SELECT 206,2026 ,2026 , '01' ,1 ,
+    PR_REGISTRO_PRESUPUESTAL.numero_registro,PR_REGISTRO_PRESUPUESTAL.numero_disponibilidad,
+      PR_REGISTRO_DISPONIBILIDAD.rubro_interno,
+      PR_REGISTRO_DISPONIBILIDAD.valor valor_inicial,
+      PR_REGISTRO_DISPONIBILIDAD.valor valor_bruto
+      /*,
+      Pk_Pr_Compromisos.fn_pre_traer_anulacion(PR_REGISTRO_PRESUPUESTAL.vigencia ,PR_REGISTRO_PRESUPUESTAL.codigo_compania,
+            PR_REGISTRO_PRESUPUESTAL.codigo_unidad_ejecutora ,PR_REGISTRO_PRESUPUESTAL.numero_registro ,
+            PR_REGISTRO_DISPONIBILIDAD.rubro_interno,'01/feb/2026' ) anulacion*/-- 
+      FROM PR_REGISTRO_PRESUPUESTAL,PR_REGISTRO_DISPONIBILIDAD
+      WHERE PR_REGISTRO_PRESUPUESTAL.vigencia = PR_REGISTRO_DISPONIBILIDAD.vigencia AND
+      PR_REGISTRO_PRESUPUESTAL.codigo_compania = PR_REGISTRO_DISPONIBILIDAD.codigo_compania AND
+      PR_REGISTRO_PRESUPUESTAL.codigo_unidad_ejecutora = PR_REGISTRO_DISPONIBILIDAD.codigo_unidad_ejecutora AND
+      PR_REGISTRO_PRESUPUESTAL.numero_disponibilidad = PR_REGISTRO_DISPONIBILIDAD.numero_disponibilidad AND
+      PR_REGISTRO_PRESUPUESTAL.numero_registro = PR_REGISTRO_DISPONIBILIDAD.numero_registro AND
+      PR_REGISTRO_PRESUPUESTAL.vigencia = 2026 AND
+      PR_REGISTRO_PRESUPUESTAL.codigo_compania = 206 AND
+      PR_REGISTRO_PRESUPUESTAL.codigo_unidad_ejecutora = '01' AND
+      PR_REGISTRO_PRESUPUESTAL.tipo_compromiso ='01' AND
+      PR_REGISTRO_PRESUPUESTAL.numero_compromiso = 1 ;
+
+
+     -- commit;
+
+      

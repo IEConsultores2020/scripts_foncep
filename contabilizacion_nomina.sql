@@ -31,13 +31,14 @@ SELECT
     CONTABILIZADO          CTDO,
     CONTABILIZAR           CTAR 
    -- UPDATE
-FROM
-    RH_LM_RA -- SET /*ACTUALIZADO_CONTAB='N', */ GEN_CXP_OPGET = 'N' /*, CONTABILIZADO = 'N'*/, CONTABILIZAR = 'S'
+--FROM
+    RH_LM_RA 
+         SET /*ACTUALIZADO_CONTAB='N',  GEN_CXP_OPGET = 'N' , */      CONTABILIZADO = 'N', CONTABILIZAR = 'S'
 WHERE
     SCOMPANIA = 206 --AND DFECHA_INICIAL_PERIODO = '01-DEC-24';
-    AND EXTRACT(YEAR FROM DFECHA_INICIAL_PERIODO) = 2025
-     AND EXTRACT(MONTH FROM DFECHA_INICIAL_PERIODO) = :MES
-   -- AND NRO_RA=12
+    AND EXTRACT(YEAR FROM DFECHA_INICIAL_PERIODO) = 2026
+    AND EXTRACT(MONTH FROM DFECHA_INICIAL_PERIODO) = :MES
+    AND NRO_RA=1
 ORDER BY
     DFECHA_INICIAL_PERIODO DESC,
     TIPO_RA ASC;
@@ -63,13 +64,15 @@ rollback;
                 AND     contabilizado        =  'N'
                 AND     contabilizar         =  'S'
 
-SELECT
-    *
+SELECT *
 FROM --DELETE     --Reversar contabilizacion 2/2
     RH_LM_NOMINA_PROCESADA
 WHERE
     --EXTRACT(YEAR FROM DFECHA_INICIAL_PERIODO) = 2025;
-    DFECHA_INICIAL_PERIODO = '01-JUN-20';
+    DFECHA_INICIAL_PERIODO = '01-JAN-2026'
+    --AND NRO_RA IS NULL
+    --AND NTRANSACCION = 521
+    ;
 
 
 SELECT sum(valor)
@@ -194,14 +197,24 @@ AND PERIODO ='30/JUN/2025'
 ORDER BY 1
 ;
 
-SELECT
-    *
+SELECT *
 FROM 
 --UPDATE 
     RH_LM_NOMINA_PROCESADA
 --SET DFECHA_FINAL_PERIODO = TO_DATE('30/06/2020','DD/MM/YYYY')
 WHERE
     /*DFECHA_INICIAL_PERIODO = '01-JUN-2020'
-AND*/ DFECHA_FINAL_PERIODO = '30-JUN-2025';
+AND*/ DFECHA_FINAL_PERIODO = '31-JAN-2026'
+AND NTRANSACCION=521;
 
-COMMIT;
+--COMMIT;
+
+select * from rh_lm_ra_presupuesto
+order by rowid desc
+where /*compania = 206
+and*/ vigencia=2026
+and unidad_ejecutora=01
+and nro_ra=1;
+
+--Lista compromisos
+pk_pr_compromisos.fn_pre_traer_compr_tipo

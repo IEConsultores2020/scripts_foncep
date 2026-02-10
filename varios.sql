@@ -926,3 +926,13 @@ select *
 from bintablas
 where grupo='NOMINA' AND nombre='NOVEDADPILA'
 ;
+
+SELECT distinct grupo
+FROM bintablas
+order by 1
+WHERE GRUPO='SISLA';
+
+select *
+from binconsecutivo
+where grupo = 'SISLA'
+AND VIGENCIA=2026;

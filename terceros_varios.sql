@@ -116,4 +116,7 @@ where codigo in (47125,16791);
 
 
 select *
-from rh_funcionario
+from rh_funcionario;
+
+select *
+from 
