@@ -8,10 +8,11 @@ AND CODIGO_CENTRO_COSTOS IN ( 5, 1285, 1267)
 ;
 
 
-select consecutivo, SUM (APORTE_EMPLEADO)
+select * --consecutivo, SUM (APORTE_EMPLEADO)
 from ogt_anexo_nomina
 where vigencia = 2026
 and consecutivo =1
---AND CODIGO_CENTRO_COSTOS IN ( 5, 1285, 1267)
+AND CODIGO_CENTRO_COSTOS IN ( 5, 1285, 1267)
 group by consecutivo
 ;
+

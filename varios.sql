@@ -936,3 +936,20 @@ select *
 from binconsecutivo
 where grupo = 'SISLA'
 AND VIGENCIA=2026;
+
+
+select *
+from bintablas
+where grupo = 'NOMINA' and upper(resultado) like '%LIQUIDADOR%' 
+-- 'E:\SICAPITAL\PERNO\TEMP\Soporte\'
+
+
+F:\ERP\RH\LIQUIDADOR\soporte\0000143666
+PATH
+COMPILADOR
+
+PERSO
+E:\SICAPITAL\PERNO\temp;
+
+
+select * from rh_conceptos

@@ -581,3 +581,68 @@ EXCEPTION
   WHEN NO_DATA_FOUND THEN
     NULL;
 END;
+
+
+select rowid, ogt_centro_costos.*  --aporte_patronal, aporte_empleado, aporte_patronal+aporte_empleado as total
+from ogt_centro_costos
+where tipo_ra=2
+and tipo_documento='RA'
+and unidad_ejecutora='01'
+and entidad='206'
+and mes=1
+and vigencia=2026
+and consecutivo=2
+;
+
+---TOTAL CARGADO SS
+   SELECT OGT_ANEXO_PATRONAL.CODIGO_CENTRO_COSTOS,
+    /* OGT_ANEXO_PATRONAL.APORTE_PATRONAL,
+      OGT_ANEXO_PATRONAL.INCAPACIDAD, OGT_ANEXO_PATRONAL.SALDO*/
+   SUM( NVL(OGT_ANEXO_PATRONAL.APORTE_PATRONAL,0)
+								- NVL(OGT_ANEXO_PATRONAL.INCAPACIDAD,0)	                                                        
+	              - NVL(OGT_ANEXO_PATRONAL.SALDO,0)                                          
+	              )
+	    --INTO   :OGT_CENTRO_COSTOS.TOTAL_CARGADO	              
+  	  FROM   OGT_ANEXO_PATRONAL
+    	WHERE  OGT_ANEXO_PATRONAL.VIGENCIA         				= 2026
+	    AND    OGT_ANEXO_PATRONAL.ENTIDAD          				= 206                  
+  	  AND    OGT_ANEXO_PATRONAL.UNIDAD_EJECUTORA 				= '01'
+    	AND    OGT_ANEXO_PATRONAL.TIPO_DOCUMENTO   				= 'RA'
+	    AND    OGT_ANEXO_PATRONAL.CONSECUTIVO     	 			= 2
+  	  AND    OGT_ANEXO_PATRONAL.TIPO_RA       	   			= '2'
+    	AND    OGT_ANEXO_PATRONAL.MES         	     			= 1
+	    AND    OGT_ANEXO_PATRONAL.FECHA_DESDE	     	 			= '01/JAN/2026'
+	   -- AND    OGT_ANEXO_PATRONAL.CODIGO_CENTRO_COSTOS    = :OGT_CENTRO_COSTOS.CODIGO_CENTRO_COSTOS
+     GROUP BY OGT_ANEXO_PATRONAL.CODIGO_CENTRO_COSTOS
+    	;
+
+
+select *
+from ogt_relacion_autorizacion
+where tipo_documento='RA'      
+and vigencia=2026
+and tipo_ra=2
+and mes=2
+and consecutivo=2
+and fecha_desde='01-JAN-2026'
+and fecha_hasta='31-JAN-2026'
+
+
+select *
+from 
+--update 
+rh_lm_ra
+--set nro_ra_opget=null
+--  set gen_cxp_opget='N'
+where scompania=206 and vigencia=2026 and tipo_ra=2
+  and grupo_ra=5 and ntipo_nomina='0' and dfecha_inicial_periodo='01-JAN-2026' 
+  and dfecha_final_periodo='31-JAN-2026' and nro_ra=2;
+
+-commit
+
+select *
+from binconsecutivo
+where grupo='OPGET'
+and nombre='OGT_RA'
+and vigencia=2026
+

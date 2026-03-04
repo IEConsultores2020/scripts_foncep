@@ -31,14 +31,14 @@ SELECT
     CONTABILIZADO          CTDO,
     CONTABILIZAR           CTAR 
    -- UPDATE
---FROM
+FROM
     RH_LM_RA 
-         SET /*ACTUALIZADO_CONTAB='N',  GEN_CXP_OPGET = 'N' , */      CONTABILIZADO = 'N', CONTABILIZAR = 'S'
+   --      SET /*ACTUALIZADO_CONTAB='N',  GEN_CXP_OPGET = 'N' , */      CONTABILIZADO = 'N', CONTABILIZAR = 'S'
 WHERE
     SCOMPANIA = 206 --AND DFECHA_INICIAL_PERIODO = '01-DEC-24';
     AND EXTRACT(YEAR FROM DFECHA_INICIAL_PERIODO) = 2026
     AND EXTRACT(MONTH FROM DFECHA_INICIAL_PERIODO) = :MES
-    AND NRO_RA=1
+   -- AND NRO_RA=2
 ORDER BY
     DFECHA_INICIAL_PERIODO DESC,
     TIPO_RA ASC;
@@ -75,34 +75,46 @@ WHERE
     ;
 
 
-SELECT sum(valor)
+SELECT * --sum(valor)
 FROM
     --UPDATE 
     RH_T_LM_VALORES
 WHERE
-    EXTRACT(YEAR FROM PERIODO) = 2025 AND
-    STIPOFUNCIONARIO = 'PLANTA' AND
-    sconcepto like 'APORTE%' AND 
-    NRO_RA in (28,29)
+    EXTRACT(YEAR FROM PERIODO) = 2026
+    and periodo = '28/FEB/2026' 
+    and stipofuncionario = 'PLANTA' 
+    and sconcepto like '%VACACIONESDINERO%' 
+    --NRO_RA in (28,29)*/
 GROUP BY PERIODO 
     -- SCONCEPTO,    VARIABLE_VALOR */
 ORDER BY  1
 ;
 
-SELECT *
+SELECT distinct sconcepto, cc
 FROM
     --UPDATE 
-    RH_T_LM_VALORES
+    rh_t_lm_valores
 WHERE
-    EXTRACT(YEAR FROM PERIODO) = 2025 AND
-    STIPOFUNCIONARIO = 'PLANTA' AND
+    EXTRACT(YEAR FROM PERIODO) = 2026 
+    and STIPOFUNCIONARIO = 'PLANTA' 
     --sconcepto like 'APORTE%' AND 
-    NRO_RA = 20
+    and    ntipo_nomina      = 0    --un_tipo_nomina
+	and    nro_ra            = 3    --un_nro_ra
+    and     periodo           = '28/FEB/2026'
+
 GROUP BY PERIODO 
     -- SCONCEPTO,    VARIABLE_VALOR */
 ORDER BY  1
 ;
 
+select *
+from rh_lm_cuenta
+where scompania         = 206  --una_compania
+and   tipo_ra           = 1    --un_tipo_ra
+and   grupo_ra          in ('5' /*un_grupo_ra*/)
+and   ncierre           = 1
+and sconcepto= 'VACACIONESDINERO'
+;
 
 
 

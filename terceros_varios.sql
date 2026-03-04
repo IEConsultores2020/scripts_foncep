@@ -119,4 +119,44 @@ select *
 from rh_funcionario;
 
 select *
-from 
+from trc.trc_terceros
+where codigo_identificacion in ('41341647','51843547');
+
+select b.primer
+from trc.trc_informacion_basica B
+where id in (select id
+from trc.trc_terceros
+where codigo_identificacion in ('41341647','51843547'));
+
+select ib.ib_primer_nombre nombre1, ib.ib_segundo_nombre nombre2, ib.ib_primer_apellido apellido1, ib.ib_segundo_apellido apellido2,
+      ib.ib_regimen_tributario regiment_tibutario, ib.ib_gran_contribuyente gran_contribuyente, ib.ib_autorretenedor autoretenedor, ib_pais, ib_depto, ib_ciudad,
+      ic.ic_banco codigo_banco, ic.ic_tipo_cuenta tipo_cuenta, ic.ic_cuenta numero_cuenta, ic.ic_sucursal sucursal
+     -- select t.*
+from trc.trc_informacion_basica ib
+full outer join trc.trc_terceros t on t.id = ib.id
+full outer join trc.trc_informacion_comercial ic on ic.id = ib.id
+where t.codigo_identificacion in ('41341647','51843547')
+ ;
+
+ select ic.ic_banco codigo_banco, ic.ic_tipo_cuenta tipo_cuenta, ic.ic_cuenta numero_cuenta, ic.ic_sucursal sucursal
+ from trc.trc_informacion_comercial ic;
+
+ create or replace view vw_terceros_foncep as
+ select ib.ib_primer_nombre nombre1, ib.ib_segundo_nombre nombre2, ib.ib_primer_apellido apellido1, ib.ib_segundo_apellido apellido2,
+      ib.ib_regimen_tributario regiment_tibutario, ib.ib_gran_contribuyente gran_contribuyente, ib.ib_autorretenedor autoretenedor, ib_pais, ib_depto, ib_ciudad,
+      ic.ic_banco codigo_banco, ic.ic_tipo_cuenta tipo_cuenta, ic.ic_cuenta numero_cuenta, ic.ic_sucursal sucursal
+     -- select t.*
+from trc.trc_informacion_basica ib
+full outer join trc.trc_terceros t on t.id = ib.id
+full outer join trc.trc_informacion_comercial ic on ic.id = ib.id
+ ;
+
+
+
+select *
+from shd_terceros
+where codigo_identificacion in ('41341647','51843547');
+
+select *
+from shd_informacion_basica
+where ib_codigo_identificacion in ('41341647','51843547');

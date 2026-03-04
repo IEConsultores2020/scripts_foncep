@@ -102,7 +102,7 @@ end;
 /
 
 select * from tab_lch_segui   
-where fecha >= '24/dec/2025'
+--where fecha = '04/MAR/2025'
 order by consec desc   
 ;
 

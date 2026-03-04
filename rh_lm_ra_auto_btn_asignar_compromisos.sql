@@ -175,8 +175,11 @@ from dual;
   mi_cursor_contratos Pk_Pr_Compromisos.cur_contratos_tipo;
   BEGIN
   mi_estado := 'ANULADO';
-  OPEN mi_cursor_contratos FOR SELECT UNIQUE PR_COMPROMISOS.numero_compromiso,PR_COMPROMISOS.objeto,PR_COMPROMISOS.tipo_compromiso,
-                                             PR_REGISTRO_PRESUPUESTAL.numero_registro, PR_REGISTRO_PRESUPUESTAL.numero_disponibilidad
+  OPEN mi_cursor_contratos FOR SELECT UNIQUE  PR_COMPROMISOS.numero_compromiso,
+                                              PR_COMPROMISOS.objeto,
+                                              PR_COMPROMISOS.tipo_compromiso,
+                                              PR_REGISTRO_PRESUPUESTAL.numero_registro, 
+                                              PR_REGISTRO_PRESUPUESTAL.numero_disponibilidad
                                  FROM PR_COMPROMISOS,PR_REGISTRO_PRESUPUESTAL
                                  WHERE --PR_COMPROMISOS.vigencia = 2026 /*una_vigencia*/ AND
                                  --PR_COMPROMISOS.codigo_compania = 206 /*un_codigo_compania*/ AND
@@ -329,8 +332,8 @@ AND RP.ESTADO <> 'ANULADO';
     AND    vigencia             = 2026
     AND    vigencia_presupuesto = 2026
     AND    unidad_ejecutora     = '01'
-    AND    nro_ra               = 1
-    AND    interno_rubro        = 1548
+    AND    nro_ra               = 3
+    --AND    interno_rubro        = 1548
     ORDER BY valor_rp DESC;
 
  INSERT INTO RH_LM_RA_PRESUPUESTO
@@ -345,6 +348,7 @@ AND RP.ESTADO <> 'ANULADO';
   	        valor_rp)
   	     VALUES
 
+--NOMINA
  INSERT INTO RH_LM_RA_PRESUPUESTO
   	       (compania,
   	        vigencia,
@@ -365,6 +369,7 @@ AND RP.ESTADO <> 'ANULADO';
       Pk_Pr_Compromisos.fn_pre_traer_anulacion(PR_REGISTRO_PRESUPUESTAL.vigencia ,PR_REGISTRO_PRESUPUESTAL.codigo_compania,
             PR_REGISTRO_PRESUPUESTAL.codigo_unidad_ejecutora ,PR_REGISTRO_PRESUPUESTAL.numero_registro ,
             PR_REGISTRO_DISPONIBILIDAD.rubro_interno,'01/feb/2026' ) anulacion*/-- 
+            select sum(PR_REGISTRO_DISPONIBILIDAD.valor)
       FROM PR_REGISTRO_PRESUPUESTAL,PR_REGISTRO_DISPONIBILIDAD
       WHERE PR_REGISTRO_PRESUPUESTAL.vigencia = PR_REGISTRO_DISPONIBILIDAD.vigencia AND
       PR_REGISTRO_PRESUPUESTAL.codigo_compania = PR_REGISTRO_DISPONIBILIDAD.codigo_compania AND
@@ -375,9 +380,194 @@ AND RP.ESTADO <> 'ANULADO';
       PR_REGISTRO_PRESUPUESTAL.codigo_compania = 206 AND
       PR_REGISTRO_PRESUPUESTAL.codigo_unidad_ejecutora = '01' AND
       PR_REGISTRO_PRESUPUESTAL.tipo_compromiso ='01' AND
-      PR_REGISTRO_PRESUPUESTAL.numero_compromiso = 1 ;
+      PR_REGISTRO_PRESUPUESTAL.numero_compromiso = 1;
 
+--seguridad social
+ INSERT INTO RH_LM_RA_PRESUPUESTO
+  	       (compania,
+  	        vigencia,
+  	        vigencia_presupuesto,
+  	        unidad_ejecutora,
+  	        nro_ra,
+  	        registro_presupuestal,
+  	        disponibilidad,
+  	        interno_rubro,
+  	        valor_rp, valor_bruto)
+ SELECT PR_REGISTRO_PRESUPUESTAL.codigo_compania,
+    PR_REGISTRO_PRESUPUESTAL.vigencia,
+    PR_REGISTRO_PRESUPUESTAL.vigencia, 
+    '01' ,
+    2 ,
+    PR_REGISTRO_PRESUPUESTAL.numero_registro,
+    PR_REGISTRO_PRESUPUESTAL.numero_disponibilidad,
+    PR_REGISTRO_DISPONIBILIDAD.rubro_interno,
+    PR_REGISTRO_DISPONIBILIDAD.valor valor_inicial,
+    PR_REGISTRO_DISPONIBILIDAD.valor valor_bruto
+    --select sum(PR_REGISTRO_DISPONIBILIDAD.valor)
+      FROM PR_REGISTRO_PRESUPUESTAL,PR_REGISTRO_DISPONIBILIDAD
+      WHERE PR_REGISTRO_PRESUPUESTAL.vigencia = PR_REGISTRO_DISPONIBILIDAD.vigencia AND
+      PR_REGISTRO_PRESUPUESTAL.codigo_compania = PR_REGISTRO_DISPONIBILIDAD.codigo_compania AND
+      PR_REGISTRO_PRESUPUESTAL.codigo_unidad_ejecutora = PR_REGISTRO_DISPONIBILIDAD.codigo_unidad_ejecutora AND
+      PR_REGISTRO_PRESUPUESTAL.numero_disponibilidad = PR_REGISTRO_DISPONIBILIDAD.numero_disponibilidad AND
+      PR_REGISTRO_PRESUPUESTAL.numero_registro = PR_REGISTRO_DISPONIBILIDAD.numero_registro AND
+      PR_REGISTRO_PRESUPUESTAL.vigencia = 2026 AND
+      PR_REGISTRO_PRESUPUESTAL.codigo_compania = 206 AND
+      PR_REGISTRO_PRESUPUESTAL.codigo_unidad_ejecutora = '01' AND
+      PR_REGISTRO_PRESUPUESTAL.tipo_compromiso ='01' AND
+      PR_REGISTRO_PRESUPUESTAL.numero_compromiso = 2;
+--234.727.560
 
      -- commit;
 
+select sum(valor_rp)
+from
+--delete 
+rh_lm_ra_presupuesto
+where compania = 206
+and vigencia=2026
+and vigencia_presupuesto=2026
+and unidad_ejecutora='01'
+and nro_ra=2
+;
+
+--commit
+
       
+PROCEDURE PR_ACTUALIZAR_BRUTO_RA_VIG  (una_compania             VARCHAR2,
+                                       una_vigencia             NUMBER,
+                                       una_unidad_ejecutora     VARCHAR2,
+                                       un_tipo_ra               VARCHAR2,
+                                       un_grupo_ra              VARCHAR2,
+                                       una_fecha_final          DATE,
+                                       un_tipo_nomina           NUMBER,
+                                       un_nro_ra                NUMBER,
+                                       mi_err               OUT NUMBER) IS
+  CURSOR c_bruto_ra   IS
+	  SELECT b.codigo_presupuesto, SUM(a.valor)
+    FROM   rh_t_lm_valores a, rh_lm_cuenta b
+    WHERE  b.stipo_funcionario = a.stipofuncionario
+    AND    b.sconcepto         = a.sconcepto
+    AND    a.periodo           = '31/DEC/2025' -- una_fecha_final
+    AND    a.ntipo_nomina      = '0'  --un_tipo_nomina
+   -- AND    a.nro_ra            = '27'  --un_nro_ra
+    AND    b.scompania         = 206  --una_compania
+    AND    b.tipo_ra           = 2    --un_tipo_ra
+    AND    b.grupo_ra          = '5'  --un_grupo_ra
+    AND    b.ncierre           = 1
+    AND    b.codigo_presupuesto IS NOT NULL
+    -- RQ2523-2005   05/12/2005
+    AND   b.dfecha_inicio_vig <= '31/DEC/2025' --una_fecha_final
+    AND  (b.dfecha_final_vig  >= '31/DEC/2025' /*una_fecha_final*/ OR b.dfecha_final_vig IS NULL)-- */
+    -- Fin RQ2523
+    GROUP BY b.codigo_presupuesto;
+
+  CURSOR c_imputacion_ra_vig  (un_interno_rubro rh_lm_ra_presupuesto.interno_rubro%TYPE) IS
+    -- RQ174-2007 31-01-2007
+    --SELECT registro_presupuestal, disponibilidad, valor_rp, rowid
+    SELECT registro_presupuestal, disponibilidad, valor_rp, fuente, detalle_fuente, rowid
+    -- Fin RQ174-2007	
+    FROM   rh_lm_ra_presupuesto
+    WHERE  compania             = una_compania
+    AND    vigencia             = una_vigencia
+    AND    vigencia_presupuesto = una_vigencia
+    AND    unidad_ejecutora     = una_unidad_ejecutora
+    AND    nro_ra               = un_nro_ra
+    AND    interno_rubro        = un_interno_rubro
+    ORDER BY valor_rp DESC;
+    
+  mi_registro_presupuestal      rh_lm_ra_presupuesto.registro_presupuestal%TYPE;
+  mi_disponibilidad             rh_lm_ra_presupuesto.disponibilidad%TYPE;
+  mi_valor_rp                   rh_lm_ra_presupuesto.valor_rp%TYPE;
+  -- RQ174-2007		31-01-2007
+  mi_fuente											rh_lm_ra_presupuesto.fuente%TYPE;
+  mi_detalle_fuente							rh_lm_ra_presupuesto.detalle_fuente%TYPE;
+  -- Fin RQ174-2007	
+  mi_interno_rubro_dis          rh_lm_ra_presupuesto.interno_rubro%TYPE;
+  mi_valor_bruto_dis            rh_t_lm_valores.valor%TYPE;
+  mi_valor_asignado             rh_t_lm_valores.valor%TYPE:=0;
+  mi_valor_asignar              rh_t_lm_valores.valor%TYPE:=0;
+  mi_rowid                      ROWID;
+  
+BEGIN
+	mi_err:=0;
+	OPEN c_bruto_ra;
+	LOOP
+		FETCH c_bruto_ra INTO mi_interno_rubro_dis,mi_valor_bruto_dis;
+    EXIT WHEN c_bruto_ra%NOTFOUND;
+      OPEN c_imputacion_ra_vig(mi_interno_rubro_dis);
+      LOOP
+        FETCH c_imputacion_ra_vig INTO mi_registro_presupuestal,
+                                       mi_disponibilidad,
+                                       mi_valor_rp,
+        -- RQ174-2007	31-01-2007	                               
+                                       mi_fuente,
+                                       mi_detalle_fuente,
+        -- Fin RQ174-2007	
+                                       mi_rowid;
+        EXIT WHEN c_imputacion_ra_vig%NOTFOUND;
+        mi_valor_asignar:= mi_valor_bruto_dis - mi_valor_asignado;
+        IF mi_valor_rp < mi_valor_asignar THEN
+          mi_valor_asignar:= mi_valor_rp;
+        END IF;
+        
+        BEGIN
+            UPDATE rh_lm_ra_presupuesto
+            SET    valor_bruto = mi_valor_asignar
+            WHERE  rowid       = mi_rowid;
+        EXCEPTION
+          	WHEN OTHERS THEN
+          	  pr_despliega_mensaje('AL_STOP_1','Ocurrió el error : ' || SUBSTR(SQLERRM,1,120) || ' al actualizar el valor bruto para la RA de vigencia.');
+          	  mi_err:=1;
+          	  RETURN;
+        END;
+        mi_valor_asignado:=mi_valor_asignado + mi_valor_asignar;
+        IF mi_valor_bruto_dis = mi_valor_asignado THEN
+          EXIT;
+        END IF;
+      END LOOP;
+      CLOSE c_imputacion_ra_vig;
+      mi_valor_asignado:=0;
+      mi_valor_asignar:=0;
+  END LOOP;
+  CLOSE c_bruto_ra;
+  --Borra registros de la tabla rh_lm_ra_reservas cuyos rubros no se han actualizado
+  BEGIN
+  	DELETE FROM rh_lm_ra_presupuesto
+  	WHERE  compania = una_compania
+  	AND    vigencia = una_vigencia
+  	AND    vigencia_presupuesto = una_vigencia
+  	AND    unidad_ejecutora = una_unidad_ejecutora
+  	AND    nro_ra = un_nro_ra
+  	AND    (valor_bruto IS NULL OR valor_bruto = 0);
+  EXCEPTION
+  	WHEN OTHERS THEN
+      pr_despliega_mensaje('AL_STOP_1','Ocurrió el error : ' || SUBSTR(SQLERRM,1,120) || ' al borrar registros de imputación presupuestal no actualizados.');
+      mi_err:=1;
+      RETURN;
+  END;
+EXCEPTION
+	WHEN OTHERS THEN
+    pr_despliega_mensaje('AL_STOP_1','Ocurrió el error : ' || SUBSTR(SQLERRM,1,120) || ' al actualizar el valor bruto para la RA de vigencia.');
+  	mi_err:=1;
+END;      
+
+
+
+----REVISANDO LA RA PARA INCLUIR LO FALTANTE
+  SELECT * --b.codigo_presupuesto, A.VALOR
+    FROM   rh_t_lm_valores a, rh_lm_cuenta b
+    WHERE  b.stipo_funcionario = a.stipofuncionario
+    AND    b.sconcepto         = a.sconcepto
+    AND    a.periodo           = '31/JAN/2026' -- una_fecha_final
+    AND    a.ntipo_nomina      = '0'  --un_tipo_nomina
+    AND    a.nro_ra            = '2'  --un_nro_ra
+    AND    b.scompania         = 206  --una_compania
+    AND    b.tipo_ra           = 2    --un_tipo_ra
+    AND    b.grupo_ra          = '5'  --un_grupo_ra
+    AND    b.ncierre           = 1
+    AND    b.codigo_presupuesto IS NOT NULL
+    -- RQ2523-2005   05/12/2005
+    AND   b.dfecha_inicio_vig <= '31/JAN/2026' --una_fecha_final
+    AND  (b.dfecha_final_vig  >= '31/JAN/2026' /*una_fecha_final*/ OR b.dfecha_final_vig IS NULL) 
+    -- Fin RQ2523
+    GROUP BY b.codigo_presupuesto;
