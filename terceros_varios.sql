@@ -131,11 +131,13 @@ where codigo_identificacion in ('41341647','51843547'));
 select ib.ib_primer_nombre nombre1, ib.ib_segundo_nombre nombre2, ib.ib_primer_apellido apellido1, ib.ib_segundo_apellido apellido2,
       ib.ib_regimen_tributario regiment_tibutario, ib.ib_gran_contribuyente gran_contribuyente, ib.ib_autorretenedor autoretenedor, ib_pais, ib_depto, ib_ciudad,
       ic.ic_banco codigo_banco, ic.ic_tipo_cuenta tipo_cuenta, ic.ic_cuenta numero_cuenta, ic.ic_sucursal sucursal
-     -- select t.*
+     -- select distinct t.codigo_identificacion, ib.ib_primer_nombre nombre1, ib.ib_segundo_nombre nombre2
 from trc.trc_informacion_basica ib
 full outer join trc.trc_terceros t on t.id = ib.id
 full outer join trc.trc_informacion_comercial ic on ic.id = ib.id
-where t.codigo_identificacion in ('41341647','51843547')
+where t.codigo_identificacion in ('860002503','800126785',
+'901104588','860041163','860066942','860514823','80182608',
+'900116609','830084033','901652098','860078828','860002964','830070784')
  ;
 
  select ic.ic_banco codigo_banco, ic.ic_tipo_cuenta tipo_cuenta, ic.ic_cuenta numero_cuenta, ic.ic_sucursal sucursal

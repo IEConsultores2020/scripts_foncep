@@ -112,4 +112,10 @@ and valor_credito=254889717
 select *
 from pr_documentos
 where vigencia=2026
-and numero='01679'
+and numero='01679';
+
+select *
+from pr_v_rubros
+where vigencia=2026
+and descripcion like '%SOLIDAR%';
+

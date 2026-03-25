@@ -101,12 +101,6 @@ exception
 end;
 /
 
-select * from tab_lch_segui   
---where fecha = '04/MAR/2025'
-order by consec desc   
-;
-
-
 select * from   
  ogt_ingreso 
  where doc_numero|| '-'||doc_tipo 
@@ -116,3 +110,29 @@ select * from
         ;
 
         
+
+---Mensajes de error
+select * from tab_lch_segui   
+where mensaje like '%2026000070%'
+order by consec desc   
+; 2962523877
+
+select * from tab_lch_segui   
+where consec --between 296250637 and  296250670 --
+   >= (select max(consec) from tab_lch_segui where mensaje like '%2026000070%')
+order by consec asc ;
+
+--delete tab_lch_segui
+----LM        
+
+
+select *
+from lm_centro_contable
+;
+
+/*
+update lm_centro_contable
+set cncn_dfnal=to_date('28/02/2026','dd/mm/yyyy')
+
+commit;
+*/

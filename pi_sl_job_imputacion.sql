@@ -9,10 +9,10 @@ BEGIN
                                 );
                             END;',
         start_date      => SYSTIMESTAMP,
-        repeat_interval => 'FREQ=MINUTELY; INTERVAL=2',
+        repeat_interval => 'FREQ=MINUTELY; INTERVAL=1',
         enabled         => TRUE,              ---ACTIVAR
         auto_drop       => FALSE,          
-        comments        => 'Proceso de imputación, cada 2 minutos.'
+        comments        => 'Proceso de imputación, cada 1 minuto.'
     );
 END;
 /

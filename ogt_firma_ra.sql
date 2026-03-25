@@ -37,11 +37,12 @@ FN_OGT_RP_PAGO
                ,ID_LIMAY_ANULACION_PAGO
                ,FECHA_ANULACION_PAGO
                ,USUARIO_ANULACION_PAGO
+          --SELECT   *  ---  sum(valor_registro)
            FROM OGT_REGISTRO_PRESUPUESTAL
           WHERE REGISTRO >= 		0 		--MI_VALOR_CERO
             AND TIPO_DOCUMENTO = 	'RA'	--UN_TIPO_DOCUMENTO
             AND DISPONIBILIDAD >= 	0 		--MI_VALOR_CERO
-            AND CONSECUTIVO = 		1 		--UN_CONSECUTIVO
+            AND CONSECUTIVO = 		2 		--UN_CONSECUTIVO
             AND ENTIDAD = 			206 	--UNA_ENTIDAD
             AND UNIDAD_EJECUTORA = '01'		--UNA_UNIDAD_EJECUTORA
             AND VIGENCIA = 			2026	--UNA_VIGENCIA

@@ -10,7 +10,7 @@ where table_name like '%CENTRO%COSTO%'
 
 SELECT *
 FROM all_cons_columns
-where constraint_name like '%INCU_DEIN_FK'
+where constraint_name like 'FK_PR_REGIS_REF_5094_PR_DISPO'
 ;
 
 SELECT distinct

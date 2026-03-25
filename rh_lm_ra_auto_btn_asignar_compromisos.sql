@@ -447,18 +447,18 @@ PROCEDURE PR_ACTUALIZAR_BRUTO_RA_VIG  (una_compania             VARCHAR2,
     FROM   rh_t_lm_valores a, rh_lm_cuenta b
     WHERE  b.stipo_funcionario = a.stipofuncionario
     AND    b.sconcepto         = a.sconcepto
-    AND    a.periodo           = '31/DEC/2025' -- una_fecha_final
+    AND    extract(year from a.periodo) = 2026 
+    AND    extract(month from a.periodo) = 2
+    AND    a.periodo           = '28/FEB/2026' -- una_fecha_final
     AND    a.ntipo_nomina      = '0'  --un_tipo_nomina
-   -- AND    a.nro_ra            = '27'  --un_nro_ra
+    AND    a.nro_ra            = '4'  --un_nro_ra
     AND    b.scompania         = 206  --una_compania
     AND    b.tipo_ra           = 2    --un_tipo_ra
     AND    b.grupo_ra          = '5'  --un_grupo_ra
     AND    b.ncierre           = 1
     AND    b.codigo_presupuesto IS NOT NULL
-    -- RQ2523-2005   05/12/2005
-    AND   b.dfecha_inicio_vig <= '31/DEC/2025' --una_fecha_final
-    AND  (b.dfecha_final_vig  >= '31/DEC/2025' /*una_fecha_final*/ OR b.dfecha_final_vig IS NULL)-- */
-    -- Fin RQ2523
+    AND   b.dfecha_inicio_vig <= '28/FEB/2026' --una_fecha_final
+    AND  (b.dfecha_final_vig  >= '28/FEB/2026' /*una_fecha_final*/ OR b.dfecha_final_vig IS NULL)-- */
     GROUP BY b.codigo_presupuesto;
 
   CURSOR c_imputacion_ra_vig  (un_interno_rubro rh_lm_ra_presupuesto.interno_rubro%TYPE) IS

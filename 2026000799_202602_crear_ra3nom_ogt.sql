@@ -114,3 +114,49 @@ and descripcion like '%Indemnización por vacaciones%'
 		AND    TIPO_DOCUMENTO   = 'RA'  --:OGT_DOCUMENTO_PAGO.TIPO_DOCUMENTO              
 		AND    DISPONIBILIDAD   = 199    --:OGT_REGISTRO_PRESUPUESTAL.DISPONIBILIDAD
 		AND    RUBRO_INTERNO    = 1396  --:OGT_REGISTRO_PRESUPUESTAL.RUBRO_INTERNO   
+		;
+
+
+select  * --a.nfuncionario, a.sconcepto, a.valor, a.variable_valor, b.cc, b.codigo_presupuesto
+    FROM   rh_t_lm_valores a, rh_lm_cuenta b
+    WHERE  b.stipo_funcionario = a.stipofuncionario
+    AND    b.sconcepto         = a.sconcepto
+    AND    a.periodo           = '28/FEB/2026' -- una_fecha_final
+    AND    a.ntipo_nomina      = '0'  --un_tipo_nomina
+    AND    a.nro_ra            = '3'  --un_nro_ra
+    AND    b.scompania         = 206  --una_compania
+    AND    b.tipo_ra           = 1    --un_tipo_ra
+    AND    b.grupo_ra          = '5'  --un_grupo_ra
+    AND    b.ncierre           = 1
+   -- AND    b.codigo_presupuesto IS NOT NULL
+    -- RQ2523-2005   05/12/2005
+    AND   b.dfecha_inicio_vig <= '28/FEB/2026' --una_fecha_final
+    AND  (b.dfecha_final_vig  >= '28/FEB/2026' /*una_fecha_final*/ OR b.dfecha_final_vig IS NULL)
+    AND     a.nfuncionario= 20 --509
+    order by 2		;
+
+select  a.sconcepto, sum(valor)
+    FROM   rh_t_lm_valores a
+    WHERE     a.periodo           = '28/FEB/2026' -- una_fecha_final
+    AND    a.ntipo_nomina      = '0'  --un_tipo_nomina
+    AND    a.nro_ra            = '4'  --un_nro_ra
+	--AND sconcepto in ('APORTESALUD') --,'APORTEFONDOGARANTIA')
+	--AND     a.nfuncionario= 20 --509
+	group by a.sconcepto
+    order by 2		;
+
+	select r.descripcion, r.interno, p.compania, p.vigencia, p.unidad_ejecutora, p.valor_rp, p.valor_bruto
+	from rh_lm_ra_presupuesto p, pr_rubro r
+	where p.vigencia=2025
+	and p.unidad_ejecutora=01
+	and p.nro_ra=24
+	and r.interno = p.interno_rubro
+	and p.vigencia=r.vigencia
+	order by descripcion
+	;
+
+	select *
+	from rh_lm_cuenta
+	where stipo_funcionario='PLANTA'
+	and sconcepto like '%SALUD%'
+
