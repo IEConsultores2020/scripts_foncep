@@ -80,14 +80,14 @@ where REGISTRO >= 0                     --MI_VALOR_CERO
                                                     ,'RA'
                                                     ,:OGT_RELACION_AUTORIZACION.CONSECUTIVO);
 
-select *from 
+select * from 
 --update 
 ogt_relacion_autorizacion  
 --set estado =  '00000000000'      
 where vigencia=2026
 and tipo_ra in (1,2)
 --and consecutivo=2
-and fecha_desde = '01-JAN-2026';
+and fecha_desde = '01-FEB-2026';
 
 select nro_ra
 from rh_lm_ra
@@ -97,4 +97,8 @@ and ntipo_nomina=0
 ;
 
 
-commit
+select *
+from bintablas
+where grupo='OPGET'
+and nombre = 'PATH'
+;

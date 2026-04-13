@@ -1,4 +1,4 @@
-create or replace package pk_ogt_imputacion as
+create or replace package ogt.pk_ogt_imputacion as
 /* Creado para el portal de pagos de cuotas partes
    2024005523 202509 ftorresv Creación
 
@@ -208,5 +208,5 @@ create or replace package pk_ogt_imputacion as
       p_resp                out varchar2
    );
 
-end pk_ogt_imputacion;
+end ogt.pk_ogt_imputacion;
 /

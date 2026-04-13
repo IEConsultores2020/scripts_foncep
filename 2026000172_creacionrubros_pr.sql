@@ -232,7 +232,7 @@ create table select * from select * from pr_rubros_no2026 as
 select *
 from 
 --delete 
-pr_rubro where vigencia=2026 and interno in 1801
+pr_rubro where vigencia=2026 and interno in 1759
     (--select vr2.interno_rubro
     --/*
       select vr2.interno_rubro, vr2.vigencia||'-'||vr2.descripcion||'-'|| vr2.tipo_plan||'-'|| vr2.codigo_nivel1||'-'|| vr2.codigo_nivel2||'-'|| vr2.codigo_nivel3||'-'||
@@ -330,7 +330,17 @@ where vigencia = 2026
 and codigo_compania = 206
 and codigo_unidad_ejecutora ='01'
 --and numero_disponibilidad in  (200,214,200,159,157,160,192)
-and numero_registro in (126,150,173)
+--and numero_registro in (126,150,173)
+and rubro_interno in (1759,1948)
+;
+
+select *
+from pr_cdp_anulados
+where vigencia = 2026
+and codigo_compania = 206
+and codigo_unidad_ejecutora ='01'
+and numero_disponibilidad=160
+and rubro_interno in (1759,1948)
 ;
 
 select *
@@ -340,7 +350,7 @@ and numero_disponibilidad in (200,214,200,159,157,160,192)
 and numero_registro in (126,150,173)
 ;
 
---Anulaciones parciales
+--Anulaciones parciales rp
 select *
 from pr_rp_anulados
 where vigencia=2026

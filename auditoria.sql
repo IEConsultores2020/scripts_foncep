@@ -1,14 +1,16 @@
-select distinct ( operacion )
+select *
   from auditoria
- where tabla = 'OGT_REGISTRO_PRESUPUESTAL'
-   and fecha >= to_date('11/08/2025','dd/mm/yyyy')
-   and columna = 'VALOR_REGISTRO'
+ where tabla = 'OGT_RELACION_AUTORIZACION'
+   and extract(year from fecha) = 2026
+   order by codigo desc
+   and columna = 'TIPO_RA'
+   and valor_nuevo=
    and ( valor_ant is not null
     or valor_nuevo is not null )
 --and operacion not in ('INSERTAR','ELIMINAR')
  group by operacion
  order by fecha desc;
-
+SELECT * FROM OGT_RELACION_AUTORIZACION
 
 --200250811 8PM  52141 registros
 --20250812 11AM  52145 crea table 2025012

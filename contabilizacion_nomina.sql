@@ -31,14 +31,14 @@ SELECT
     CONTABILIZADO          CTDO,
     CONTABILIZAR           CTAR 
    -- UPDATE
-FROM
+--FROM
     RH_LM_RA 
-   --      SET /*ACTUALIZADO_CONTAB='N',  GEN_CXP_OPGET = 'N' , */      CONTABILIZADO = 'N', CONTABILIZAR = 'S'
+   SET    ACTUALIZADO_CONTAB='N',   CONTABILIZADO = 'N', CONTABILIZAR = 'N' --/*,  GEN_CXP_OPGET = 'N' , */
 WHERE
-    SCOMPANIA = 206 --AND DFECHA_INICIAL_PERIODO = '01-DEC-24';
+    SCOMPANIA = 206 --AND DFECHA_INICIAL_PERIODO = '01-DEC-25';
     AND EXTRACT(YEAR FROM DFECHA_INICIAL_PERIODO) = 2025
     AND EXTRACT(MONTH FROM DFECHA_INICIAL_PERIODO) = :MES
-   -- AND NRO_RA=2
+    --AND NRO_RA=26
 ORDER BY
     DFECHA_INICIAL_PERIODO DESC,
     TIPO_RA ASC;
@@ -65,13 +65,12 @@ rollback;
                 AND     contabilizar         =  'S'
 
 SELECT *
-FROM --DELETE     --Reversar contabilizacion 2/2
-    RH_LM_NOMINA_PROCESADA
-WHERE
-    --EXTRACT(YEAR FROM DFECHA_INICIAL_PERIODO) = 2025;
-    DFECHA_INICIAL_PERIODO = '01-JAN-2026'
-    --AND NRO_RA IS NULL
-    --AND NTRANSACCION = 521
+FROM
+--Reversar contabilizacion 2/2
+--DELETE 
+RH_LM_NOMINA_PROCESADA
+WHERE DFECHA_INICIAL_PERIODO = TO_DATE('01/12/2025','DD/MM/YYYY')
+ AND NRO_RA LIKE  '28[%'
     ;
 
 
@@ -221,12 +220,4 @@ AND NTRANSACCION=521;
 
 --COMMIT;
 
-select * from rh_lm_ra_presupuesto
-order by rowid desc
-where /*compania = 206
-and*/ vigencia=2026
-and unidad_ejecutora=01
-and nro_ra=1;
 
---Lista compromisos
-pk_pr_compromisos.fn_pre_traer_compr_tipo

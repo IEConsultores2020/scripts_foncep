@@ -26,9 +26,3 @@ pi_autoriza_crear_jobs.sql
 pi_sl_job_mputacion.sql
 
 
---Scripts verificaciones y borrado.
-pi_borrado_pruebas.sql
-
-
---Scripts verificacoines integrales.
-pi_verificaciones_integrales.sql
