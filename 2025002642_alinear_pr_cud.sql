@@ -1,4 +1,16 @@
---Tomado de varios.sql linea 98
+CREATE OR REPLACE PACKAGE PK_OGT_SESSION IS
+/*Control cambios
+  GLP2025002642 20260408 ftorresv Alineación PREDIS vs. PPTO.SHD
+*/
+    -- Esta variable controlará si los triggers deben ejecutarse o no
+    G_IGNORE_TRIGGER BOOLEAN := FALSE;
+END PK_OGT_SESSION;CREATE OR REPLACE PACKAGE PK_OGT_SESSION IS
+/*Control cambios
+  GLP2025002642 20260408 ftorresv Alineación PREDIS vs. PPTO.SHD
+*/
+    -- Esta variable controlará si los triggers deben ejecutarse o no
+    G_IGNORE_TRIGGER BOOLEAN := FALSE;
+END PK_OGT_SESSION;--Tomado de varios.sql linea 98
 
 select SUM (APORTE_EMPLEADO)
 from ogt_anexo_nomina
@@ -102,3 +114,5 @@ from bintablas
 where grupo='OPGET'
 and nombre = 'PATH'
 ;
+
+create or replace public synonym pk_ogt_session for ogt.pk_ogt_session

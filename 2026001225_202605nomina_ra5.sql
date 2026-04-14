@@ -24,9 +24,10 @@ rh   915.200.640,01
 
 --Modificado para revisar
     SELECT --a.sconcepto, NVL(SUM(valor),0) valor
-    --a.sconcepto, c.descripcion,
+    --a.sconcepto, 
+    c.descripcion, 
     b.codigo_presupuesto, NVL(SUM(valor),0) valor
-    --a.sconcepto, b.codigo_presupuesto, c.descripcion
+    --a.sconcepto, b.codigo_presupuesto, c.descripcion 
     FROM  rh_t_lm_valores a, rh_lm_cuenta b, pr_v_rubros c
     WHERE b.stipo_funcionario = a.stipofuncionario
     AND   b.sconcepto         = a.sconcepto
@@ -45,8 +46,8 @@ rh   915.200.640,01
     --and codigo_presupuesto = 1396
     -- Fin RQ2523
     AND   b.codigo_presupuesto IS not NULL
-    group by --a.sconcepto, c.descripcion,
-     b.codigo_presupuesto
+    group by --a.sconcepto --,
+        c.descripcion, b.codigo_presupuesto
    order by 1
    ;
 
