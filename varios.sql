@@ -862,21 +862,10 @@ and ncorrida = 1;
                   and argumento ='CENTRO CONTABLE';
 
 
-select *
-from ogt_ingreso 
-where num_doc_legalizacion = 55533;                  
-
-select *
-from sl_pcp_pago
-;
-select max(id)
-
-  FROM ogt_ingreso;
-
   select *
   from rh_personas
-  where interno_persona in (624,61) --numero_identificacion = 1049606827
-  :
+  where interno_persona in (33) --numero_identificacion = 1049606827
+  ;
 
 sl_id_tercero_y_centro_costo(
                   373, --mi_rec_cuenta_cobro.codigo_entidad,
@@ -885,32 +874,6 @@ sl_id_tercero_y_centro_costo(
                   mi_centro_costo,
                   p_resp
                );
-
-select * --id_limay, nit,id_sisla
-        --into p_id_tercero_origen, p_nit_origen,  p_centro_costo
-        from sl_relacion_tac
-       where codigo_compa = 373 --p_codigo_compa;
-
-select * from ogt_detalle_documento
---update ogt_detalle_documento set ter_id_origen=400210
- where doc_numero||'-'||doc_tipo in (
-   select numero ||'-'||tipo
-     from ogt_documento
-    where numero_legal in (
-      select numero
-        from ogt_documento
-       where tipo = 'ALE'
-         --and estado='RE'
-         and unte_codigo = 'FINANCIERO'
-        --and numero in ( 55503) --, 54861 )
-         and numero_externo in ( '2026000057'/*, '2025000003', '2025000012'*/ )
-   )
-      and tipo = 'XYZ'
-)
-   and doc_tipo = 'XYZ'       
-   and ter_id_origen= 69
-   ;
-
 
 INSERT INTO BINTABLAS (GRUPO,NOMBRE,ARGUMENTO,RESULTADO,VIG_INICIAL)
 VALUES ('GENERAL','IDENTIFICACION','TAC','TAC',TO_DATE('01/01/2026','DD/MM/YYYY'));
@@ -975,16 +938,19 @@ commit;
 
 select *  --personas_interno
 from rh_funcionario
-where /*personas_interno=20
-and */ codigo_fondo_pensiones <>61
-and estado_funcionario =1
+where personas_interno=33
+/*and  codigo_fondo_pensiones <>61
+and estado_funcionario =1*/
 order by personas_interno asc
 ;
-
 
 
 select TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')  as fysdate from dual
 ;
 
 select *
-from pr_rubro
+from pr_rubro;
+
+select *
+from rh_concepto   
+where codigo_hash = 2091789934

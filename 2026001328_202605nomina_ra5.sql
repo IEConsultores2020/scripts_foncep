@@ -24,8 +24,8 @@ rh   915.200.640,01
 
 --Modificado para revisar
     SELECT --a.sconcepto, NVL(SUM(valor),0) valor
-    --a.sconcepto, c.descripcion,
-    b.codigo_presupuesto, NVL(SUM(valor),0) valor
+    a.sconcepto, c.descripcion, NVL(SUM(valor),0) valor
+    --b.codigo_presupuesto, NVL(SUM(valor),0) valor
     --a.sconcepto, b.codigo_presupuesto, c.descripcion
     FROM  rh_t_lm_valores a, rh_lm_cuenta b, pr_v_rubros c
     WHERE b.stipo_funcionario = a.stipofuncionario
@@ -45,9 +45,9 @@ rh   915.200.640,01
     --and codigo_presupuesto = 1396
     -- Fin RQ2523
     AND   b.codigo_presupuesto IS not NULL
-    group by --a.sconcepto, c.descripcion,
-     b.codigo_presupuesto
-   order by 1
+    group by a.sconcepto, c.descripcion
+     --b.codigo_presupuesto
+   order by 2 asc
    ;
 
 
@@ -125,3 +125,12 @@ from bintablas
 where grupo='NOMINA'
 and nombre = 'T_FUNCIONARIO'
 and resultadO like '%PLANTA%';
+
+----Valida PAC
+select distinct vigencia --sum (nvl (valor, 0))
+           from pac_distribucion_pac
+          where codigo_compania = 206 --una_compania
+            and codigo_unidad_ejecutora = '01' --una_unidad
+            and mes = 3 --un_mes
+            and vigencia = 2026 --una_vigencia
+            and interno = un_interno;
