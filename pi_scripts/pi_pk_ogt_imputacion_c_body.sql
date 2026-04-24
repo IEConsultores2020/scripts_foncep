@@ -218,7 +218,7 @@ create or replace package body pk_ogt_imputacion as
                   );    
                   dbms_output.put_line(p_resp);
                end if; --if p_procesado = true and nvl(mi_acta_numero,-1) > -1    and mi_estado_encabezado = 'REG'  then
-               if p_procesado = true and mi_estado_encabezado = 'RE' then
+               if p_procesado = true and mi_estado_encabezado = 'REG' then
                   --Actualiza encabezado y guarda o rechaza actualizaciones de acuerdo al resultado en p_procesado
                   pr_actualizar_encabezado(
                      p_nro_referencia_pago => p_nro_referencia_pago,

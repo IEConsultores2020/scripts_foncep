@@ -27,18 +27,18 @@ WHERE p.interno_persona = a.nfuncionario
     AND c.interno_rubro = b.codigo_presupuesto
     AND c.vigencia = 2026 --:p_vigencia --2021 --P_VIGENCIA */
     AND a.ntipo_nomina = 0 --P_TIPONOMINA
-    AND dfecha_inicio_vig <= to_date('31-01-2026','DD-MM-YYYY')
-    AND ( dfecha_final_vig >= to_date('31-01-2026','DD-MM-YYYY')
+    AND dfecha_inicio_vig <= to_date('30-04-2026','DD-MM-YYYY')
+    AND ( dfecha_final_vig >= to_date('30-04-2026','DD-MM-YYYY')
        OR dfecha_final_vig IS NULL )
     AND b.codigo_presupuesto IS NOT NULL
-    AND a.periodo = to_date('31-01-2026','DD-MM-YYYY')
+    AND a.periodo = to_date('30-04-2026','DD-MM-YYYY')
   --and interno_rubro=23277
  -- AND        nro_ra            = :P_NRORA
 GROUP BY c.descripcion,
     codigo_nivel1, codigo_nivel2, codigo_nivel3, codigo_nivel4,
     codigo_nivel5||'-'||codigo_nivel6||'-'||codigo_nivel7||'-'||codigo_nivel8,
     descripcion, interno_rubro, b.sconcepto
-ORDER BY 1, 2, 3, 4, 5
+ORDER BY 2, 3, 4, 5
 --*/
 ;
 

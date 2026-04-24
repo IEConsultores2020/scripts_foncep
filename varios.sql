@@ -30,8 +30,9 @@ where nfuncionario in
 (select * --interno_persona, numero_identificacion, nombres, primer_apellido, segundo_apellido
  from rh_personas
 --where nombres ='DIANA MARCELA' and primer_apellido='SANABRIA'
-where numero_identificacion in (52116283)) --651, 652
---or interno_persona= 643   --  20730522
+where --numero_identificacion in (52116283)) --651, 652
+--or 
+interno_persona IN (519,614)   --  20730522
 --649 --1030575813
 ;
 
@@ -44,7 +45,7 @@ FROM shd_informacion_entidades
 select *
 from bintablas
 where grupo='OPGET'
-AND ARGUMENTO = 'REPORTSERVER'
+AND ARGUMENTO = 'INDICATIVO_VALIDA_PAC' --'VALIDA_PAC'
 AND SYSDATE BETWEEN VIG_INICIAL AND NVL(VIG_FINAL,SYSDATE);
 --'Parametros archivo favidi'
 
@@ -74,14 +75,20 @@ SANDOVAL 1049606827 607 PRIVADO
 
 select *
 from rh_concepto
-where nombre like '%EMBAR%'
+where nombre like '%AUXILIO%ALIM%'
 ;
 
 select * 
-from rh_historico_nomina
-where dinicioperiodo = 20260301
-and nhash in (561030782,2979462679,1190232691,3247840384)
-and ncorrida = 1;
+from 
+delete
+ rh_historico_nomina
+where nfuncionario=33 
+and dinicioperiodo = 20260401
+and nhash in (3024698991)
+and ndcampo0 = 165750
+;
+
+commit
 
    select resultado
                   from bintablas

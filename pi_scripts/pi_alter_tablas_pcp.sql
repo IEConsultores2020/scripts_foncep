@@ -1,6 +1,6 @@
 --sl_pcp_encabezado
 comment on column sl.sl_pcp_encabezado.estado is
-   'Estado de la referencia de pago DIS-Disponible, PAG-Pagado, ANU-Anulado, IMP=Imputado, PIMP=Pendiente imputar(alguna acto o liquidación no está Registrado completamente)'
+   'Estado de la referencia de pago DIS-Disponible, PAG-Pagado, ANU-Anulado, IMP=Imputado, REG=Inicio el período de imputación por alguna situación no ha terminado'
    ;
 
 --sl_pcp_cuenta_cobro 

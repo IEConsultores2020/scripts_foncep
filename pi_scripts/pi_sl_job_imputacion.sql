@@ -1,3 +1,4 @@
+--crea el job
 BEGIN
     DBMS_SCHEDULER.CREATE_JOB (
         job_name        => 'SL_JOB_IMPUTACION',
@@ -32,8 +33,14 @@ END;
 /
 COMMIT; 
 
+
+--Ejecutar solo para verificar
 SELECT job_name, status, actual_start_date, run_duration, error#
 FROM dba_scheduler_job_run_details
 WHERE job_name = 'SL_JOB_IMPUTACION' -- Replace with your job's name
 ORDER BY actual_start_date DESC
 FETCH FIRST 1 ROWS ONLY;
+
+/*
+
+*/

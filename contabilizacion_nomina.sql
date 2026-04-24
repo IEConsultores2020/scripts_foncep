@@ -74,22 +74,33 @@ WHERE DFECHA_INICIAL_PERIODO = TO_DATE('01/12/2025','DD/MM/YYYY')
     ;
 
 
-SELECT * --sum(valor)
+SELECT sconcepto, sum(valor)
 FROM
     --UPDATE 
     RH_T_LM_VALORES
 WHERE
     EXTRACT(YEAR FROM PERIODO) = 2026
-    and periodo = '28/FEB/2026' 
+    and periodo = '30/APR/2026' 
     and stipofuncionario = 'PLANTA' 
-    and sconcepto like '%VACACIONESDINERO%' 
+    --and sconcepto like '%VACACIONESDINERO%' 
     --NRO_RA in (28,29)*/
-GROUP BY PERIODO 
-    -- SCONCEPTO,    VARIABLE_VALOR */
+GROUP BY SCONCEPTO
+,    VARIABLE_VALOR */
 ORDER BY  1
 ;
 
-SELECT distinct sconcepto, cc
+select *
+from rh_lm_cuenta
+where sconcepto = 'VACACIONESDINERO'
+;
+
+select *
+from pr_v_rubros
+where vigencia=2026
+and UPPER(descripcion) like '%VACA%'
+;
+
+SELECT * --distinct sconcepto, cc
 FROM
     --UPDATE 
     rh_t_lm_valores
@@ -98,9 +109,9 @@ WHERE
     and STIPOFUNCIONARIO = 'PLANTA' 
     --sconcepto like 'APORTE%' AND 
     and    ntipo_nomina      = 0    --un_tipo_nomina
-	and    nro_ra            = 3    --un_nro_ra
-    and     periodo           = '28/FEB/2026'
-
+	and    nro_ra            = 5    --un_nro_ra
+    and     periodo           = '31/MAR/2026'
+    AND beneficiario is not null
 GROUP BY PERIODO 
     -- SCONCEPTO,    VARIABLE_VALOR */
 ORDER BY  1
@@ -197,14 +208,15 @@ WHERE
        from rh_t_lm_valores a
        where a.ntipo_nomina = 2        and 
        extract(year from periodo)  = 2025
+       and periodo =
        order by periodo desc
       -- and a.periodo = '31/03/25'
        ;
 
 SELECT *
 FROM RH_T_LM_VALORES
-WHERE SCONCEPTO = 'CEMBARGO'
-AND PERIODO ='30/JUN/2025'
+WHERE SCONCEPTO LIKE '%VAC%DIN%'
+AND EXTRACT(YEAR FROM PERIODO) =2024
 ORDER BY 1
 ;
 

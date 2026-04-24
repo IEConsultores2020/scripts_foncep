@@ -95,11 +95,13 @@ where REGISTRO >= 0                     --MI_VALOR_CERO
 select * from 
 --update 
 ogt_relacion_autorizacion  
---set estado =  '00000000000'      
+set estado =  '00000000000'      
 where vigencia=2026
 and tipo_ra in (1,2)
 --and consecutivo=2
 and fecha_desde = '01-FEB-2026';
+
+--commit;
 
 select nro_ra
 from rh_lm_ra
