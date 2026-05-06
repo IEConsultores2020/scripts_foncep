@@ -27,3 +27,11 @@ JOIN
 WHERE
     a.constraint_name = 'PK_SHD_TERCERO'
     AND a.owner = 'SHD';
+
+
+
+---dba files
+select * from v$session
+;
+
+SELECT sid, serial#, status, program FROM v$session WHERE program LIKE '%oracle%';

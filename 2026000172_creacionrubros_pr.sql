@@ -153,7 +153,10 @@ order by 2
 
 select *
 from pr_v_rubros vr
-where vigencia =2026 and --interno_rubro=1735
+where vigencia =2026 and descripcion like 'Partes y piezas de muebles'  --1800, 1845
+;
+
+--interno_rubro=1735
 vr.vigencia||'-'||vr.descripcion||'-'|| vr.tipo_plan||'-'|| vr.codigo_nivel1||'-'|| vr.codigo_nivel2||'-'|| vr.codigo_nivel3||'-'||
   vr.codigo_nivel4||'-'|| vr.codigo_nivel5 ||'-'||vr.codigo_nivel6 ||'-'||vr.codigo_nivel7||'-'|| vr.codigo_nivel8||'-'|| vr.codigo_tipo||'-'|| 
   vr.codigo_componente||'-'|| vr.codigo_objeto||'-'|| vr.codigo_fuente||'-'|| vr.codigo_det_fuente like
@@ -167,7 +170,18 @@ from pr_disponibilidad_rubro dr, pr_v_rubros rv
 where dr.vigencia=2026 and dr.codigo_compania=206 and dr.codigo_unidad_ejecutora='01'
 and numero_disponibilidad=39
 and dr.vigencia=rv.vigencia
-and dr.rubro_interno=rv.interno_rubro;
+and dr.rubro_interno=rv.interno_rubro
+and dr.rubro_interno in (1800, 1845);
+
+select * from 
+--
+
+delete 
+pr_rubro where vigencia=2026 and interno = 1800;
+
+commit
+
+rollback
 
 select *
 from pr_disponibilidad_rubro dr
@@ -175,7 +189,7 @@ where dr.vigencia=2026 and dr.codigo_compania=206
 and dr.codigo_unidad_ejecutora='01'
 --and rubro_interno in (1837,1543)
 --and rubro_interno in (1759,1948)    --Servicios de gestión de desarrollo empresarial 2-3-02-02
-and rubro_interno in (1801,1917)      --Servicios de gestion de desarrollo empresarial 2-1-02-02%
+and rubro_interno in (1804,1547)     --Servicios de gestion de desarrollo empresarial 2-1-02-02%
 and dr.numero_disponibilidad in (200,192,214,200,157,159,160)
 order by dr.numero_disponibilidad;
 
@@ -183,9 +197,7 @@ select *
 from pr_apropiacion
 where vigencia=2026 and codigo_compania=206 
 and codigo_unidad_ejecutora='01'
---and rubro_interno in (1804, 1547)
---and rubro_interno in (1759,1948)    --Servicios de gestión de desarrollo empresarial  2-3-02-02
-and rubro_interno in (1801,1917)       --Servicios de gestión de desarrollo empresarial  2-1-02-02% Quitar 1801
+and rubro_interno in (1800, 1845)    
 ;
 
 select *
@@ -309,10 +321,7 @@ from pr_modificacion_presupuestal
 where vigencia = 2026
 and codigo_compania=206
 and codigo_unidad_ejecutora = '01'
---and documentos_numero = '000014'
---and rubro_interno in (1849,1423) -- <= 1799 
---and rubro_interno in (1715,1893)  --Baterías de pilas
-and rubro_interno in (1759,1948)    --Servicios de gestión de desarrollo empresarial
+and rubro_interno in (1800, 1845)   --Servicios de gestión de desarrollo empresarial
 ;
 
 
@@ -321,7 +330,7 @@ from pr_compromisos
 where vigencia=2026
 and codigo_compania=206
 and codigo_unidad_ejecutora='01'
-and numero_compromiso in (103,130,151)
+and numero_compromiso in (1800, 1845)  
 ;
 
 select *
@@ -356,7 +365,7 @@ from pr_rp_anulados
 where vigencia=2026
 and codigo_compania=206
 and codigo_unidad_ejecutora='01'
-and rubro_interno in (1759,1948)    --Servicios de gestión de desarrollo empresarial
+and rubro_interno in (1800, 1845)     --Servicios de gestión de desarrollo empresarial
 ;
 
 --Anulaciones totales

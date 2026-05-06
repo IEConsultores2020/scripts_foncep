@@ -99,8 +99,8 @@ from pr_registro_disponibilidad r, pr_v_rubros c
 where r.vigencia=2026
 and r.codigo_compania=206
 and r.codigo_unidad_ejecutora='01'
-and r.numero_disponibilidad=39
-and r.numero_registro = 239
+and r.numero_disponibilidad=199
+and r.numero_registro = 240
 and c.vigencia=r.vigencia
 and c.interno_rubro=r.rubro_interno;
 
@@ -166,7 +166,7 @@ and mes=6
 order by 1,2,3,4
 ;
 
-select aa.*
+ select aa.*
 from ogt_centro_costos cc, ogt_anexo_nomina aa
 where cc.entidad=206
 and cc.unidad_ejecutora='01'
@@ -181,7 +181,8 @@ and cc.tipo_documento   =   aa.tipo_documento
 and cc.tipo_ra          =   aa.tipo_ra
 and cc.mes              =   aa.mes
 and cc.vigencia         =   aa.vigencia
-and cc.consecutivo      =   aa.consecutivo;
+and cc.consecutivo      =   aa.consecutivo
+;
 
 select *
 from rh_concepto
@@ -191,10 +192,7 @@ where nombre like '%EMBARGO%'
 select * 
 from rh_historico_nomina
 where dinicioperiodo like '2025%' and nhash in
-(561030782,
-2979462679,
-1190232691,
-3247840384)
+(561030782,2979462679,1190232691,3247840384)
 AND nfuncionario not in (646,588)
 ;--internos 646, 588
 
@@ -208,7 +206,7 @@ select *
  where ogti.unidad_ejecutora = '01'	--UNA_UNIDAD
    and ogti.entidad = '206'	--UNA_ENTIDAD
    and ogti.ano_pac = 2026    --UNA_VIGENCIA_PAC
-   and ogti.mes_pac = 3      --UN_MES_PAC
+   and ogti.mes_pac = 5      --UN_MES_PAC
    and ogti.rubro_interno = 1804; --UN_RUBRO
    ;
 
@@ -224,8 +222,23 @@ ogt_relacion_autorizacion
 set estado =  '00000000001'      
 where vigencia=2026
 and tipo_ra = 1
-and consecutivo= 5 
+and consecutivo= 5
 and fecha_desde = '01-MAR-2026';
+
+select *
+from ogt_imputacion
+where vigencia=2026
+and consecutivo= 5
+and rubro_interno=1396;
+
+select *
+from ogt_registro_presupuestal
+where rubro_interno=1396
+and unidad_ejecutora='01'
+and vigencia_presupuesto=2026
+and tipo_documento='RA'
+and entidad=206
+and consecutivo=5
 
 -- commit;
 		--CURSOR  C_RUBROS_RA IS
@@ -251,11 +264,16 @@ and fecha_desde = '01-MAR-2026';
     WHERE  O.TIPO_DOCUMENTO     = 'RA'  --MI_CON_TIPO_DOCUMENTO
     AND    O.ENTIDAD            = 206 --UNA_ENTIDAD
     AND    O.UNIDAD_EJECUTORA   = '01' --UNA_UNIDAD
-    AND    O.VIGENCIA           = 2024 --UNA_VIGENCIA
-    AND    O.VIGENCIA_PRESUPUESTO = 2024
-    AND    O.MES_PAC=12
-    AND    O.CONSECUTIVO = 31
-   -- AND p.rubro_interno = 1396
+    AND   (
+        (O.VIGENCIA           = 2024 --UNA_VIGENCIA
+        AND    O.VIGENCIA_PRESUPUESTO = 2024
+        AND    O.MES_PAC=12
+        AND    O.CONSECUTIVO = 31) or
+      (O.VIGENCIA           = 2026 --UNA_VIGENCIA
+      AND    O.VIGENCIA_PRESUPUESTO = 2026
+      AND    O.MES_PAC=3
+      AND    O.CONSECUTIVO in (5))) 
+   AND p.rubro_interno = 1396
     order by 1
   --  AND    O.CONSECUTIVO        = 5 --UN_CONSECUTIVO_RA
     ;
@@ -269,21 +287,8 @@ select distinct vigencia --sum(nvl( valor,0))
    and vigencia = 2011                 -- una_vigencia
    and mes = 5                          -- un_mes
    and interno --= 1831                  --un_interno
-   in (1804,
-1821,
-1822,
-1823,
-1824,
-1825,
-1826,
-1827,
-1828,
-1829,
-1830,
-1835,
-1841,
-1842,
-1843)
+   in (1804,1821,1822,1823,1824,1825,1826,1827,1828,1829,
+1830,1835,1841,1842,1843)
    ;
 
 
@@ -355,7 +360,8 @@ where codigo in (320,140)
            b.valor_bruto,
            b.registro_presupuestal,
            b.valor_rp,
-           a.ntipo_nomina
+           a.ntipo_nomina, 
+           a.grupo_ra
     FROM   rh_lm_ra a, rh_lm_ra_presupuesto b
     WHERE  a.scompania              = b.compania
     AND    a.vigencia               = b.vigencia
@@ -363,15 +369,23 @@ where codigo in (320,140)
     AND    a.unidad_ejecutora       = b.unidad_ejecutora
     AND    a.nro_ra                 = b.nro_ra
     AND    a.scompania              = 206
-    AND    a.vigencia               = 2024
-    AND    a.vigencia_presupuesto   = 2024
     AND    a.unidad_ejecutora       = '01'
    -- AND    a.nro_ra                 = 16
     AND    a.tipo_ra                = 1
-    AND    a.grupo_ra               = 5
+    AND    a.grupo_ra               = '5'
     AND    a.ntipo_nomina           = 0
-    AND    a.dfecha_inicial_periodo = '01/DEC/2024'
-    AND    a.dfecha_final_periodo   = '31/DEC/2024';
+    AND (
+        (a.dfecha_inicial_periodo = '01/MAR/2024'
+        AND    a.dfecha_final_periodo   = '31/MAR/2024'
+        AND    a.vigencia               = 2024
+        AND    a.vigencia_presupuesto   = 2024) OR
+        (a.dfecha_inicial_periodo = '01/APR/2026'
+        AND    a.dfecha_final_periodo   = '30/APR/2026'
+        AND    a.vigencia               = 2026
+        AND    a.vigencia_presupuesto   = 2026)
+        )
+     AND b.interno_rubro = 1396
+      ;
     
 select *
 from rh_lm_ra_presupuesto
@@ -382,4 +396,28 @@ and disponibilidad=39
 
 select *
 from pr_v_rubros
-where interno_rubro in (1396)
+where interno_rubro in (1396);
+
+select *
+from ogt_registro_presupuestal
+where valor_registro = 101929 /*disponibilidad=199
+and*/ entidad=206
+and unidad_ejecutora='01'
+and vigencia=2026
+and rubro_interno=1396;
+
+select *
+from rh_lm_ra_presupuesto
+where compania=206
+and vigencia=2026
+and unidad_ejecutora='01'
+and nro_ra = 5
+;
+
+select *
+from ogt_registro_presupuestal
+where unidad_ejecutora='01'
+and vigencia=2026
+--and tipo_documento='OP'
+and consecutivo=5
+and rubro_interno=1396

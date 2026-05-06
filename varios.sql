@@ -23,6 +23,9 @@ AND VIG_INICIAL <= SYSDATE
 AND (VIG_FINAL IS NULL OR VIG_FINAL >= SYSDATE)
 ;
 
+select *
+from RH_PERSONAS
+where interno_persona = 52
 
 
 select * from rh_maestro_personas
@@ -52,7 +55,7 @@ AND SYSDATE BETWEEN VIG_INICIAL AND NVL(VIG_FINAL,SYSDATE);
 
 select *
 from rh_personas
-where interno_persona in (646,588) --20730522, 52876090
+where interno_persona in (11) --20730522, 52876090
 nombres like 'MARGARITA%' --numero_identificacion= 79693028
 ;
 
@@ -75,20 +78,52 @@ SANDOVAL 1049606827 607 PRIVADO
 
 select *
 from rh_concepto
-where nombre like '%AUXILIO%ALIM%'
+where nombre like '%PAGO  APORTE CAJA DE COMPENSACION FAMILIAR%'
 ;
-
-select * 
+select hn.*
 from 
-delete
- rh_historico_nomina
-where nfuncionario=33 
-and dinicioperiodo = 20260401
-and nhash in (3024698991)
-and ndcampo0 = 165750
+--delete 
+rh_historico_nomina hn
+where hn.nfuncionario=633
+and nhash like '1994%'
+and hn.dinicioperiodo = 20260401
+and sproceso = 'NEWNOVELTIES'
+and hn.ncorrida=1   1994
 ;
 
 commit
+
+select *
+from rh_novedad
+;
+
+
+
+select *
+from rh_concepto
+where nombre like '%VACACIONES%' and codigo_hash  in (335110026, 726156787,942401950)  --= 1128917309
+;
+
+select c.nombre, hn.*
+from rh_historico_nomina hn, rh_concepto c
+where hn.nfuncionario=633
+and hn.dinicioperiodo = 20260401
+and hn.ncorrida=1
+and hn.nhash = c.codigo_hash
+--nhash 3168394695
+;
+
+select *
+from rh_actos_administrativos
+where funcionario = 633
+;
+
+select *
+from rh_movimientos_planta
+where funcionario=633
+;
+
+--commit
 
    select resultado
                   from bintablas
@@ -206,11 +241,12 @@ and consecutivo=2;
 
 commit;
 
+select *
 
 
 select *  --personas_interno
 from rh_funcionario
-where personas_interno=33
+where personas_interno=613
 /*and  codigo_fondo_pensiones <>61
 and estado_funcionario =1*/
 order by personas_interno asc
@@ -226,3 +262,75 @@ from pr_rubro;
 select *
 from rh_concepto   
 where codigo_hash = 2091789934
+;
+
+SELECT
+    a.stercero,
+    SUM(valor) valor,
+    SUM(valor_saldo) valor_saldo
+FROM
+    rh_t_lm_valores a,
+    rh_lm_cuenta b,
+    rh_lm_centros_costo c
+WHERE
+    b.stipo_funcionario = a.stipofuncionario
+    AND b.sconcepto = a.sconcepto
+    AND b.cc = c.codigo
+    AND a.periodo = TO_DATE(
+        '30-04-2026 12:00:00 AM',
+        'DD-MM-YYYY HH:MI:SS AM'
+    )
+    AND a.ntipo_nomina = 1
+    AND a.sdevengado IN (0, 1)
+    AND c.codigo not IN (2, 3, 4)
+    AND a.nro_ra = 10
+    AND b.scompania = '206'
+    AND b.tipo_ra = '1'
+    AND b.grupo_ra IN ('5')
+    AND b.ncierre = 1
+    AND b.dfecha_inicio_vig <= TO_DATE(
+        '30-04-2026 12:00:00 AM',
+        'DD-MM-YYYY HH:MI:SS AM'
+    )
+    AND (
+        b.dfecha_final_vig >= TO_DATE(
+            '30-04-2026 12:00:00 AM',
+            'DD-MM-YYYY HH:MI:SS AM'
+        )
+        OR b.dfecha_final_vig IS NULL
+    )
+    AND b.cc = 5
+GROUP BY
+    a.stercero;
+
+
+    select *
+    from rh_concepto
+    where nombre_corto like '%ICBF%' --121290711
+    ;
+
+    select *
+    from rh_tipos_acto_nove
+    where nombre = 'INFO_PLANILLA_ENTIDAD' --854032720
+    --'INFOAPORTEPARAF' --543977345
+
+    select *
+    from rh_historico_nomina
+    where nhash=543977345 and dinicioperiodo>=20260101 and dfinalperiodo<=20260131
+    and nfuncionario=33
+    ;
+
+
+    select *
+    from rh_historico_nomina_hoy
+    where nhash=854032720 and dinicioperiodo>=20260101 and dfinalperiodo<=20260131
+    and nfuncionario=52
+    order by dfecharegistro desc
+    ;
+    
+    select nfuncionario, count(1)
+    from rh_historico_nomina_hoy
+    where nhash=854032720 and dinicioperiodo>=20260101 and dfinalperiodo<=20260131
+    group by nfuncionario
+    having count(1)>2
+    ;

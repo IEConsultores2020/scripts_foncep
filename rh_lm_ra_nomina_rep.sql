@@ -18,15 +18,15 @@ FROM rh_t_lm_valores  a, rh_lm_cuenta     b ,  pr_v_rubros  c,
     rh_personas p
 WHERE p.interno_persona = a.nfuncionario
     AND  b.tipo_ra = 1 --:p_tipo_ra
-    AND b.grupo_ra = '5' --P_GRUPO_RA
-    AND b.scompania = 206 --P_COMPANIA
+    AND b.grupo_ra = '9' --P_GRUPO_RA
+    AND b.scompania = 102 --P_COMPANIA
     AND b.stipo_funcionario = a.stipofuncionario
    -- and nfuncionario in (609,877,3153)
     AND a.sconcepto = b.sconcepto
     AND b.ncierre = 1
     AND c.interno_rubro = b.codigo_presupuesto
     AND c.vigencia = 2026 --:p_vigencia --2021 --P_VIGENCIA */
-    AND a.ntipo_nomina = 0 --P_TIPONOMINA
+    AND a.ntipo_nomina = 1 --P_TIPONOMINA
     AND dfecha_inicio_vig <= to_date('30-04-2026','DD-MM-YYYY')
     AND ( dfecha_final_vig >= to_date('30-04-2026','DD-MM-YYYY')
        OR dfecha_final_vig IS NULL )
@@ -79,7 +79,7 @@ SELECT periodo, /*c.codigo_nivel1 n1,
   AND        dfecha_inicio_vig <= TO_DATE(:P_FECHA_FINAL,'YYYYMMDD')
   AND       (dfecha_final_vig  >= TO_DATE(:P_FECHA_FINAL,'YYYYMMDD') /*:P_FECHA_FINAL*/ OR dfecha_final_vig IS NULL)
   AND        b.codigo_presupuesto IS NOT NULL
- -- AND        periodo           = TO_DATE(:P_FECHA_FINAL,'YYYYMMDD') --:P_FECHA_FINAL
+  AND        periodo           = TO_DATE(:P_FECHA_FINAL,'YYYYMMDD') --:P_FECHA_FINAL
   AND        nro_ra            = :P_NRORA
   GROUP BY periodo,codigo_nivel1,
                       codigo_nivel2,

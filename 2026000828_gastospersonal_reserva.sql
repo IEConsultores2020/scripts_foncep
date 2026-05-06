@@ -287,6 +287,7 @@ pk_pr_consolidados_reservas.fn_pre_girosmes(:vigencia ,:compania ,:unidad_ejecut
         and vr.interno_rubro = de.rubro_interno
         and vr.vigencia = de.vigencia
         and codigo_nivel1||'-'||codigo_nivel2||'-'||codigo_nivel3 = '2-1-01'
+        and interno_rubro = 1387 ---Aportes a la seguridad social en pensiones públicas
         and pk_pr_compromisos.fn_pre_saldo_rp_fc (:p_vigencia-1,
                             :p_compania,
                             :p_unidad,
@@ -294,3 +295,11 @@ pk_pr_consolidados_reservas.fn_pre_girosmes(:vigencia ,:compania ,:unidad_ejecut
                             ma.numero_disponibilidad,
                             de.rubro_interno,
                             to_date(to_char('31-12-'||(:p_vigencia-1)),'dd-mm-yyyy'))   > 0
+
+ select * from 
+--update 
+ogt_relacion_autorizacion  
+--set estado =  '00000000001'      ---00011100000 RADICADA
+where vigencia||'-'||consecutivo in  ('2025-25','2026-5','2026-1') 
+--and tipo_ra = 2
+ for update;
