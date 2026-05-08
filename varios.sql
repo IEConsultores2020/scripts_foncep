@@ -25,7 +25,8 @@ AND (VIG_FINAL IS NULL OR VIG_FINAL >= SYSDATE)
 
 select *
 from RH_PERSONAS
-where interno_persona = 52
+where interno_persona = 592
+;
 
 
 select * from rh_maestro_personas
