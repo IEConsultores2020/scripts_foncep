@@ -11,6 +11,9 @@ values ('GENERAL','IDENTIFICACION','TAC','TAC',TO_DATE('01/01/2026','DD/MM/YYYY'
 --Se crea tabla en OGT para registrar los pagos por pensionado
 pi_ogt_crea_tabla_detalle_pensionado.sql
 
+--Crear synonymos publicos
+CREATE OR REPLACE PUBLIC SYNONYM OGT_DETALLE_PENSIONADO FOR OGT.OGT_DETALLE_PENSIONADO;
+
 --Permisos a ogt
 pi_permisos.sql
 
@@ -19,10 +22,10 @@ pi_pk_ogt_imputacion_c_spec.sql
 pi_pk_ogt_imputacion_c_body.sql
 
 --Inserción de conceptos de tesoreria para capital e intereses 
-pi_insert_ogt_conceptos_tesoreria.sql
+---Está en los scripts de Nancy pi_insert_ogt_conceptos_tesoreria.sql
 
 --Jobs
 pi_autoriza_crear_jobs.sql
-pi_sl_job_mputacion.sql
+pi_ogt_job_mputacion.sql
 
 

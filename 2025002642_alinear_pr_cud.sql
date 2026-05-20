@@ -31,7 +31,7 @@ group by consecutivo
 
  select sum(aporte_empleado)        
   from ogt_anexo_nomina
- where vigencia = 2025
+ where vigencia = 2026
    and consecutivo = :nro_ra            
    and codigo_centro_costos in ( 5,1285, 1267 );  
 

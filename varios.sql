@@ -19,6 +19,7 @@ BINTABLAS
 WHERE GRUPO in ('GENERAL')
 AND NOMBRE='IDENTIFICACION'
 --AND ARGUMENTO='REPORTSERVER'
+
 AND VIG_INICIAL <= SYSDATE
 AND (VIG_FINAL IS NULL OR VIG_FINAL >= SYSDATE)
 ;
@@ -335,3 +336,76 @@ GROUP BY
     group by nfuncionario
     having count(1)>2
     ;
+
+
+    
+ cursor reg40(un_nro_ra NUMBER) is
+    SELECT 
+      '7990990000' cuenta_credito,
+      --INI 2025005004 
+      --sum(decode(regimen, '3', a.valor,'1',0,'2',0)) 
+      sum(nvl(a.valor,0)) valor_rubro,
+      --FIN 2025005004 
+      --INI 2025004504
+      NVL(:B_RA.cta_x_nomina,'5000001965') rp_doc_presupuestal,
+      --FIN 2025004504
+      decode(c.descripcion,'Sueldo básico','0001',c.codigo_nivel7) posicion_doc_presupuestal
+    FROM     rh_t_lm_valores a, rh_lm_cuenta b, pr_v_rubros c
+      WHERE tipo_ra             = '1' 
+      AND   grupo_ra            = '5'
+      AND   scompania           = 206
+      AND   stipo_funcionario   = stipofuncionario
+      AND   a.sconcepto         = b.sconcepto
+      AND   ncierre             = 1
+      AND   c.interno_rubro     = b.codigo_presupuesto
+      AND   c.vigencia          = extract(year from 2026)
+      AND   a.ntipo_nomina      = '0'
+      AND   dfecha_inicio_vig   <= '30/APR/2026' 
+      AND   (dfecha_final_vig   >= '30/APR/2026'  OR dfecha_final_vig IS NULL) 
+      AND   b.codigo_presupuesto IS NOT NULL
+      AND   periodo             = '30/APR/2026'   --:P_FECHA_FINAL
+      --AND   nro_ra              = un_nro_ra            ---:P_NRORA
+      GROUP BY codigo_nivel1,
+                          codigo_nivel2,
+                          codigo_nivel3,
+                          codigo_nivel4,
+                          codigo_nivel7,
+                          codigo_nivel5 || '-' || codigo_nivel6 || '-' || codigo_nivel7 || '-' || codigo_nivel8,
+                          descripcion,
+                          interno_rubro
+      ORDER BY codigo_nivel5 || '-' || codigo_nivel6 || '-' || codigo_nivel7 || '-' || codigo_nivel8;
+
+
+
+
+
+grant execute,debug on shd.pk_sit_infentidades to ogt_admin;
+grant execute,debug on shd.pk_sit_infbasica to ogt_admin;
+grant execute,debug on shd.pk_secuencial to ogt_admin;
+
+select *
+from dba_role_privs
+where granted_role = 'OGT_ADMIN'
+
+where grantee = 'OGT_ADMIN'
+and table_name like 'FN_ACTUALIZA%'
+;
+
+select *
+from ALL_TAB_PRIVS
+where table_schema = 'SL'
+and table_name like 'SL_PCP_CUENTA%';
+
+GRANT SELECT, INSERT, UPDATE ON  SL.SL_PCP_CUENTA_COBRO TO OGT_ADMIN;
+
+select * from 
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON  sl.sl_relacion_terceros  TO SL_PCP_ADMIN;
+create or replace public synonym sl_relacion_terceros for sl.sl_relacion_terceros;
+
+create or replace public synonym sl_relacion_tac for sl.sl_relacion_tac;
+GRANT SELECT, INSERT, UPDATE, DELETE ON  SL.sl_relacion_tac  TO SL_PCP_ADMIN;
+
+grant sl_pcp_admin to ogt_admin;
+
+grant sl_pcp_admin to ogt;

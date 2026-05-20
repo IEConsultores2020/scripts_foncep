@@ -17,7 +17,7 @@ and n.funcionario=52
 and n.tipo_planilla = 'N'
 ;
 
-drop view rh_vw_g1585_r2388
+--drop view rh_vw_g1585_r2388
 
 create or replace view rh_vw_g1585_r2388 as
 select n.funcionario, n.mes, 
@@ -51,8 +51,11 @@ and n.fecha_novedad = e.fecha_novedad
 --pk_detalle_anexos_ra.fn_detalle_beneficiarios(mi_concepto_paraf,mi_err)
 --pk_rhlm_ra.pr_inserta_tmp
 
+
+--drop view rh_vw_g1585_ra2
 create or replace view rh_vw_g1585_ra2 as
-select nfuncionario, nro_ra, sum(ICBF) ICBF, sum(CCF) CCF, sum(ARL) ARL, sum(SENA) SENA
+select  nfuncionario, nro_ra, sum(PENSION_PUBLICA) PENSION_PUBLICA, sum(PENSION_PRIVADA) PENSION_PRIVADA, 
+        sum(SALUD) SALUD, sum(ICBF) ICBF, sum(CCF) CCF, sum(ARL) ARL, sum(SENA) SENA
 from
 (SELECT  nfuncionario,
         periodo,
@@ -64,14 +67,26 @@ from
           when 1836 then
             sum(decode(regimen, '1', a.valor,'2',a.valor,'3',0)) + sum(decode(regimen, '3', a.valor,'1',0,'2',0)) 
           else 0 end as CCF,
-                case interno_rubro
+        case interno_rubro
           when 1838 then
             sum(decode(regimen, '1', a.valor,'2',a.valor,'3',0)) + sum(decode(regimen, '3', a.valor,'1',0,'2',0)) 
           else 0 end as ARL,
-                  case interno_rubro
+        case interno_rubro
           when 1840 then
             sum(decode(regimen, '1', a.valor,'2',a.valor,'3',0)) + sum(decode(regimen, '3', a.valor,'1',0,'2',0)) 
           else 0 end as sena,
+        case interno_rubro
+          when 1831 then
+            sum(decode(regimen, '1', a.valor,'2',a.valor,'3',0)) + sum(decode(regimen, '3', a.valor,'1',0,'2',0)) 
+          else 0 end as PENSION_PUBLICA,      
+        case interno_rubro
+          when 1832 then
+            sum(decode(regimen, '1', a.valor,'2',a.valor,'3',0)) + sum(decode(regimen, '3', a.valor,'1',0,'2',0)) 
+          else 0 end as PENSION_PRIVADA,            
+        case interno_rubro
+          when 1834 then
+            sum(decode(regimen, '1', a.valor,'2',a.valor,'3',0)) + sum(decode(regimen, '3', a.valor,'1',0,'2',0)) 
+          else 0 end as SALUD, 
         nro_ra 
       --sum(decode(regimen, '1', a.valor,'2',a.valor,'3',0)) + sum(decode(regimen, '3', a.valor,'1',0,'2',0))  total
   --select *
@@ -85,18 +100,21 @@ from
   AND        c.interno_rubro       = b.codigo_presupuesto
   AND        c.vigencia            = 2026   --:P_VIGENCIA
   AND        a.ntipo_nomina        = 1      --:P_TIPONOMINA
-  AND        dfecha_inicio_vig <= TO_DATE(20260228,'YYYYMMDD')
-  AND       (dfecha_final_vig  >= TO_DATE(20260228,'YYYYMMDD') /*:P_FECHA_FINAL*/ OR dfecha_final_vig IS NULL)
+  AND        dfecha_inicio_vig <= TO_DATE(20260131,'YYYYMMDD')
+  AND       (dfecha_final_vig  >= TO_DATE(20260131,'YYYYMMDD') /*:P_FECHA_FINAL*/ OR dfecha_final_vig IS NULL)
   AND        b.codigo_presupuesto IS NOT NULL
-  AND        periodo           = TO_DATE(20260228,'YYYYMMDD') --:P_FECHA_FINAL  20260101 20260228
-  AND        nro_ra            = 9 --:P_NRORA                                           --8         
+  AND        periodo           = TO_DATE(20260131,'YYYYMMDD') --:P_FECHA_FINAL  20260101 20260228
+  AND        nro_ra            = 8 --:P_NRORA                                           --8         
   --AND       nfuncionario in (11,15,20,22,29,39,52,634)
   AND       interno_rubro  --=1836
                           in  (1839, --'Aportes al ICBF'
                               1836, --'Compensar'
                               1838, --'Aportes generales al sistema de riesgos laborales públicos
-                              1840 --'Aportes al SENA'
-                              )  --*/
+                              1840, --'Aportes al SENA'
+                              1831, --'Aportes a la seguridad social en pensiones públicas'
+                              1832, --'Aportes a la seguridad social en pensiones privadas'
+                              1834 --'Aportes a la seguridad social en salud privada'
+                              )  
   group by nfuncionario,
       periodo, nro_ra, /*codigo_nivel2,
       codigo_nivel3,
@@ -111,26 +129,32 @@ from
 
    select *
     from rh_tipos_acto_nove
-    where nombre = 'INFO_PLANILLA_ENTIDAD' --854032720
+    where nombre =
+    --pension patronal  
+      'INFOAPORTEPENSIONES'   4290415819 9003 --ndcampo6
+    --'INFO_PLANILLA_ENTIDAD' --854032720
     --'INFOAPORTEPARAF' --543977345
+    
+    
 
 
-      select *
+    select *
     from rh_historico_nomina_hoy
-    where nhash=854032720 and dinicioperiodo>=20260101 and dfinalperiodo<=20260131
-    and nfuncionario=52
+    where nhash=4290415819 and dinicioperiodo>=20260101 and dfinalperiodo<=20260131
+    and nfuncionario=635
     order by dfecharegistro desc
     ;
 
-     select *
+    select *
     from rh_historico_nomina_hoy
-    where nhash=854032720 and dinicioperiodo>=20260101 and dfinalperiodo<=20260131
+    where nhash=4290415819 and dinicioperiodo>=20260101 and dfinalperiodo<=20260131
     and dfechanovedad >= 20260301 and dfechanovedad <= 20260331
-    and nfuncionario=52
+    and nfuncionario=635
     order by dfecharegistro desc;
 
     select numero_identificacion, interno_persona
     from RH_PERSONAS
+    where interno_persona in (61,591,592)
     where numero_identificacion = 1014179264
     1014179264	    635
     1010211471      656
@@ -147,21 +171,48 @@ from
     order by 1
     ;
 
-    select *
+    select periodo, nfuncionario, sconcepto, stercero, valor
     from rh_t_lm_valores a
     where a.ntipo_nomina        = 1      --:P_TIPONOMINA
     and extract(year from periodo) = 2026
     --and extract(month from periodo) = 4
     and /*periodo           = '01-MAR-2026'
     and*/ nro_ra            = 8
+    AND sconcepto like 'PENSIONES%'
+    --AND nfuncionario = 656
+    order by periodo desc
+;
+
+
+    select sum(valor) --p.numero_identificacion, a.periodo, a.nfuncionario, a.sconcepto, a.stercero, a.valor
+    from rh_t_lm_valores a, rh_personas p
+    where a.nfuncionario = p.interno_persona
+     --and p.numero_identificacion = 51604666
+     and a.ntipo_nomina        = 1      --:P_TIPONOMINA
+    and extract(year from a.periodo) = 2026
+    and extract(month from a.periodo) = 1
+    and a.periodo           = '28-FEB-2026'
+    and a.nro_ra            = 8
+    AND sconcepto like 'PENSIONES%'
+    --AND nfuncionario = 656
     order by periodo desc
 ;
 
 select  count(1) --sum(ICBF) ICBF, sum(CCF) CCF, sum(ARL) ARL, sum(SENA) SENA
 from rh_vw_g1585_ra1;  --79
 
-select  count(1) --sum(ICBF) ICBF, sum(CCF) CCF, sum(ARL) ARL, sum(SENA) SENA
-from rh_vw_g1585_ra2; --81
+select  sum(pension_publica) pension_publica, sum(pension_privada) pension_privada, sum(salud) salud, 
+    sum(CCF) CCF, sum(ARL) ARL, sum(ICBF) ICBF,  sum(SENA) SENA
+from rh_vw_g1585_ra2 ra2
+order by 1; --81
+
+select  '202601' periodo, p.numero_identificacion, p.nombres||' '||p.primer_apellido||' '||p.segundo_apellido nombres, 
+    ra2.pension_privada, ra2.pension_publica, ra2.salud, ra2.icbf, ra2.ccf, ra2.arl, ra2.sena
+   /*sum(pension_publica) pension_publica, sum(pension_privada) pension_privada, sum(salud) salud, 
+    sum(CCF) CCF, sum(ARL) ARL, sum(ICBF) ICBF,  sum(SENA) SENA*/
+from rh_vw_g1585_ra2 ra2, rh_personas p
+where p.interno_persona=nfuncionario
+order by 2 desc; --81
 
 select count(distinct funcionario), mes  --, sum(ccf) ccf, sum(arl) arl, sum(sena) sena, sum(icbf) icbf 
 from rh_vw_g1585_r2388
@@ -188,7 +239,7 @@ group by funcionario
 select funcionario, p.ccf ccfp, r.ccf ccfr, p.arl arlp, r.arl arlr, p.sena senap, r.sena senar, p.icbf icbfp, r.icbf icbfr
 from (select funcionario, mes, sum(ccf) ccf, sum(arl) arl, sum(sena) sena, sum(icbf) icbf 
       from rh_vw_g1585_r2388
-      group by funcionario, mes) p, rh_vw_g1585_ra2 r
+      group by funcionario, mes) p, rh_vw_g1585_ra1 r
 where p.mes = 2
 and p.funcionario = r.nfuncionario
 and (p.ccf - r.ccf != 0 or p.arl - r.arl != 0 or p.sena - r.sena != 0 or p.icbf - r.icbf != 0) ;

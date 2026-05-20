@@ -101,8 +101,8 @@ and tipo = 'XYZ'
 
 
 select * from tab_lch_segui   
-where fecha >= '20/JAN/2026'
---and mensaje like 'OPGET%2025000119%'
+where fecha >= '15/APR/2026'
+--and mensaje like 'OPGET: Acta número%'
 order by consec DESC
 ;
 

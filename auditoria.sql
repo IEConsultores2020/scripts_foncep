@@ -1,6 +1,6 @@
-select *
+select distinct tabla
   from auditoria
- where tabla = 'OGT_RELACION_AUTORIZACION'
+ where tabla like 'RH_T%' --'RH_T_LM_VALORES'
    and extract(year from fecha) = 2026
    order by codigo desc
    and columna = 'TIPO_RA'

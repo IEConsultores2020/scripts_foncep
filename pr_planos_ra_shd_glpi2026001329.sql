@@ -71,41 +71,49 @@ PROCEDURE PR_PLANOS_RA_SHD(una_compania      VARCHAR2,
        AND B.CC IS NOT NULL
     ;
 
-  cursor reg40(un_nro_ra NUMBER) is
+  --cursor reg40(un_nro_ra NUMBER) is
+  SELECT LPAD(TO_CHAR(ROWNUM),3,'0') posicion_doc_presupuestal, cuenta_credito, srubro, descripcion
+  FROM (
     SELECT 
       '7990990000' cuenta_credito,
       --INI 2025005004 
       --sum(decode(regimen, '3', a.valor,'1',0,'2',0)) 
-      sum(nvl(a.valor,0)) valor_rubro,
+      --sum(nvl(a.valor,0)) valor_rubro,
       --FIN 2025005004 
       --INI 2025004504
-      NVL(:B_RA.cta_x_nomina,'5000001965') rp_doc_presupuestal,
+      --NVL(:B_RA.cta_x_nomina,'5000001965') rp_doc_presupuestal,
       --FIN 2025004504
-      decode(c.descripcion,'Sueldo básico','0001',c.codigo_nivel7) posicion_doc_presupuestal
+      --decode(c.descripcion,'Sueldo básico','0001',c.codigo_nivel7) posicion_doc_presupuestal
+       codigo_nivel1|| '-' ||codigo_nivel2|| '-' ||codigo_nivel3|| '-' || codigo_nivel4|| '-' ||
+       codigo_nivel5 || '-' || codigo_nivel6 || '-' || codigo_nivel7 || '-' || codigo_nivel8 as srubro,
+        descripcion
+    --  select *
     FROM     rh_t_lm_valores a, rh_lm_cuenta b, pr_v_rubros c
-      WHERE tipo_ra             = '1' 
+      WHERE tipo_ra             = '2' 
       AND   grupo_ra            = '5'
-      AND   scompania           = una_compania
+      AND   scompania           = 206       --:una_compania
       AND   stipo_funcionario   = stipofuncionario
       AND   a.sconcepto         = b.sconcepto
       AND   ncierre             = 1
       AND   c.interno_rubro     = b.codigo_presupuesto
-      AND   c.vigencia          = extract(year from una_fecha_final)
+      AND   c.vigencia          = 2026      --extract(year from una_fecha_final)
       AND   a.ntipo_nomina      = '0'
-      AND   dfecha_inicio_vig   <= una_fecha_final 
-      AND   (dfecha_final_vig   >= una_fecha_final OR dfecha_final_vig IS NULL) 
+      AND   dfecha_inicio_vig   <= :una_fecha_final 
+      AND   (dfecha_final_vig   >= :una_fecha_final OR dfecha_final_vig IS NULL) 
       AND   b.codigo_presupuesto IS NOT NULL
-      AND   periodo             = una_fecha_final  --:P_FECHA_FINAL
-      --AND   nro_ra              = un_nro_ra            ---:P_NRORA
-      GROUP BY codigo_nivel1,
+      AND   periodo             = :una_fecha_final  --:P_FECHA_FINAL
+      --20260508 se quita el comentario
+      AND   nro_ra              = :P_NRORA
+      GROUP BY c.descripcion,
+            -- c.codigo_nivel7 --, nro_ra
+          codigo_nivel1,
                           codigo_nivel2,
                           codigo_nivel3,
                           codigo_nivel4,
                           codigo_nivel7,
-                          codigo_nivel5 || '-' || codigo_nivel6 || '-' || codigo_nivel7 || '-' || codigo_nivel8,
-                          descripcion,
-                          interno_rubro
-      ORDER BY codigo_nivel5 || '-' || codigo_nivel6 || '-' || codigo_nivel7 || '-' || codigo_nivel8;
+                          codigo_nivel5 , codigo_nivel6 , codigo_nivel7, codigo_nivel8
+      ORDER BY 2
+      )  ; --codigo_nivel5 || '-' || codigo_nivel6 || '-' || codigo_nivel7 || '-' || codigo_nivel8;
 
   CURSOR cur_anexos(un_cc number) IS
     SELECT b.codigo,

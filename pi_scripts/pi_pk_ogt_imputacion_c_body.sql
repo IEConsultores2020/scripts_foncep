@@ -3,11 +3,11 @@ create or replace package body pk_ogt_imputacion as
   /* Procedimiento para imputar pagos pendientes*/
    procedure pr_imputaciones (    
       p_usuario            varchar2,
-      p_nro_referencia     sl_pcp_pago.nro_referencia_pago%type default null
+      p_nro_referencia     varchar2 default null
    ) as
    mi_cur_encabezados      sys_refcursor;
    mi_rec_encabezado       type_rec_encabezado;
-   mi_nro_referencia_pago  sl_pcp_pago.nro_referencia_pago%type;
+   mi_nro_referencia_pago  varchar2(15 BYTE);
    mi_resp                 varchar2(2000);
    mi_procesado            boolean;
    begin
@@ -41,16 +41,16 @@ create or replace package body pk_ogt_imputacion as
    end pr_imputaciones;
 
    procedure pr_procesar_imputacion (
-      p_nro_referencia_pago sl_pcp_pago.nro_referencia_pago%type,
+      p_nro_referencia_pago varchar2,
       p_usuario             varchar2,
       p_resp                out varchar2,
       p_procesado           out boolean
    ) as
       ref_cur_cuentas_cobro sys_refcursor;
       mi_rec_pago           type_rec_pago;
-      my_exception exception;
+      my_exception          exception;
       mi_acta_numero        number;
-      mi_tipo_acta          varchar2(10) /*ogt_documento.tipo%type*/ := 'ALE';
+      mi_tipo_acta          varchar2(10)     /*ogt_documento.tipo%type*/ := 'ALE';
       mi_estado_acta        varchar2(2) := 'RE';
       mi_valor_pagado       number;
       mi_num_resp           number;
@@ -255,7 +255,7 @@ create or replace package body pk_ogt_imputacion as
       p_acta_numero         varchar2, --ogt_documento.numero%type,
       p_acta_tipo           varchar2, --ogt_documento.tipo%type,
       p_estado              varchar2,
-      p_nro_referencia_pago sl_pcp_pago.nro_referencia_pago%type,
+      p_nro_referencia_pago varchar2,
       p_rec_pago            type_rec_pago,
       p_usuario             varchar2,
       p_resp                out varchar2,
@@ -473,7 +473,7 @@ create or replace package body pk_ogt_imputacion as
 
 --Registra capital e intereses
    procedure pr_registrar_detalle_docum (
-      p_id_cuenta_cobro         sl_pcp_cuenta_cobro.id%type,
+      p_id_cuenta_cobro         number,
       p_valor_capital           number,
       p_valor_interes           number,
       p_doc_numero              varchar2, --30
@@ -508,7 +508,7 @@ create or replace package body pk_ogt_imputacion as
       mi_det_pen_num        number;
       mi_situacion_fondos   varchar2(1) := 'S';
       mi_unidad_ejecutora   varchar2(2) := '02';
-      mi_id_tercero          sl_relacion_terceros.id_tercero%type; 
+      mi_id_tercero         number(20,0); 
    begin
       begin
          select resultado
@@ -672,7 +672,7 @@ create or replace package body pk_ogt_imputacion as
                   begin
                      select id_tercero
                      into mi_id_tercero
-                     from SL_RELACION_TERCEROS
+                     from sl_relacion_terceros
                      where id_sisla = mi_rec_liquidacion.interno_persona;  --in (16791,47125)
                   exception
                      when others then
@@ -814,7 +814,7 @@ create or replace package body pk_ogt_imputacion as
 
    --Ingresa la información en tablas que se  pueden visualizar en la forma ogt_ingreso
    procedure pr_ingreso_imputacion (
-      p_nro_referencia_pago sl_pcp_pago.nro_referencia_pago%type,
+      p_nro_referencia_pago varchar2,
       p_usuario             varchar2,
       p_resp                out varchar2,
       p_procesado           out boolean
@@ -822,7 +822,7 @@ create or replace package body pk_ogt_imputacion as
 
       ogt_ingresos_rec  ogt_ingreso%rowtype;
       cursor cursor_ingresos (
-         pc_nro_referencia_pago sl_pcp_pago.nro_referencia_pago%type
+         pc_nro_referencia_pago varchar2
       ) is
       select ogt_ingreso.*
         from ogt_ingreso
@@ -878,17 +878,17 @@ create or replace package body pk_ogt_imputacion as
    end pr_ingreso_imputacion;
 
    procedure pr_legalizar_financiero (
-      p_nro_referencia_pago sl_pcp_pago.nro_referencia_pago%type,
+      p_nro_referencia_pago varchar2,
       p_resp                out varchar2,
       p_procesado           out boolean
       ) is
 
-      id_transaccion    pls_integer :=0;
-      mi_numero_acta    ogt_documento.numero%type;
-      mi_msg            Varchar2(500);
-      mi_tipo_acta      ogt_documento.tipo%TYPE := 'ALE';
-      mi_usuario        varchar2(30);
-      mi_codigo_res     varchar2(30);
+      id_transaccion             pls_integer :=0;
+      mi_numero_acta             ogt_documento.numero%type;
+      mi_msg                     varchar2(500);
+      mi_tipo_acta               ogt_documento.tipo%TYPE := 'ALE';
+      mi_usuario                 varchar2(30);
+      mi_codigo_res              varchar2(30);
       mi_unidad_ejecutora_limay  ogt_ingreso.unidad_ejecutora_limay%type;
 
       cursor c_ingreso IS 
@@ -1015,8 +1015,8 @@ create or replace package body pk_ogt_imputacion as
    end pr_legalizar_financiero; 
 
    procedure pr_traer_encabezados (
-      p_estado             sl_pcp_encabezado.estado%type,      
-      p_nro_referencia     sl_pcp_pago.nro_referencia_pago%type default null,
+      p_estado             varchar2,  --3      
+      p_nro_referencia     varchar2 default null,
       p_resp               out varchar2,
       p_ref_cursor         out sys_refcursor
    ) as
@@ -1036,7 +1036,7 @@ create or replace package body pk_ogt_imputacion as
 
    --Trae el valor pagado
    function fn_traer_valor_referencia_pago (
-      p_nro_referencia_pago sl_pcp_pago.nro_referencia_pago%type
+      p_nro_referencia_pago  varchar2
    ) return number as
       v_valor_referencia number;
    begin
@@ -1053,7 +1053,7 @@ create or replace package body pk_ogt_imputacion as
 
    --Retorna las cuentas de cobro de un encabezado con p_id_encabezado
    procedure pr_traer_cuentas_cobro (
-      p_nro_referencia_pago sl_pcp_pago.nro_referencia_pago%type,
+      p_nro_referencia_pago varchar2,
       p_resp                out varchar2,
       p_ref_cursor          out sys_refcursor
    ) as
@@ -1085,7 +1085,7 @@ create or replace package body pk_ogt_imputacion as
 
    --Retorna las liquidaciones asociadas la cuenta de cobro id_det_cuenta_cobro
    procedure pr_traer_liquidaciones (
-      p_id_det_cuenta_cobro sl_pcp_liquidaciones.id_det_cuenta_cobro%type,
+      p_id_det_cuenta_cobro number,
       p_resp                out varchar2,
       p_ref_cursor          out sys_refcursor
    ) as
@@ -1101,7 +1101,7 @@ create or replace package body pk_ogt_imputacion as
                                    valor_interes,
                                    fecha_sistema,
                                    estado
-                                                    from sl_pcp_liquidaciones
+                              from sl_pcp_liquidaciones
                              where id_det_cuenta_cobro = p_id_det_cuenta_cobro
                              and valor_capital > 0;
    exception
@@ -1114,7 +1114,7 @@ create or replace package body pk_ogt_imputacion as
    end pr_traer_liquidaciones;
 
    procedure pr_traer_sl_pcp_pago (
-      p_nro_referencia_pago sl_pcp_pago.nro_referencia_pago%type,
+      p_nro_referencia_pago varchar2,
       p_resp                out varchar2,
       p_rec_pago            out type_rec_pago
    ) as
@@ -1191,7 +1191,7 @@ create or replace package body pk_ogt_imputacion as
    end fn_crear_acta;
 
    procedure pr_actualizar_encabezado (
-      p_nro_referencia_pago sl_pcp_encabezado.nro_referencia_pago%type,
+      p_nro_referencia_pago varchar2,
       p_nuevo_estado        varchar2,
       p_resp                out varchar2,
       p_procesado           in out boolean
@@ -1199,8 +1199,7 @@ create or replace package body pk_ogt_imputacion as
    begin
       --Registro las cuentas de cobro en opget creando correctamente el acta
       update sl_pcp_encabezado
-         set
-         estado = p_nuevo_estado
+         set estado = p_nuevo_estado
        where nro_referencia_pago = p_nro_referencia_pago;
       commit;
     /* elsif
@@ -1241,7 +1240,7 @@ create or replace package body pk_ogt_imputacion as
 -- Para obtenere el id del tercero y centro de costo
 -- para el obtener el tercero o pensionado usar sl_relacion_persona
    procedure sl_id_tercero_y_centro_costo (
-      p_codigo_compa      sl_relacion_tac.codigo_compa%type,
+      p_codigo_compa      varchar2,
       p_id_tercero_origen out number,
       p_nit_origen        out varchar2,
       p_centro_costo      out varchar2,
@@ -1309,7 +1308,7 @@ create or replace package body pk_ogt_imputacion as
 
    --Trae el estado del encabezado
    procedure pr_traer_estado_encabezado (
-      p_nro_referencia_pago sl_pcp_encabezado.nro_referencia_pago%type,
+      p_nro_referencia_pago varchar2,
       p_resp                out varchar2
    ) is
    begin
@@ -1324,3 +1323,4 @@ create or replace package body pk_ogt_imputacion as
    end pr_traer_estado_encabezado;
 
 end pk_ogt_imputacion;
+/

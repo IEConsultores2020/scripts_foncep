@@ -1,0 +1,1 @@
+& "C:\Program Files\Fortinet\FortiClient\FortiClient.exe" connect -s FN -h FortiGate_IP:10443 -u ftorresv:Bogota*2025+ -i -m -q

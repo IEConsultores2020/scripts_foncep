@@ -80,11 +80,12 @@ FROM
     RH_T_LM_VALORES
 WHERE
     EXTRACT(YEAR FROM PERIODO) = 2026
-    and periodo = '30/APR/2026' 
+    and periodo = '28/FEB/2026' 
     and stipofuncionario = 'PLANTA' 
-    and ntipo_nomina=0
-    and nro_ra = 7
+    and ntipo_nomina=1
+    and nro_ra = 9
 --ORDER BY SCONCEPTO    
+
     --and sconcepto like '%VACACIONESDINERO%' 
     --NRO_RA in (28,29)*/
 GROUP BY SCONCEPTO

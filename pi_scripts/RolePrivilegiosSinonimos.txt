@@ -1,0 +1,97 @@
+-------1. PARA SYSLA
+     
+---SINONIMOS
+-- TABLAS 
+create or replace public synonym SL_PCP_CONTROL_USUARIOS for SL.SL_PCP_CONTROL_USUARIOS;
+create or replace public synonym SL_PCP_ENCABEZADO for  SL.SL_PCP_ENCABEZADO;
+create or replace public synonym SL_PCP_LIQUIDACIONES for SL. SL_PCP_LIQUIDACIONES;
+create or replace public synonym SL_PCP_DET_INTERESES for SL. SL_PCP_DET_INTERESES;
+create or replace public synonym SL_PCP_PAGO  for  SL.SL_PCP_PAGO;
+create or replace public synonym SL_PCP_TMP_CENTRO_COSTO for SL.SL_PCP_TMP_CENTRO_COSTO;
+create or replace public synonym SL_PCP_TMP_DET_PAGO_INTERESES for SL.SL_PCP_TMP_DET_PAGO_INTERESES;
+create or replace public synonym SL_PCP_TMP_LIQUIDACIONES for SL.SL_PCP_TMP_LIQUIDACIONES;
+create or replace public synonym SL_PCP_TMP_PAGO_INTERESES for SL.SL_PCP_TMP_PAGO_INTERESES;
+create or replace public synonym SL_PCP_USUARIOS  for  SL.SL_PCP_USUARIOS;
+create or replace public synonym SL_PCP_CUENTA_COBRO for SL.SL_PCP_CUENTA_COBRO;
+
+
+---PAQUETES
+create or replace public synonym PK_SL_INTERFAZ_OPGET_CP for SL.PK_SL_INTERFAZ_OPGET_CP;
+create or replace public synonym PK_SL_PCP_USUARIOS for SL.PK_SL_PCP_USUARIOS;
+
+--SECUENCIA
+create or replace public synonym SL_PCP_SQ_USUARIO        for SL.SL_PCP_SQ_USUARIO;
+create or replace public synonym SL_PCP_TR_B_I_SL_USUARIO for SL.SL_PCP_TR_B_I_SL_USUARIO;
+
+ --CREAR ROL  
+CREATE ROLE SL_PCP_ADMIN; 
+GRANT CREATE SESSION     TO SL_PCP_ADMIN;  
+GRANT CREATE TABLE       TO SL_PCP_ADMIN;
+GRANT CREATE PROCEDURE   TO SL_PCP_ADMIN;
+
+---PRIVILEGIOS
+GRANT SELECT, INSERT, UPDATE, DELETE ON  SL.SL_PCP_CONTROL_USUARIOS TO SL_PCP_ADMIN;
+GRANT SELECT, INSERT, UPDATE, DELETE ON  SL.SL_PCP_ENCABEZADO TO SL_PCP_ADMIN;
+GRANT SELECT, INSERT, UPDATE, DELETE ON  SL.SL_PCP_LIQUIDACIONES TO SL_PCP_ADMIN;
+GRANT SELECT, INSERT, UPDATE, DELETE ON  SL.SL_PCP_DET_INTERESES TO SL_PCP_ADMIN;
+GRANT SELECT, INSERT, UPDATE, DELETE ON  SL.SL_PCP_PAGO TO SL_PCP_ADMIN;
+GRANT SELECT, INSERT, UPDATE, DELETE ON  SL.SL_PCP_TMP_CENTRO_COSTO TO SL_PCP_ADMIN;
+GRANT SELECT, INSERT, UPDATE, DELETE ON  SL.SL_PCP_TMP_DET_PAGO_INTERESES TO SL_PCP_ADMIN;
+GRANT SELECT, INSERT, UPDATE, DELETE ON  SL.SL_PCP_TMP_LIQUIDACIONES TO SL_PCP_ADMIN;;
+GRANT SELECT, INSERT, UPDATE, DELETE ON  SL.SL_PCP_TMP_PAGO_INTERESES TO SL_PCP_ADMIN;
+GRANT SELECT, INSERT, UPDATE, DELETE ON  SL.SL_PCP_USUARIOS  TO SL_PCP_ADMIN;
+
+
+--PARA OGT_ADMIN
+GRANT SELECT, INSERT, UPDATE ON  SL.SL_PCP_CUENTA_COBRO TO OGT_ADMIN;
+
+GRANT EXECUTE ON SL.PK_SL_PCP_USUARIOS      TO SL_PCP_ADMIN;
+GRANT EXECUTE ON SL.PK_SL_INTERFAZ_OPGET_CP    TO SL_PCP_ADMIN;
+
+GRANT SL_PCP_ADMIN to PORTALP;
+GRANT OGT_ADMIN to PORTALP;                    ----------------------------------
+
+---grant sl_pcp_admin to ogt;
+grant sl_pcp_admin to ogt_admin;
+
+--2. PARA OPGET
+--Crear synonymos publicos
+CREATE OR REPLACE PUBLIC SYNONYM OGT_DETALLE_PENSIONADO FOR OGT.OGT_DETALLE_PENSIONADO;
+
+--connectado como OGT
+--grant ogt_admin to sl;
+grant ogt_admin to sl with admin option;
+
+grant select,insert,update,delete on ogt.ogt_documento to ogt_admin;
+grant select,insert,update,delete on ogt.ogt_detalle_documento to ogt_admin;
+grant select,insert,update,delete on ogt.ogt_detalle_pensionado to ogt_admin;
+grant select on ogt_concepto_tesoreria to ogt_admin;
+grant select on ogt_tercero_cc to ogt_admin;
+grant select on ogt_ingreso to ogt_admin;
+
+--revoke select,insert,update,delete on ogt.ogt_documento from sl;
+
+grant execute,debug on ogt.ogt_pk_ingreso to ogt_admin;
+
+--grant insert on ogt.ogt_documento to sl_pcp_admin;
+
+--grant update, insert on ogt_ingreso to sl_pcp_admin;
+
+grant execute on fn_actualiza_ejecutora to ogt_admin;
+
+create public synonym pk_ogt_imputacion for ogt.pk_ogt_imputacion;
+
+--connectado como shd
+grant execute,debug on shd.pk_sit_infentidades to ogt_admin with grant option;
+grant execute,debug on shd.pk_sit_infbasica to ogt_admin with grant option;
+grant execute,debug on shd.pk_secuencial to ogt_admin with grant option;
+grant execute,debug on sl.seguimiento to ogt with grant option;            ----------------------------
+grant execute,debug on sl.seguimiento to lm2 with grant option;            ----------------------------
+
+--jobs with system
+grant create job to ogt_admin;
+grant execute on dbms_scheduler to ogt_admin;
+-- optional, but useful for full management capabilities
+grant manage scheduler to ogt_admin; 
+
+

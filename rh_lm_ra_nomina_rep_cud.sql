@@ -13,28 +13,30 @@ SELECT --/*
     SUM(decode(regimen,'1',a.valor,'2',a.valor,'3',0)) valora,
     SUM(decode(regimen,'3',a.valor,'1',0,'2',0))       valorn
      --*/
---select * --DISTINCT PERIODO 
+-- select distinct a.sconcepto 
 FROM rh_t_lm_valores  a, rh_lm_cuenta     b ,  pr_v_rubros  c,
     rh_personas p
 WHERE p.interno_persona = a.nfuncionario
-    AND  b.tipo_ra = 2 --:p_tipo_ra
-   -- AND b.grupo_ra = '5' --P_GRUPO_RA
+    AND  b.tipo_ra = 1 --:p_tipo_ra
+    AND b.grupo_ra = '5' --P_GRUPO_RA
     AND b.scompania = 206 --P_COMPANIA
     AND b.stipo_funcionario = a.stipofuncionario
    -- and nfuncionario in (609,877,3153)
     AND a.sconcepto = b.sconcepto
+    --INI CUD
+    --AND a.sconcepto in ('APORTEPENSION','APORTESALUD','APORTEFONDOGARANTIA','APORTEREGIMENSOLIDARIDAD')
+    --FIN CUD
     AND b.ncierre = 1
     AND c.interno_rubro = b.codigo_presupuesto
     AND c.vigencia = 2026 --:p_vigencia --2021 --P_VIGENCIA */
-    AND a.ntipo_nomina = 1 --P_TIPONOMINA
-    AND dfecha_inicio_vig <= to_date('31-01-2026','DD-MM-YYYY')
-    AND ( dfecha_final_vig >= to_date('31-01-2026','DD-MM-YYYY')
+    AND a.ntipo_nomina = 0 --P_TIPONOMINA
+    AND dfecha_inicio_vig <= to_date('30-04-2026','DD-MM-YYYY')
+    AND ( dfecha_final_vig >= to_date('30-04-2026','DD-MM-YYYY')
        OR dfecha_final_vig IS NULL )
     AND b.codigo_presupuesto IS NOT NULL
-    and extract(year from periodo)=2026
- --   AND a.periodo = to_date('31-01-2026','DD-MM-YYYY')
+    AND a.periodo = to_date('30-04-2026','DD-MM-YYYY')
   --and interno_rubro=23277
-    AND  a.nro_ra            = 8 --:P_NRORA
+    and        nro_ra            = :P_NRORA
 GROUP BY c.descripcion,
     codigo_nivel1, codigo_nivel2, codigo_nivel3, codigo_nivel4,
     codigo_nivel5||'-'||codigo_nivel6||'-'||codigo_nivel7||'-'||codigo_nivel8,
@@ -90,3 +92,14 @@ SELECT periodo, /*c.codigo_nivel1 n1,
                       descripcion,
                       interno_rubro
   order by n1,n2,n3,n4, nresto                      
+;
+--nomina
+select /*sconcepto,*/ sum(valor)
+from rh_t_lm_valores a
+where a.ntipo_nomina = 0 --0 normal, 1 adicional
+  and a.periodo = to_date('30-04-2026','DD-MM-YYYY')
+  --and interno_rubro=23277
+  and sconcepto in ('APORTEPENSION','APORTESALUD','APORTEFONDOGARANTIA','APORTEREGIMENSOLIDARIDAD')
+ and        nro_ra            = 7
+ group by sconcepto;
+ --71101356
