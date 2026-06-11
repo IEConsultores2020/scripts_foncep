@@ -26,7 +26,7 @@ AND (VIG_FINAL IS NULL OR VIG_FINAL >= SYSDATE)
 
 select *
 from RH_PERSONAS
-where interno_persona = 592
+where numero_identificacion = 79384072 --interno_persona = 578
 ;
 
 
@@ -396,16 +396,55 @@ from ALL_TAB_PRIVS
 where table_schema = 'SL'
 and table_name like 'SL_PCP_CUENTA%';
 
-GRANT SELECT, INSERT, UPDATE ON  SL.SL_PCP_CUENTA_COBRO TO OGT_ADMIN;
 
-select * from 
+SELECT RTRIM(TO_CHAR(sysdate, 'MONTH', 'NLS_DATE_LANGUAGE = SPANISH')) 
+                || ' ' || TO_CHAR(sysdate, 'DD') 
+                || ' DE ' || TO_CHAR(sysdate, 'RRRR') resp
+    FROM dual;
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON  sl.sl_relacion_terceros  TO SL_PCP_ADMIN;
-create or replace public synonym sl_relacion_terceros for sl.sl_relacion_terceros;
+pk_sl_interfaz_opget_cp.extraer_resumen_cuentas
 
-create or replace public synonym sl_relacion_tac for sl.sl_relacion_tac;
-GRANT SELECT, INSERT, UPDATE, DELETE ON  SL.sl_relacion_tac  TO SL_PCP_ADMIN;
+select *
+from sl_pcp_usuarios
+;
 
-grant sl_pcp_admin to ogt_admin;
 
-grant sl_pcp_admin to ogt;
+
+   SELECT /*c.codigo_nivel1 n1,
+    c.codigo_nivel2 n2,
+	c.codigo_nivel3 n3,
+	c.codigo_nivel4 n4,
+    c.codigo_nivel7 n7,*/
+    b.sconcepto,
+    c.codigo_nivel5 || '-' || c.codigo_nivel6 || '-' || c.codigo_nivel7 || '-' || c.codigo_nivel8 nresto,
+	c.descripcion,
+    c.interno_rubro,
+	-- sum(decode(regimen, '1', a.valor,'2',a.valor,'3',0)) valora,
+	-- sum(decode(regimen, '3', a.valor,'1',0,'2',0)) valorn
+    sum(a.valor) valor
+    -- select *
+  FROM     rh_t_lm_valores a, rh_lm_cuenta b, pr_v_rubros c
+  WHERE tipo_ra             = '1'           --:P_TIPO_RA
+  AND   grupo_ra            = '5'             --:P_GRUPO_RA
+  AND   scompania           = 206           --:P_COMPANIA
+  AND   stipo_funcionario   = stipofuncionario
+  AND   a.sconcepto         = b.sconcepto
+  AND   ncierre             = 1
+  AND   c.interno_rubro     = b.codigo_presupuesto
+  AND   c.vigencia          = 2026        --:P_VIGENCIA
+  AND   a.ntipo_nomina      = '0'           --:P_TIPONOMINA
+  AND   dfecha_inicio_vig   <= '01-MAY-26'       --:P_FECHA_FINAL
+  AND   (dfecha_final_vig   >= '31-MAY-26' /*:P_FECHA_FINAL*/ OR dfecha_final_vig IS NULL) 
+  AND   b.codigo_presupuesto IS NOT NULL
+  AND   periodo              = to_date('31-MAY-2026','dd/mm/yyyy')   --:P_FECHA_FINAL
+  --AND   nro_ra              = 1            ---:P_NRORA
+  and interno_rubro=1804
+  --AND codigo_nivel1 || '-' || codigo_nivel2 || '-' || codigo_niveL3 || '-' || codigo_nivel4 || '-' ||codigo_nivel5 || '-' || codigo_nivel6 || '-' || codigo_nivel7 || '-' || codigo_nivel8
+  ---= '2-1-01-01-0001-01-001-0001-0000000'
+   GROUP BY  b.sconcepto, 
+            codigo_nivel5 || '-' || codigo_nivel6 || '-' || codigo_nivel7 || '-' || codigo_nivel8,
+            descripcion,
+            interno_rubro
+  --ORDER BY c.codigo_nivel1 ASC, c.codigo_nivel2 ASC, c.codigo_nivel3 ASC, c.codigo_nivel4 ASC, codigo_nivel5 || '-' || codigo_nivel6 || '-' || codigo_nivel7 || '-' || codigo_nivel8 ASC
+;
+

@@ -34,4 +34,6 @@ WHERE
 select * from v$session
 ;
 
-SELECT sid, serial#, status, program FROM v$session WHERE program LIKE '%oracle%';
+SELECT sid, serial#, status, program FROM v$session WHERE program NOT LIKE '%oracle%';
+
+alter system kill session '780,3525'

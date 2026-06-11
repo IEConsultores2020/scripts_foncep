@@ -33,22 +33,25 @@ SELECT
    -- UPDATE
 FROM
     RH_LM_RA 
-  -- SET    ACTUALIZADO_CONTAB='N',   CONTABILIZADO = 'N', CONTABILIZAR = 'N' --/*,  GEN_CXP_OPGET = 'N' , */
+ -- SET    ACTUALIZADO_CONTAB='N',   CONTABILIZADO = 'N', CONTABILIZAR = 'N' --/*,  GEN_CXP_OPGET = 'N' , */
 WHERE
     SCOMPANIA = 206 --AND DFECHA_INICIAL_PERIODO = '28-FEB-26';
     AND EXTRACT(YEAR FROM DFECHA_INICIAL_PERIODO) = 2026
-    --AND EXTRACT(MONTH FROM DFECHA_INICIAL_PERIODO) = :MES
-    --AND NRO_RA=9
+    AND EXTRACT(MONTH FROM DFECHA_INICIAL_PERIODO) = 4 --:MES
+    AND NRO_RA in (7,10,11)
 ORDER BY
     DFECHA_INICIAL_PERIODO ASC,
     TIPO_RA ASC;
 
-delete --select * from 
-RH_LM_RA
-where nro_ra IN (29,30) and ANO_PAC is null and vigencia_presupuesto=2025
 
-commit;
-rollback;
+select * from 
+--delete 
+RH_LM_RA
+where nro_ra IN (6) and ANO_PAC is null and vigencia_presupuesto=2026
+;
+
+--commit;
+--rollback;
 /*
 -- TIPO MES  NRO_RA       AP  AC   GCXP  CDO CTAR
                           S   N     N     N    S 
@@ -69,8 +72,8 @@ FROM
 --Reversar contabilizacion 2/2
 --DELETE 
 RH_LM_NOMINA_PROCESADA
-WHERE DFECHA_INICIAL_PERIODO = TO_DATE('01/12/2025','DD/MM/YYYY')
- AND NRO_RA LIKE  '28[%'
+WHERE DFECHA_INICIAL_PERIODO = TO_DATE('01/04/2026','DD/MM/YYYY')
+ AND NRO_RA LIKE  '7[%'
     ;
 
 

@@ -1,10 +1,10 @@
 --MI DEDUCIDO
 SELECT co_dv.nombre_corto,
-       co_dv.devengado,
-       hino_dv.nfuncionario,
-       hino_dv.ndcampo3,
-       RTRIM(LTRIM(hino_dv.sactoadmi)),
-       hino_dv.ndcampo6,
+      -- co_dv.devengado,
+       --hino_dv.nfuncionario,
+       --hino_dv.ndcampo3,
+       --RTRIM(LTRIM(hino_dv.sactoadmi)),
+       --hino_dv.ndcampo6,
        SUM((nvl(hino_dv.ndcampo0, 0))) valor
   FROM rh_historico_nomina /*rh_reportes_nomina*/ hino_dv, rh_concepto co_dv, rh_funcionario
  WHERE hino_dv.nhash = co_dv.codigo_hash
@@ -15,8 +15,8 @@ SELECT co_dv.nombre_corto,
             FROM rh_historico_nomina /*rh_reportes_nomina*/ a
            WHERE a.nFuncionario = hino_dv.nFuncionario
              AND a.nHash = 812839052
-             AND a.dInicioPeriodo <= to_number('20250131')
-             AND a.dFinalPeriodo >= to_number('20250101')
+             AND a.dInicioPeriodo <= to_number('20260531')
+             AND a.dFinalPeriodo >= to_number('20260501')
              /*AND USER_SESS = USERENV('SESSIONID')*/ )) OR
        hino_dv.ntipoconcepto <> 1)
    AND hino_dv.nesnovedad = 0
@@ -25,13 +25,14 @@ SELECT co_dv.nombre_corto,
    AND hino_dv.ndCampo0 <> 0
    AND hino_dv.ncorrida = 0
    --INI 2025002642 
+   /*
    AND co_dv.nombre_corto not in 
    (SELECT stipo_funcionario
         FROM rh_lm_det_grp_funcionario
        WHERE scompania = 206 --una_compania
-         AND sGrupo    IN ('SALUD','PENSION') --un_grupo
+         --AND sGrupo    IN ('SALUD','PENSION') --un_grupo
          AND sGtipo    = 'DESCUENTO'
-         AND '31/JAN/2025' BETWEEN dfecha_inicio_vig AND dfecha_final_vig
+         AND '31/MAY/2026' BETWEEN dfecha_inicio_vig AND dfecha_final_vig
          AND hino_dv.dinicioperiodo >= (SELECT TO_NUMBER(TO_CHAR(TO_DATE(RESULTADO,'mmddyyyy'),'yyyymmdd'))
                                         FROM BINTABLAS
                                         WHERE GRUPO='NOMINA'
@@ -40,18 +41,20 @@ SELECT co_dv.nombre_corto,
                                         AND SYSDATE BETWEEN VIG_INICIAL AND NVL(VIG_FINAL, SYSDATE)
                                         AND ROWNUM =1)
          AND ncierre   = 1   )
+         */
   --FIN 2025002642
-   AND hino_dv.dinicioperiodo >= to_number('20250101')
-   AND hino_dv.dfinalperiodo <= to_number('20250131')
+   AND hino_dv.dinicioperiodo >= to_number('20260501')
+   AND hino_dv.dfinalperiodo <= to_number('20260531')
    AND (co_dv.devengado = 'N')
    AND instr('5', tipo_funcionario) > 0
    /*AND USER_SESS = USERENV('SESSIONID')*/
- GROUP BY co_dv.nombre_corto,
-          co_dv.devengado,
-          hino_dv.nfuncionario,
-          hino_dv.ndcampo6,
-          hino_dv.ndcampo3,
-          RTRIM(LTRIM(hino_dv.sactoadmi))
+ GROUP BY co_dv.nombre_corto--,
+          --co_dv.devengado,
+          --hino_dv.nfuncionario,
+          --hino_dv.ndcampo6,
+          --hino_dv.ndcampo3 ,
+          --RTRIM(LTRIM(hino_dv.sactoadmi))
+order by nombre_corto
           ;
 
 --rh_pg_lm_general.fn_conceptos_descuentos(una_compania,'SALUD',una_fecha_final, mi_mensaje_err);	

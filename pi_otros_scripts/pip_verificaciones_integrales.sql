@@ -25,7 +25,7 @@ select e.nro_referencia_pago,
    and cc.id = l.id_det_cuenta_cobro
    and e.nro_referencia_pago = p.nro_referencia_pago
    --and e.estado = 'PAG'
-   and e.nro_referencia_pago in ('2026000057');
+   and e.nro_referencia_pago in ('2026000187');
 
    select id_sisla, id_tercero
    from SL_RELACION_TERCEROS
@@ -47,7 +47,7 @@ and e.nro_referencia_pago in ('2025000105');
 
 select *
 from sl_pcp_encabezado e
-where e.nro_referencia_pago = '2025000003'; 
+where e.nro_referencia_pago = '2026000187'; 
 
 select *
 from sl_pcp_pago p 
@@ -72,7 +72,7 @@ from sl_pcp_encabezado e
 inner join sl_pcp_pago p on e.nro_referencia_pago = p.nro_referencia_pago
 and e.nro_referencia_pago in ('2025000105'); 
 
-select fecha_autorizacion, fecha_autorizacion+
+select fecha_autorizacion, fecha_autorizacion
 from sl_pcp_pago 
 where nro_referencia_pago in ('2025000105'); 
 
@@ -100,13 +100,20 @@ and tipo = 'XYZ'
 ;
 
 
-select * from tab_lch_segui   
-where fecha >= '15/APR/2026'
---and mensaje like 'OPGET: Acta número%'
+select * --distinct mensaje 
+from tab_lch_segui   
+where fecha >= '05/JUN/2026'
+--order by consec DESC
+and consec = (select max(consec) from tab_lch_segui 
+              where /*mensaje like '%55585%'*/
+                mensaje like 'OGT->LEG>%FALLID%') --'OGT->LEG>Legalización EXITOSA ingreso: 608727%')
+--and mensaje like 'OGT->LEG>Recaudo FALLIDO en SISLA para referencia:%'
 order by consec DESC
-;
+; --55585  2026000187
 
-delete tab_lch_segui
+--truncate table tab_lch_segui;
+
+commit
 
 
 begin
@@ -120,13 +127,13 @@ update --select * from
    set estado='PAG'
   where nro_referencia_pago =   '2026000002'
 
-rollback;
+--rollback;
 
 --commit;
 
 
-  SELECT * FROM 
-  ogt_info_ing
+  SELECT * 
+  FROM ogt_info_ing
   WHERE VALOR= '31132';
 
 

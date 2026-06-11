@@ -18,7 +18,7 @@ create or replace package body pk_ogt_imputacion as
          p_ref_cursor      => mi_cur_encabezados
       );
      if mi_cur_encabezados is null Then
-        mi_resp := 'OPGET:'+to_char(sysdate,'YYYYMMDD')+': No hay encabezados con estado PAG para procesar';
+        mi_resp := 'OPGET->'+to_char(sysdate,'YYYYMMDD')+' No hay encabezados con estado PAG para procesar';
         seguimiento(mi_resp);
         mi_procesado := false;
      else
@@ -26,14 +26,14 @@ create or replace package body pk_ogt_imputacion as
            fetch mi_cur_encabezados into mi_rec_encabezado;
            exit when mi_cur_encabezados%notfound;
            mi_nro_referencia_pago := mi_rec_encabezado.nro_referencia_pago;
-           dbms_output.put_line('Procesando referencia de pago: ' || mi_nro_referencia_pago);
+           dbms_output.put_line('Procesando referencia de pago ' || mi_nro_referencia_pago);
            pr_procesar_imputacion(
               p_nro_referencia_pago => mi_nro_referencia_pago,
               p_usuario             => p_usuario,
               p_resp                => mi_resp,
               p_procesado           => mi_procesado
            );
-          -- mi_resp := 'OPGET: '; --||to_char(sysdate,'YYYYMMDD') || mi_nro_referencia_pago || ': ' || mi_resp;
+          -- mi_resp := 'OPGET-> '; --||to_char(sysdate,'YYYYMMDD') || mi_nro_referencia_pago || ': ' || mi_resp;
          --  seguimiento(mi_resp);
         end loop;
         close mi_cur_encabezados;
@@ -64,14 +64,14 @@ create or replace package body pk_ogt_imputacion as
          mi_concepto_capital is not null
          and mi_concepto_interes is not null
       then
-         p_resp := 'OPGET: Iniciando imputacion con referencia: ' || p_nro_referencia_pago;
+         p_resp := 'OPGET-> Iniciando imputacion con referencia ' || p_nro_referencia_pago;
          seguimiento(p_resp);
          dbms_output.put_line(p_resp);
          pr_traer_estado_encabezado(
             p_nro_referencia_pago => p_nro_referencia_pago,
             p_resp                => mi_estado_encabezado );
          if mi_estado_encabezado not in ('PAG','REG','DIS') then
-            p_resp := 'OPGET: Imputación fallida. El estado debe ser PAGada o REGistrada de la referencia: '|| p_nro_referencia_pago;
+            p_resp := 'OPGET-> Imputación fallida. El estado debe ser PAGada o REGistrada de la referencia '|| p_nro_referencia_pago;
             seguimiento(p_resp);
             p_procesado := false;
          else
@@ -93,20 +93,26 @@ create or replace package body pk_ogt_imputacion as
                if mi_acta_numero > 1 and mi_estado_acta = 'AP' then
                   p_resp := 'Ya estaba aprobada, acta '||mi_acta_numero||' referencia '||p_nro_referencia_pago;
                   seguimiento(p_resp);
+                  pr_actualizar_encabezado (p_nro_referencia_pago,'IMP',p_resp,p_procesado);
+                  if not p_procesado then 
+                    seguimiento(p_resp); 
+                  else
+                     p_resp := 'Se actualiza la factura como IMPutada de '||p_nro_referencia_pago ||' la referencia '||p_nro_referencia_pago;   
+                  end if;
                   p_procesado := false;
                elsif mi_acta_numero = -2 then
-                  p_resp := 'OPGET: Hay más de una acta para la referencia '||p_nro_referencia_pago;
+                  p_resp := 'OPGET-> Hay más de una acta para la referencia '||p_nro_referencia_pago;
                   seguimiento(p_resp);
                   p_procesado := false;                    
                elsif mi_acta_numero = -1 and mi_estado_encabezado = 'REG' then --El acta debe existir
-                  p_resp := 'OPGET: Inconsistencia en Imputacion. Para factura REGistrada, debe existir un acta '
+                  p_resp := 'OPGET-> Inconsistencia en Imputacion. Para factura REGistrada, debe existir un acta '
                      || mi_estado_encabezado || ' referencia ' || p_nro_referencia_pago;
                   seguimiento(p_resp);
                   p_procesado := false;
                elsif mi_acta_numero = -1 and mi_estado_encabezado in ('PAG','DIS') then --El acta no ha sido creada, se procede a crearla 
                   -- Inicio registro acta
                   mi_acta_numero := pk_secuencial.fn_traer_consecutivo( 'OPGET', 'ACTA_LEGAL_ID', '0000', '000' ) + 1;
-                  p_resp := 'OPGET: Consecutivo acta legal: ' || mi_acta_numero|| ' para referencia ' || p_nro_referencia_pago;
+                  p_resp := 'OPGET-> Consecutivo acta legal ' || mi_acta_numero|| ' para referencia ' || p_nro_referencia_pago;
                   seguimiento(p_resp);
                   if mi_acta_numero > 0 then --el acta aún no ha sido creada.
                      mi_valor_pagado := fn_traer_valor_referencia_pago(p_nro_referencia_pago => p_nro_referencia_pago);
@@ -120,26 +126,26 @@ create or replace package body pk_ogt_imputacion as
                            un_estado         => mi_estado_acta,
                            una_unidad        => 'FINANCIERO',
                            un_numero_externo => to_char(p_nro_referencia_pago),
-                           una_observacion   => 'PAGADO PORTAL REF. PAGO: ' || to_char(p_nro_referencia_pago),
+                           una_observacion   => 'PAGADO PORTAL REF. PAGO ' || to_char(p_nro_referencia_pago),
                            un_usuario        => p_usuario,
                            un_valor          => mi_valor_pagado
                         );
                         --Una vez creada el acta mi_num_resp = 1, se crea el documento y detalle del mismo
                         if mi_num_resp = 1 then                           
                            commit;
-                           p_resp :=  'OPGET: Acta guardada '||mi_acta_numero;
+                           p_resp :=  'OPGET-> Acta guardada '||mi_acta_numero;
                            seguimiento(p_resp);
                            p_procesado := true;
                         end if;
                         --Se crea el documento y detalle documento del acta
                      else
-                        p_resp := 'OPGET: El valor de la referencia de pago debe ser mayor a cero (0) para la referencia de pago '
+                        p_resp := 'OPGET-> El valor de la referencia de pago debe ser mayor a cero (0) para la referencia de pago '
                                  || p_nro_referencia_pago;
                         seguimiento(p_resp);                                 
                         p_procesado := false;
                      end if; --if nvl(mi_valor_pagado,0) > 0 then
                   else
-                     p_resp := 'OPGET: No es posible obtener el secuencial (ACTA_LEGAL_ID) para generar el acta '
+                     p_resp := 'OPGET-> No es posible obtener el secuencial (ACTA_LEGAL_ID) para generar el acta '
                               || p_nro_referencia_pago;
                      seguimiento(p_resp);
                      p_procesado := false;
@@ -147,7 +153,7 @@ create or replace package body pk_ogt_imputacion as
                elsif mi_acta_numero > -1 then
                   p_procesado := true;
                end if; --if fn_existe_acta(p_nro_referencia_pago) = false then
-               p_resp := 'OPGET: Acta número '||mi_acta_numero;
+               p_resp := 'OPGET-> Acta número '||mi_acta_numero;
                seguimiento(p_resp);
                if p_procesado = true and nvl(mi_acta_numero,-1) > -1
                   and mi_estado_encabezado in ('PAG','DIS') then --Se procede a registar los documentos
@@ -161,7 +167,7 @@ create or replace package body pk_ogt_imputacion as
                      p_resp                => p_resp,
                      p_procesado           => p_procesado
                   );
-                  p_resp := 'OPGET: Documento(s) creado(s) ... inicio registro para legalización' || p_resp ;
+                  p_resp := 'OPGET-> Documento(s) creado(s) ... inicio registro para legalización' || p_resp ;
                   seguimiento(p_resp);
                   if p_procesado = true then
                      --Contabilizar y actualiza sisla
@@ -172,7 +178,7 @@ create or replace package body pk_ogt_imputacion as
                         p_resp                => p_resp,
                         p_procesado           => p_procesado
                      );
-                     p_resp := 'OPGET: Resultado imputación->REGistro. '||p_resp;
+                     p_resp := 'OPGET-> Resultado imputación->REGistro. '||p_resp;
                      seguimiento(p_resp);
                      if p_procesado = true then
                         --Actualiza encabezado y guarda o rechaza actualizaciones de acuerdo al resultado en p_procesado
@@ -184,28 +190,29 @@ create or replace package body pk_ogt_imputacion as
                            p_procesado           => p_procesado
                         );
                      else
-                        p_resp := 'OPGET: Reversado proceso registro acta'||mi_acta_numero;
+                        p_resp := 'OPGET-> Reversado proceso registro acta '||mi_acta_numero;
                         seguimiento(p_resp);
                         rollback;
                      end if; --if p_procesado = true then
                   else
-                     p_resp := 'OPGET: Reversado proceso registro';
+                     p_resp := 'OPGET-> Reversado proceso registro';
                      seguimiento(p_resp);
                      rollback;
                   end if; --if p_procesado = true then contabiliza
                elsif p_procesado = true and nvl(mi_acta_numero,-1) > -1 
                   and mi_estado_encabezado = 'REG' then
-                  p_resp := 'OPGET: El acta y el ingreso fueron generados previo al proceso actual';
+                  p_resp := 'OPGET-> El acta y el ingreso fueron generados previo al proceso actual';
                   seguimiento(p_resp);
                   p_procesado := true;
                else
-                  p_resp := 'OPGET: Revise que el acta se encuentre creada';
+                  --
+                  p_resp := 'OPGET-> Revise que el acta se encuentre creada';
                   seguimiento(p_resp);
                end if;  --if mi_num_resp = 1 and nvl(mi_acta_numero,-1) > -1 and mi_estado_encabezado = 'PAG' 
                --Temporal para guardar detalle documento, quitar comentarios este bloque y comentariar bloque inferior
                /*if p_procesado = true then
                                        commit;
-                        p_resp := 'OPGET: Guardado registro acta'||mi_acta_numero;
+                        p_resp := 'OPGET-> Guardado registro acta '||mi_acta_numero;
                         seguimiento(p_resp);
                end if;*/
                --/*Inicio comentariar bloque
@@ -227,26 +234,26 @@ create or replace package body pk_ogt_imputacion as
                      p_procesado           => p_procesado
                   );
                else
-                  p_resp := 'OPGET: Reversando legalización';
+                  p_resp := 'OPGET-> Reversando legalización';
                   seguimiento(p_resp);
                   p_procesado := false;
                   rollback;
                end if; 
                --Fin comentariar bloque */
             else
-               p_resp := 'OPGET: No hay registros de pago para referencia ' || p_nro_referencia_pago;
+               p_resp := 'OPGET-> No hay registros de pago para referencia ' || p_nro_referencia_pago;
                seguimiento(p_resp);
                p_procesado := false;
             end if; --if mi_rec_pago is null then
          end if; --if mi_estado_encabezado not in ('PAG','REG') then
       else
-         p_resp := 'OPGET: No existe el concepto para capita ó intereses ';
+         p_resp := 'OPGET-> No existe el concepto para capita ó intereses ';
          seguimiento(p_resp);
       end if; --if mi_concepto_capital is null or mi_concepto_interes is null THEN
    exception
       when others then
          p_procesado := false;
-         p_resp := 'OPGET: Fin imputacion con referencia: ' || p_nro_referencia_pago||'. Error:'||sqlerrm;
+         p_resp := 'OPGET-> Fin imputacion con referencia ' || p_nro_referencia_pago||'. Error '||sqlerrm;
          seguimiento(p_resp);
    end pr_procesar_imputacion;
 
@@ -282,7 +289,7 @@ create or replace package body pk_ogt_imputacion as
    begin
       --Si no encuentra la entidad
       if mi_entidad is null then
-         p_resp := 'OPGET:RD: Entidad sin valor';
+         p_resp := 'OPGET->RD> Entidad sin valor';
          seguimiento(p_resp);
          p_procesado := false;
       else
@@ -308,11 +315,11 @@ create or replace package body pk_ogt_imputacion as
          p_ref_cursor          => mi_cur_cuentas_cobro
       );
       if p_resp is not null then
-         p_resp := 'OPGET:RD:No encuentra cuentas de cobro de referencia'|| p_nro_referencia_pago;
+         p_resp := 'OPGET->RD>No encuentra cuentas de cobro de referencia'|| p_nro_referencia_pago;
          seguimiento(p_resp);
          p_procesado := false;
       else
-         p_resp := 'OPGET:RD:Cuentas de cobro cargadas de referencia'|| p_nro_referencia_pago;
+         p_resp := 'OPGET->RD>Cuentas de cobro cargadas de referencia'|| p_nro_referencia_pago;
          seguimiento(p_resp);
       end if;
 
@@ -320,7 +327,7 @@ create or replace package body pk_ogt_imputacion as
          loop
             fetch mi_cur_cuentas_cobro into mi_rec_cuenta_cobro;
             exit when mi_cur_cuentas_cobro%notfound;
-            p_resp := 'OPGET:RD:ID Cuenta cobro= ' || mi_rec_cuenta_cobro.id;
+            p_resp := 'OPGET->RD>ID Cuenta cobro= ' || mi_rec_cuenta_cobro.id;
             seguimiento(p_resp);
             if mi_rec_cuenta_cobro.valor_capital > 0 then
                sl_id_tercero_y_centro_costo(
@@ -333,14 +340,14 @@ create or replace package body pk_ogt_imputacion as
                if mi_id_tercero_tac is null
                   or mi_centro_costo is null or mi_nit_origen is null then
                   p_procesado := false;
-                  p_resp := 'OPGET:RD:No encuentra tercero tac de la id_cuenta_cobro '
+                  p_resp := 'OPGET->RD>No encuentra tercero tac de la id_cuenta_cobro '
                            || mi_rec_cuenta_cobro.id;
                   seguimiento(p_resp);
                else
                   mi_id_tercero_origen := pk_sit_infbasica.sit_fn_get_id('NIT',mi_nit_origen,sysdate);
                   if mi_id_tercero_origen is null then
                      p_procesado := false;
-                     p_resp := 'OPGET:RD:No encuentra tercero origen de la cuenta_cobro '
+                     p_resp := 'OPGET->RD>No encuentra tercero origen de la cuenta_cobro '
                            || mi_rec_cuenta_cobro.id;
                      seguimiento(p_resp);      
                   end if;
@@ -349,7 +356,7 @@ create or replace package body pk_ogt_imputacion as
                   'OPGET', 'DOC_NUM', '2002', '000' ) + 1;
                --Crea documento
                if mi_numero_documento is null then
-                  p_resp := 'OPGET:RD:No fue posible obtener el consecutivo (DOC_NUM) para registrar documento '
+                  p_resp := 'OPGET->RD>No fue posible obtener el consecutivo (DOC_NUM) para registrar documento '
                            || mi_rec_cuenta_cobro.id;
                   seguimiento(p_resp);   
                   p_procesado := false;
@@ -398,7 +405,7 @@ create or replace package body pk_ogt_imputacion as
                      p_procesado := true;
                   exception
                      when others then
-                        p_resp :='OPGET:RD:No ingresó documento para cuenta de cobro:'
+                        p_resp :='OPGET->RD>No ingresó documento para cuenta de cobro:'
                                  || mi_rec_cuenta_cobro.id_cuenta_cobro|| '. '|| sqlerrm;
                         seguimiento(p_resp);
                         p_procesado := false;
@@ -446,13 +453,13 @@ create or replace package body pk_ogt_imputacion as
                         p_procesado               => p_procesado
                      );
                      if p_procesado = false then
-                        p_resp := 'OPGET:RD:Fallido ingreso ocumento';
+                        p_resp := 'OPGET->RD>Fallido ingreso ocumento';
                         seguimiento(p_resp);
                         exit;
                      end if;
                   exception
                      when others then
-                        p_resp := 'OPGET:RD:Fallido detalle del documento para cuenta de cobro:'
+                        p_resp := 'OPGET->RD>Fallido detalle del documento para cuenta de cobro:'
                                  || mi_rec_cuenta_cobro.id_cuenta_cobro
                                  || '. '
                                  || sqlerrm;
@@ -519,11 +526,11 @@ create or replace package body pk_ogt_imputacion as
          and argumento ='CENTRO CONTABLE';
       exception
          when no_data_found then
-            p_resp := 'OPGET:RDD: No existe configuración LIMAY_INGRESO_PORTAL - CENTRO CONTABLE en BINTABLAS, se asigna valor por defecto 02';
+            p_resp := 'OPGET->RDD> No existe configuración LIMAY_INGRESO_PORTAL - CENTRO CONTABLE en BINTABLAS, se asigna valor por defecto 02';
             mi_unidad_ejecutora := '02';
       end;
       if p_valor_capital <= 0 then
-         p_resp := 'OPGET:RDD:No hay capital a registrar cuenta de cobro '|| p_id_cuenta_cobro;
+         p_resp := 'OPGET->RDD> No hay capital a registrar cuenta de cobro '|| p_id_cuenta_cobro;
          seguimiento(p_resp);
       else
          --********************************
@@ -628,7 +635,7 @@ create or replace package body pk_ogt_imputacion as
          p_ref_cursor          => mi_cur_liquidacion
       );
       if mi_cur_liquidacion is null then
-         p_resp := 'OPGET:RDD No encuentra liquidaciones de la cuenta de cobro ' || p_codigo_interno;
+         p_resp := 'OPGET->RDD No encuentra liquidaciones de la cuenta de cobro ' || p_codigo_interno;
          seguimiento(p_resp);
          p_procesado := false;
       else
@@ -665,7 +672,7 @@ create or replace package body pk_ogt_imputacion as
                   un_reconocimiento       => 0
                ); 
                if mi_id_ingreso_capital is null then
-                  p_resp := 'OPGET:RDD:No registra ingreso de la cuenta de cobro '|| p_id_cuenta_cobro;
+                  p_resp := 'OPGET->RDD>No registra ingreso de la cuenta de cobro '|| p_id_cuenta_cobro;
                   seguimiento(p_resp);
                   p_procesado := false; --No continua, el ingreso debe ser garantizado
                else
@@ -726,7 +733,7 @@ create or replace package body pk_ogt_imputacion as
                            un_reconocimiento       => 0
                         );
                         if mi_id_ingreso_interes is null then
-                           p_resp := 'OPGET:RDD:No registrar ingreso de la cuenta de cobro '
+                           p_resp := 'OPGET->RDD>No registrar ingreso de la cuenta de cobro '
                                     || p_id_cuenta_cobro;
                            seguimiento(p_resp);
                            p_procesado := false;
@@ -775,7 +782,7 @@ create or replace package body pk_ogt_imputacion as
                            un_reconocimiento       => 0
                         );
                         if mi_id_ingreso_interes is null then
-                           p_resp := 'OPGET:RDD:No registrar causacion interes de la cuenta de cobro '
+                           p_resp := 'OPGET->RDD>No registrar causacion interes de la cuenta de cobro '
                                     || p_id_cuenta_cobro;
                            seguimiento(p_resp);
                            p_procesado := false;
@@ -805,7 +812,7 @@ create or replace package body pk_ogt_imputacion as
             p_procesado := true;
          exception
             when others then
-               p_resp := 'OPGET:RDD:Error ingresando detalle pensionado: ' || sqlerrm;
+               p_resp := 'OPGET->RDD>Error ingresando detalle pensionado: ' || sqlerrm;
                seguimiento(p_resp);
                p_procesado := false;
          end;
@@ -861,7 +868,7 @@ create or replace package body pk_ogt_imputacion as
                un_tipo_transaccion => 'SISTEMA FINANCIERO');
          exception
             when others then
-               p_resp := 'OPGET:RI:Verifique ogt_pk_ingreso.ogt_fn_tipo_operacion ' || sqlerrm;
+               p_resp := 'OPGET->RI> ogt_pk_ingreso.ogt_fn_tipo_operacion ' || sqlerrm;
                seguimiento(p_resp);
                p_procesado := false;
                exit;
@@ -872,7 +879,7 @@ create or replace package body pk_ogt_imputacion as
       end if;
    exception
       when others then
-         p_resp := 'OPGET:RI:Verifique pr_ingreso_imputacion ' || sqlerrm;
+         p_resp := 'OPGET->RI>Verifique pr_ingreso_imputacion ' || sqlerrm;
          seguimiento(p_resp);
          p_procesado := false;
    end pr_ingreso_imputacion;
@@ -898,7 +905,7 @@ create or replace package body pk_ogt_imputacion as
 
 
    begin
-      p_resp := 'OPGET:LEG:Inicio legalización referencia: ' || p_nro_referencia_pago || '.';
+      p_resp := 'OPGET->LEG>Inicio legalización referencia: ' || p_nro_referencia_pago || '.';
       seguimiento(p_resp);
       p_procesado := TRUE;
       mi_usuario := user;
@@ -913,11 +920,11 @@ create or replace package body pk_ogt_imputacion as
             and numero_externo = p_nro_referencia_pago;
       exception
          when no_data_found then
-            p_resp := 'OPGET:LF:No existe acta para referencia: ' || p_nro_referencia_pago || '.';
+            p_resp := 'OPGET->LF>No existe acta para referencia: ' || p_nro_referencia_pago || '.';
             seguimiento(p_resp);
             p_procesado := FALSE;
          when too_many_rows then
-            p_resp := 'OPGET:LF:Más de un acta para referencia' || p_nro_referencia_pago || '.';
+            p_resp := 'OPGET->LF>Más de un acta para referencia' || p_nro_referencia_pago || '.';
             seguimiento(p_resp);
             p_procesado := FALSE;  
       end;    
@@ -929,11 +936,11 @@ create or replace package body pk_ogt_imputacion as
             id_transaccion := ogt_pk_ingreso.ogt_fn_Legalizar(mi_ingreso.id);
             if nvl(id_transaccion,0) = 0 then
                rollback;
-               p_resp := 'OGT:LEG:Legalización FALLIDA ingreso '||mi_ingreso.id||'.';
+               p_resp := 'OGT->LEG>Legalización FALLIDA ingreso '||mi_ingreso.id||'.';
                p_procesado := FALSE;
                exit;
             else
-               p_resp := 'OGT:LEG:Legalización EXITOSA ingreso: '||mi_ingreso.id||'. Transaccion '||id_transaccion;
+               p_resp := 'OGT->LEG>Legalización EXITOSA ingreso: '||mi_ingreso.id||'. Transaccion '||id_transaccion;
                p_procesado := true;
                --asigno unidad ejecutora limay
                begin
@@ -960,10 +967,10 @@ create or replace package body pk_ogt_imputacion as
                      id_transaccion, 
                      mi_unidad_ejecutora_limay);
                   if p_resp = 'Operacion Exitosa!' then
-                     p_resp := 'OGT:LEG:Actualiza Ejecutora: '||p_resp ;
+                     p_resp := 'OGT->LEG>Actualiza Ejecutora: '||p_resp ;
                      p_procesado := true;
                   else
-                     p_resp := 'OGT:LEG:No fue posible actualizar la unidad ejecutora';
+                     p_resp := 'OGT->LEG>No fue posible actualizar la unidad ejecutora';
                      p_procesado := false;
                   end if;
                   */
@@ -992,11 +999,11 @@ create or replace package body pk_ogt_imputacion as
                                     );
             seguimiento(p_resp);
             if mi_codigo_res = 'ERROR' then
-               p_resp := 'OGT:LEG:Recaudo FALLIDO en SISLA para referencia: ' || p_nro_referencia_pago || '. ' || p_resp;
+               p_resp := 'OGT->LEG>Recaudo FALLIDO en SISLA para referencia: ' || p_nro_referencia_pago || '. ' || p_resp;
                p_procesado := FALSE;
                rollback;
             else
-               p_resp := 'OGT:LEG:Recaudo EXITOSO para referencia: ' || p_nro_referencia_pago || '. '|| p_resp;
+               p_resp := 'OGT->LEG>Recaudo EXITOSO para referencia: ' || p_nro_referencia_pago || '. '|| p_resp;
                p_procesado := TRUE;
                commit;
             end if;
@@ -1008,7 +1015,7 @@ create or replace package body pk_ogt_imputacion as
    exception
    when OTHERS then
       rollback;
-      p_resp := 'OGT:LEG:Proceso detenido: '||sqlerrm;
+      p_resp := 'OGT->LEG>Proceso detenido: '||sqlerrm;
       seguimiento(p_resp);
       p_procesado := FALSE;
 

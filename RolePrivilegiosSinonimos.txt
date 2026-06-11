@@ -1,3 +1,4 @@
+Conectar como sys /as sysdba
 -------1. PARA SYSLA
      
 ---SINONIMOS
@@ -24,6 +25,8 @@ create or replace public synonym SL_PCP_TR_B_I_SL_USUARIO for SL.SL_PCP_TR_B_I_S
 create or replace public synonym sl_relacion_terceros for sl.sl_relacion_terceros;
 create or replace public synonym sl_relacion_tac for sl.sl_relacion_tac;
 
+
+
  --CREAR ROL  
 CREATE ROLE SL_PCP_ADMIN; 
 GRANT CREATE SESSION     TO SL_PCP_ADMIN;  
@@ -44,8 +47,15 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON  SL.SL_PCP_USUARIOS  TO SL_PCP_ADMIN;
 GRANT SELECT, INSERT, UPDATE, DELETE ON  SL.sl_relacion_terceros  TO SL_PCP_ADMIN;
 GRANT SELECT, INSERT, UPDATE, DELETE ON  SL.sl_relacion_tac  TO SL_PCP_ADMIN;
 
+GRANT SELECT, INSERT, UPDATE, DELETE ON SL.SL_PCP_ENCABEZADO TO OGT;
+GRANT SELECT, INSERT, UPDATE, DELETE ON SL.sl_pcp_cuenta_cobro TO OGT;
+GRANT SELECT, INSERT, UPDATE, DELETE ON SL.sl_pcp_liquidaciones TO OGT;
+GRANT SELECT, INSERT, UPDATE, DELETE ON SL.sl_pcp_pago TO OGT;
+GRANT SELECT, INSERT, UPDATE, DELETE ON SL.sl_relacion_terceros TO OGT;
+GRANT SELECT, INSERT, UPDATE, DELETE ON SL.sl_pcp_encabezado TO OGT;
+
 GRANT EXECUTE ON SL.PK_SL_PCP_USUARIOS      TO SL_PCP_ADMIN;
-GRANT EXECUTE ON SL.PK_SL_INTERFAZ_OPGET_CP    TO SL_PCP_ADMIN;
+GRANT EXECUTE ON SL.PK_SL_INTERFAZ_OPGET_CP TO SL_PCP_ADMIN;
 
 GRANT SL_PCP_ADMIN to PORTALP;
 GRANT OGT_ADMIN to PORTALP;                    ----------------------------------
@@ -61,21 +71,16 @@ CREATE OR REPLACE PUBLIC SYNONYM OGT_DETALLE_PENSIONADO FOR OGT.OGT_DETALLE_PENS
 --grant ogt_admin to sl;
 grant ogt_admin to sl with admin option;
 
-grant select,insert,update,delete on ogt_documento to sl_pcp_admin with grant option;
-grant select,insert,update,delete on ogt_detalle_documento to sl_pcp_admin with grant option;
-grant select,insert,update,delete on ogt_detalle_pensionado to sl_pcp_admin with grant option;
-grant select on ogt_concepto_tesoreria to sl_pcp_admin with grant option;
-grant select on ogt_tercero_cc to sl_pcp_admin with grant option;
-grant select on ogt_ingreso to sl_pcp_admin with grant option;
-
---revoke select,insert,update,delete on ogt.ogt_documento from sl;
+grant select,insert,update,delete on ogt_documento to sl_pcp_admin;
+grant select,insert,update,delete on ogt_detalle_documento to sl_pcp_admin;
+grant select,insert,update,delete on ogt_detalle_pensionado to sl_pcp_admin;
+grant select on ogt_concepto_tesoreria to sl_pcp_admin;
+grant select on ogt_tercero_cc to sl_pcp_admin;
+grant select on ogt_ingreso to sl_pcp_admin;
 
 grant execute,debug on ogt.ogt_pk_ingreso to sl_pcp_admin with grant option;
-
 grant insert on ogt.ogt_documento to sl_pcp_admin;
-
 grant update, insert on ogt_ingreso to sl_pcp_admin;
-
 grant execute on fn_actualiza_ejecutora to sl_pcp_admin;
 
 create public synonym pk_ogt_imputacion FOR ogt.pk_ogt_imputacion;

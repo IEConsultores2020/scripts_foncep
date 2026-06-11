@@ -118,7 +118,7 @@ doc_numero||'-'||doc_tipo in --('5502-XYZ','5503-XYZ')
             where tipo='ALE'
             and estado='AP'
             and unte_codigo='FINANCIERO'
-            AND numero_externo = '2025000003')
+            AND numero_externo = '2026000163')
             and tipo='XYZ'  
             and estado = 'RE'
         )

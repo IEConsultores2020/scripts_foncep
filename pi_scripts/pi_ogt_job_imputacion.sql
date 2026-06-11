@@ -1,10 +1,10 @@
 --crea el job
 BEGIN
     DBMS_SCHEDULER.CREATE_JOB (
-        job_name        => 'OGT_JOB_IMPUTACION',
+        job_name        => 'OGT.OGT_JOB_IMPUTACION',
         job_type        => 'PLSQL_BLOCK',
         job_action      => 'BEGIN 
-                                ogt.pk_ogt_imputacion.pr_imputaciones(
+                                pk_ogt_imputacion.pr_imputaciones(
                                 ''' || USER || ''',
                                 NULL
                                 );
