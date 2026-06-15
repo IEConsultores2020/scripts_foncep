@@ -865,7 +865,7 @@ create or replace package body pk_ogt_imputacion as
          begin
             mi_tipo_operacion := ogt_pk_ingreso.ogt_fn_tipo_operacion(
                un_ingreso          => ogt_ingresos_rec.id,
-               un_tipo_transaccion => 'SISTEMA FINANCIERO');
+               un_tipo_transaccion => 'LEGALIZACION PORTALP');
          exception
             when others then
                p_resp := 'OPGET->RI> ogt_pk_ingreso.ogt_fn_tipo_operacion ' || sqlerrm;
@@ -979,12 +979,6 @@ create or replace package body pk_ogt_imputacion as
             seguimiento (p_resp);
          end loop;
 
-         if p_procesado = TRUE then
-            commit;
-         else
-            rollback;
-         end if;
-         
          if p_procesado = TRUE then
             mi_codigo_res := null;
             update ogt_documento

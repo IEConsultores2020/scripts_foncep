@@ -1,8 +1,17 @@
 
 Begin
-  Dbms_Scheduler.Drop_Job (Job_Name => 'OGT_JOB_IMPUTACION');
+  Dbms_Scheduler.Drop_Job (Job_Name => 'SL_JOB_IMPUTACION');    --- 20260612 No debe existir
 END;
 /
+
+
+
+
+Begin
+  Dbms_Scheduler.Drop_Job (Job_Name => 'OGT.OGT_JOB_IMPUTACION');    ---20260612 Este debe existir
+END;
+/
+
 
 BEGIN
     -- Keep logs from the last 30 days, purging all older entries
@@ -13,6 +22,10 @@ BEGIN
 END;
 /
 COMMIT; 
+
+
+SELECT * FROM all_scheduler_jobs;
+
 
 
 --Ejecutar solo para verificar

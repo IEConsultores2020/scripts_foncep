@@ -448,3 +448,18 @@ from sl_pcp_usuarios
   --ORDER BY c.codigo_nivel1 ASC, c.codigo_nivel2 ASC, c.codigo_nivel3 ASC, c.codigo_nivel4 ASC, codigo_nivel5 || '-' || codigo_nivel6 || '-' || codigo_nivel7 || '-' || codigo_nivel8 ASC
 ;
 
+
+select id, descripcion
+    --    into mi_id
+        from ogt_concepto_tesoreria
+       where descripcion in ('RECAUDO CAPITAL CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA',
+       'RECAUDO INTERESES CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA',
+       'CAUSACION INTERESES CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA');
+
+
+
+mi_concepto_capital := fn_ogt_traer_code_concepto('RECAUDO CAPITAL CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA');
+mi_concepto_interes := fn_ogt_traer_code_concepto('RECAUDO INTERESES CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA');
+      --00-02-37-19-00-00-00
+mi_concepto_causa_interes := fn_ogt_traer_code_concepto('CAUSACION INTERESES CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA');
+    

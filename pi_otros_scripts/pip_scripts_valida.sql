@@ -102,25 +102,30 @@ where numero||'-'||tipo in
 --Verifica ingreso
 select *
 from   ogt_ingreso
-where --id=68375 and
-/*doc_numero>='55502' and 
+where --id=68375 and doc_numero='55608' 
+extract(year from fecha_consignacion)=2026
+order by fecha_legalizacion desc
+and 
 doc_tipo='XYZ'*/
-doc_numero||'-'||doc_tipo in --('5502-XYZ','5503-XYZ')
+doc_numero||'-'||doc_tipo in ('55608-XYZ')
+in
   (select doc_numero||'-'||doc_tipo
     from ogt_detalle_documento 
     where doc_numero||'-'||doc_tipo in
         (select numero_legal||'-'||tipo
             from ogt_documento
-        where numero_legal in -- '55502'
-          ( select numero
+        where numero_legal in   --'55582'
+          ( select * --numero --, numero_externo
             from --DELETE 
             ogt_documento
             where tipo='ALE'
-            and estado='AP'
-            and unte_codigo='FINANCIERO'
-            AND numero_externo = '2026000163')
+            --and estado='AP'
+             and unte_codigo='FINANCIERO'
+            --and extract(year from fecha)=2026
+            AND numero_externo = '2026000206'  -- in ('2026000203','2026000204','2026000205','2026000206') 
+          )
             and tipo='XYZ'  
-            and estado = 'RE'
+            and estado = 'AP'
         )
   )
 order by id desc

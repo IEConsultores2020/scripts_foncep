@@ -25,7 +25,7 @@ select e.nro_referencia_pago,
    and cc.id = l.id_det_cuenta_cobro
    and e.nro_referencia_pago = p.nro_referencia_pago
    --and e.estado = 'PAG'
-   and e.nro_referencia_pago in ('2026000187');
+   and e.nro_referencia_pago in ('2026000201'); --,'2025000003');
 
    select id_sisla, id_tercero
    from SL_RELACION_TERCEROS
@@ -47,7 +47,7 @@ and e.nro_referencia_pago in ('2025000105');
 
 select *
 from sl_pcp_encabezado e
-where e.nro_referencia_pago = '2026000187'; 
+where e.nro_referencia_pago = '2026000202'; 
 
 select *
 from sl_pcp_pago p 
@@ -102,11 +102,11 @@ and tipo = 'XYZ'
 
 select * --distinct mensaje 
 from tab_lch_segui   
-where fecha >= '05/JUN/2026'
+where fecha >= '12/JUN/2026'
 --order by consec DESC
 and consec = (select max(consec) from tab_lch_segui 
               where /*mensaje like '%55585%'*/
-                mensaje like 'OGT->LEG>%FALLID%') --'OGT->LEG>Legalización EXITOSA ingreso: 608727%')
+                mensaje like '%2026000206%') -- 'OGT->LEG>%FALLID%') --'OGT->LEG>Legalización EXITOSA ingreso: 608727%')
 --and mensaje like 'OGT->LEG>Recaudo FALLIDO en SISLA para referencia:%'
 order by consec DESC
 ; --55585  2026000187
@@ -115,9 +115,24 @@ order by consec DESC
 
 commit
 
+declare
+  p_resp varchar2(4000);
+  p_procesado boolean;
+begin
+  pk_ogt_imputacion.pr_procesar_imputacion(    
+      p_nro_referencia_pago => '2026000204',
+      p_usuario             => 'user',
+      p_resp                => p_resp,
+      p_procesado           => p_procesado
+   ) ;
+   dbms_output.put_line('Respuesta: ' || p_resp);
+   dbms_output.put_line('Procesado: ' || case when p_procesado then 'Sí' else 'No' end);
+end;   
+
 
 begin
-  pk_ogt_imputacion.pr_imputaciones (    
+  pk_ogt_imputacion.pr_procesar_imputacion (    
+
       p_usuario     => user
    ) ;
 end;   
