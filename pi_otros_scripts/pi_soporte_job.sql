@@ -1,11 +1,4 @@
 
-Begin
-  Dbms_Scheduler.Drop_Job (Job_Name => 'SL_JOB_IMPUTACION');    --- 20260612 No debe existir
-END;
-/
-
-
-
 
 Begin
   Dbms_Scheduler.Drop_Job (Job_Name => 'OGT.OGT_JOB_IMPUTACION');    ---20260612 Este debe existir

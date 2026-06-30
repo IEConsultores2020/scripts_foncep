@@ -57,6 +57,8 @@ create or replace package pk_ogt_imputacion as
    mi_concepto_interes        varchar2(20);        -- := fn_ogt_traer_code_concepto('RECAUDO INTERESES CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA');
    mi_concepto_causa_interes  varchar2(20);  -- := fn_ogt_traer_code_concepto('CAUSACION INTERESES CUOTAS PARTES POR APLICAR FIDUDAVIVIENDA');
 
+   mi_fecha_pago              date;                -- := SYSDATE;
+
   /* Procedimiento para imputar pagos pendientes*/
    procedure pr_imputaciones (    
       p_usuario            varchar2,

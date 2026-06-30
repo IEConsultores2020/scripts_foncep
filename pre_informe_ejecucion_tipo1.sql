@@ -65,10 +65,13 @@ LTRIM(RTRIM(pr_nivel3.descripcion)) desc_nivel3,
 LTRIM(RTRIM(pr_nivel2.descripcion)) desc_nivel2,
 (  pr_nivel1.codigo) cadena_nivel1,
 LTRIM(RTRIM(pr_nivel1.descripcion)) desc_nivel1
+--select *
  FROM pr_apropiacion,pr_rubro,pr_nivel8, pr_nivel7, pr_nivel6,
 pr_nivel5, pr_nivel4,
 pr_nivel3, pr_nivel2, pr_nivel1
 WHERE 
+pr_apropiacion.vigencia =  2016 /*:P_VIGENCIA*/  AND
+pr_apropiacion.codigo_compania = 206 /*:P_COMPANIA*/  AND
 pr_apropiacion.vigencia = pr_rubro.vigencia AND
 pr_apropiacion.rubro_interno = pr_rubro.interno AND
 pr_rubro.vigencia = pr_nivel1.vigencia AND
@@ -95,11 +98,11 @@ pr_rubro.tipo_plan = pr_nivel7.tipo_plan AND
 pr_rubro.vigencia = pr_nivel8.vigencia AND
 pr_rubro.interno_nivel8 = pr_nivel8.interno AND
 pr_rubro.tipo_plan = pr_nivel8.tipo_plan AND
-pr_apropiacion.vigencia =  2025 /*:P_VIGENCIA*/  AND
+pr_apropiacion.vigencia =  2016 /*:P_VIGENCIA*/  AND
 pr_apropiacion.codigo_compania = 206 /*:P_COMPANIA*/  AND
-pr_apropiacion.codigo_unidad_ejecutora = '01'  /*:P_UNIDAD */  AND
+pr_apropiacion.codigo_unidad_ejecutora = '01'  /*:P_UNIDAD */  --AND
 --pr_nivel1.codigo =  LTRIM(RTRIM( 2 /*:P_NIVEL1*/))
-pr_rubro.descripcion like '%seguridad%social%' --AND
+--pr_rubro.descripcion like '%seguridad%social%' --AND
 --and pr_apropiacion.DOCUMENTOS_FECHA = TO_DATE('01/01/2025', 'DD/MM/YYYY')
 ORDER BY
 pr_apropiacion.vigencia,

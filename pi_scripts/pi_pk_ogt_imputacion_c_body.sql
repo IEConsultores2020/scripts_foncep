@@ -82,6 +82,7 @@ create or replace package body pk_ogt_imputacion as
             );
 
             if p_resp is null then
+               mi_fecha_pago := mi_rec_pago.fecha_autorizacion;
                pr_traer_numero_acta (
                   un_tipo           => mi_tipo_acta,
                   una_unidad        => 'FINANCIERO',
@@ -91,15 +92,11 @@ create or replace package body pk_ogt_imputacion as
 
                --Si encuentro el acta y esta en AProbada, no se procesa             
                if mi_acta_numero > 1 and mi_estado_acta = 'AP' then
+                  --Actualiza estado a IMPutada, no se procesa la referencia porque ya estaba imputada y aprobada
                   p_resp := 'Ya estaba aprobada, acta '||mi_acta_numero||' referencia '||p_nro_referencia_pago;
                   seguimiento(p_resp);
-                  pr_actualizar_encabezado (p_nro_referencia_pago,'IMP',p_resp,p_procesado);
-                  if not p_procesado then 
-                    seguimiento(p_resp); 
-                  else
-                     p_resp := 'Se actualiza la factura como IMPutada de '||p_nro_referencia_pago ||' la referencia '||p_nro_referencia_pago;   
-                  end if;
-                  p_procesado := false;
+                  mi_estado_encabezado := 'IMP';
+                  p_procesado := true;
                elsif mi_acta_numero = -2 then
                   p_resp := 'OPGET-> Hay más de una acta para la referencia '||p_nro_referencia_pago;
                   seguimiento(p_resp);
@@ -225,14 +222,22 @@ create or replace package body pk_ogt_imputacion as
                   );    
                   dbms_output.put_line(p_resp);
                end if; --if p_procesado = true and nvl(mi_acta_numero,-1) > -1    and mi_estado_encabezado = 'REG'  then
-               if p_procesado = true and mi_estado_encabezado = 'REG' then
+               if p_procesado = true and mi_estado_encabezado in ('REG','IMP') then
                   --Actualiza encabezado y guarda o rechaza actualizaciones de acuerdo al resultado en p_procesado
-                  pr_actualizar_encabezado(
-                     p_nro_referencia_pago => p_nro_referencia_pago,
-                     p_nuevo_estado        => 'IMP', --Registro Limay y Sisla
-                     p_resp                => p_resp,
-                     p_procesado           => p_procesado
-                  );
+                  if mi_estado_encabezado = 'REG' then
+                     mi_estado_encabezado := 'IMP';
+                  end if;
+                     pr_actualizar_encabezado(
+                        p_nro_referencia_pago => p_nro_referencia_pago,
+                        p_nuevo_estado        => 'IMP', --Registro Limay y Sisla
+                        p_resp                => p_resp,
+                        p_procesado           => p_procesado
+                     );
+                  if p_procesado = true then
+                     commit;
+                  else
+                     rollback;
+                  end if;  
                else
                   p_resp := 'OPGET-> Reversando legalización';
                   seguimiento(p_resp);
@@ -295,7 +300,7 @@ create or replace package body pk_ogt_imputacion as
       else
          mi_id_tercero_destino := pk_sit_infentidades.sit_fn_id_entidad(
             mi_entidad,
-            sysdate
+            mi_fecha_pago --sysdate
          );
          if mi_id_tercero_destino is null then
             p_resp := ' entidad destino no encontrada';
@@ -305,7 +310,7 @@ create or replace package body pk_ogt_imputacion as
          end if;
       end if;
 
-      select extract(year from sysdate)
+      select extract(year from mi_fecha_pago) --sysdate
         into mi_vigencia
         from dual;
 
@@ -344,7 +349,7 @@ create or replace package body pk_ogt_imputacion as
                            || mi_rec_cuenta_cobro.id;
                   seguimiento(p_resp);
                else
-                  mi_id_tercero_origen := pk_sit_infbasica.sit_fn_get_id('NIT',mi_nit_origen,sysdate);
+                  mi_id_tercero_origen := pk_sit_infbasica.sit_fn_get_id('NIT',mi_nit_origen,mi_fecha_pago); --sysdate);
                   if mi_id_tercero_origen is null then
                      p_procesado := false;
                      p_resp := 'OPGET->RD>No encuentra tercero origen de la cuenta_cobro '
@@ -386,7 +391,8 @@ create or replace package body pk_ogt_imputacion as
                      ) values ( mi_numero_documento,
                               mi_tipo_documento,
                               p_estado,
-                              sysdate,trunc(sysdate,'mm'),
+                              mi_fecha_pago,             --sysdate,
+                              trunc(mi_fecha_pago,'mm'), --trunc(sysdate,'mm'),
                               p_rec_pago.id_banco,
                               mi_unte_codigo,
                               mi_bin_tipo_cuenta,
@@ -649,8 +655,8 @@ create or replace package body pk_ogt_imputacion as
                --crear el ingreso del capital registrado
                mi_id_ingreso_capital := ogt_pk_ingreso.fn_crear(
                   una_vigencia            => p_vigencia_ingreso,
-                  una_fecha_legalizacion  => sysdate,
-                  una_fecha_consignacion  => sysdate,
+                  una_fecha_legalizacion  => mi_fecha_pago,  --sysdate,
+                  una_fecha_consignacion  => mi_fecha_pago,  --sysdate,
                   un_concepto             => mi_concepto_capital,
                   un_soporte              => p_doc_numero,
                   un_tipo_soporte         => p_doc_tipo,
@@ -680,7 +686,8 @@ create or replace package body pk_ogt_imputacion as
                      select id_tercero
                      into mi_id_tercero
                      from sl_relacion_terceros
-                     where id_sisla = mi_rec_liquidacion.interno_persona;  --in (16791,47125)
+                     where id_sisla = mi_rec_liquidacion.interno_persona
+                     and fecha_fin is null;  --in (16791,47125)
                   exception
                      when others then
                         p_procesado := false;
@@ -710,8 +717,8 @@ create or replace package body pk_ogt_imputacion as
                         --crear el ingreso de interes registrado
                         mi_id_ingreso_interes := ogt_pk_ingreso.fn_crear(
                            una_vigencia            => p_vigencia_ingreso,
-                           una_fecha_legalizacion  => sysdate,
-                           una_fecha_consignacion  => sysdate,
+                           una_fecha_legalizacion  => mi_fecha_pago, --sysdate,
+                           una_fecha_consignacion  => mi_fecha_pago, --sysdate,
                            un_concepto             => mi_concepto_interes,
                            un_soporte              => p_doc_numero,
                            un_tipo_soporte         => p_doc_tipo,
@@ -759,8 +766,8 @@ create or replace package body pk_ogt_imputacion as
                         --Crear causacion interes
                         mi_id_ingreso_interes := ogt_pk_ingreso.fn_crear(
                            una_vigencia            => p_vigencia_ingreso,
-                           una_fecha_legalizacion  => sysdate,
-                           una_fecha_consignacion  => sysdate,
+                           una_fecha_legalizacion  => mi_fecha_pago, --sysdate,
+                           una_fecha_consignacion  => mi_fecha_pago, --sysdate,
                            un_concepto             => mi_concepto_causa_interes,
                            un_soporte              => p_doc_numero,
                            un_tipo_soporte         => p_doc_tipo,
@@ -987,7 +994,7 @@ create or replace package body pk_ogt_imputacion as
                and tipo=mi_tipo_acta;
             pk_sl_interfaz_opget_cp.pr_actualiza_recaudo_pcp (p_referencia_pago     => p_nro_referencia_pago,
                                      p_acta_legalizacion    => mi_numero_acta,
-                                     p_fecha_legalizacion   => sysdate,
+                                     p_fecha_legalizacion   => mi_fecha_pago, --sysdate,
                                      p_cod_rta_proceso      => mi_codigo_res,
                                      p_des_rta_proceso      => p_resp
                                     );

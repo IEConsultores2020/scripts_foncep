@@ -16,7 +16,7 @@ select e.nro_referencia_pago,
        l.interno_persona id_persona, 
        l.valor_capital capital, l.valor_interes interes,
        p.id_banco, l.*
-      -- select p.*
+      -- select *
   from sl_pcp_encabezado e,
        sl_pcp_cuenta_cobro cc,
        sl_pcp_liquidaciones l,
@@ -25,7 +25,7 @@ select e.nro_referencia_pago,
    and cc.id = l.id_det_cuenta_cobro
    and e.nro_referencia_pago = p.nro_referencia_pago
    --and e.estado = 'PAG'
-   and e.nro_referencia_pago in ('2026000201'); --,'2025000003');
+   and e.nro_referencia_pago in ('2026000215'); --,'2025000003');
 
    select id_sisla, id_tercero
    from SL_RELACION_TERCEROS
@@ -42,22 +42,21 @@ from sl_pcp_encabezado e
 inner join  sl_pcp_cuenta_cobro cc on e.id = cc.id_encabezado
 inner join sl_pcp_liquidaciones l on cc.id = l.id_det_cuenta_cobro 
 --inner join sl_pcp_pago p on e.nro_referencia_pago = p.nro_referencia_pago
-and e.nro_referencia_pago in ('2025000105'); 
+and e.nro_referencia_pago in ('2026000211'); 
 
 
 select *
 from sl_pcp_encabezado e
-where e.nro_referencia_pago = '2026000202'; 
+where e.nro_referencia_pago = '2026000211'; 
 
 select *
 from sl_pcp_pago p 
-order by id desc
-where p.nro_referencia_pago = '2025000107';
+where p.nro_referencia_pago = '2026000211';
 
 select sum(cc.valor_capital)+sum(cc.valor_intereses) total_cuentas
 from sl_pcp_encabezado e
 inner join sl_pcp_cuenta_cobro cc on e.id = cc.id_encabezado
-and e.nro_referencia_pago in ('2025000105');
+and e.nro_referencia_pago in ('2026000211');
 
 
 select * --sum(l.valor_capital)+SUM(l.valor_interes) as total_liquidado
@@ -65,16 +64,16 @@ from sl_pcp_encabezado e
 inner join  sl_pcp_cuenta_cobro cc on e.id = cc.id_encabezado
 inner join sl_pcp_liquidaciones l on cc.id = l.id_det_cuenta_cobro 
 --inner join sl_pcp_pago p on e.nro_referencia_pago = p.nro_referencia_pago
-and e.nro_referencia_pago in ('2025000105'); 
+and e.nro_referencia_pago in ('2026000211'); 
 
 select * --sum(l.valor_capital)+SUM(l.valor_interes) as total_liquidado
 from sl_pcp_encabezado e
 inner join sl_pcp_pago p on e.nro_referencia_pago = p.nro_referencia_pago
-and e.nro_referencia_pago in ('2025000105'); 
+and e.nro_referencia_pago in ('2026000211'); 
 
 select fecha_autorizacion, fecha_autorizacion
 from sl_pcp_pago 
-where nro_referencia_pago in ('2025000105'); 
+where nro_referencia_pago in ('2026000211'); 
 
 ----Cunsultar el acta del radicado
 select * from 
@@ -82,7 +81,7 @@ select * from
  where tipo = 'ALE'
    --and estado = 'RE'
    and unte_codigo = 'FINANCIERO'
-   and numero_externo in ( '2026000002') 
+   and numero_externo in ( '2026000211') 
    and extract(year from fecha) in ( 2026 );
 
 ---Consultar los documentos asociados al acta
@@ -94,16 +93,18 @@ select * from
     where tipo = 'ALE'
       --and estado='RE'
       and unte_codigo = 'FINANCIERO'
-      and numero_externo in ( '2026000002')
+      and numero_externo in ( '2026000211')
 )
 and tipo = 'XYZ'   
 ;
 
+--truncate table sl.tab_lch_segui;
 
 select * --distinct mensaje 
-from tab_lch_segui   
-where fecha >= '12/JUN/2026'
---order by consec DESC
+from sl.tab_lch_segui   
+where fecha >= '27/JUN/2026'
+order by consec desc
+
 and consec = (select max(consec) from tab_lch_segui 
               where /*mensaje like '%55585%'*/
                 mensaje like '%2026000206%') -- 'OGT->LEG>%FALLID%') --'OGT->LEG>Legalización EXITOSA ingreso: 608727%')
@@ -139,8 +140,9 @@ end;
 
 update --select * from
    sl_pcp_encabezado 
-   set estado='PAG'
-  where nro_referencia_pago =   '2026000002'
+  set estado='PAG'
+  where nro_referencia_pago =   '2026000214'
+  ;
 
 --rollback;
 
@@ -170,3 +172,29 @@ SELECT * --numero, tipo, fecha_compra_titulo, numero_legal, tipo_legal
 FROM ogt_DOCUMENTO  WHERE /*numero=98232 and*/ numero_legal = '55540'   AND tipo   = 'XYZ'
 
 select doc_numero from ogt_ingreso where doc_numero=98232 and doc_tipo='XYZ';
+
+select * from all_synonyms where synonym_name like '%SL_PCP_USUARIOS%';
+
+select * from all_privileges where grantee like '%PK_SL_PCP_USUARIOS%';
+
+pk_sl_pcp_usuarios.pr_listar_usuarios(p_cursor => :mi_cursor);
+
+select usu.id, usu.usuario, usu.nombre_usuario, bin.resultado, usu.estado
+     from   SL_PCP_USUARIOS usu, bintablas bin
+     where  /*to_char(usu.centro_costo) = bin.argumento
+     and*/    bin.grupo = 'SISLA'
+     and    nombre = 'CENTROS_COSTO_CP'
+     and    usu.centro_costo = null
+     order by bin.resultado;
+
+select * from sl_pcp_usuarios     ;
+
+select *
+from bintablas
+where grupo = 'GENERAL'
+and nombre = 'IDENTIFICACION'
+and argumento = 'TAC';
+
+
+
+

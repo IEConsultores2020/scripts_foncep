@@ -7,6 +7,9 @@ pi_alter_tablas_pcp.sql
 --Creación nuevo tipo documento. Tercero TAC en bintablas, para la forma OGT_ACTA_INGRESO
 insert into bintablas (grupo,nombre,argumento,resultado,vig_inicial)
 values ('GENERAL','IDENTIFICACION','TAC','TAC',TO_DATE('01/01/2026','DD/MM/YYYY'));
+insert into bintablas (grupo,nombre,argumento,resultado,vig_inicial)
+values ('OPGET','LIMAY_INGRESO_PORTAL','CONTABLE','02',TO_DATE('01/01/2026','DD/MM/YYYY'));
+
 
 --Se crea tabla en OGT para registrar los pagos por pensionado
 pi_ogt_crea_tabla_detalle_pensionado.sql

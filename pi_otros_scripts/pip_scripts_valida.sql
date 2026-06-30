@@ -1,6 +1,6 @@
 --CUENTAS DE COBRO EN SISLA
 select e.nro_referencia_pago,
-       --e.estado eest,
+       e.estado eest,
        e.valor_referencia evalor,
        e.centro_costo centro_costo,
        --cc.id ctac_id,
@@ -16,6 +16,7 @@ select e.nro_referencia_pago,
        l.interno_persona id_persona, 
        l.valor_capital capital, l.valor_interes interes /*,
        l.*, p.**/
+       --select e.*
   from sl_pcp_encabezado e,
        sl_pcp_cuenta_cobro cc,
        sl_pcp_liquidaciones l,
@@ -23,7 +24,7 @@ select e.nro_referencia_pago,
  where e.id = cc.id_encabezado
    and cc.id = l.id_det_cuenta_cobro
    and e.nro_referencia_pago = p.nro_referencia_pago
-   and e.nro_referencia_pago in ('2025000003'); --,'2025000003');
+   and e.nro_referencia_pago in ('2026000214'); --,'2025000003');
 
    select *
    from sl_pcp_cuenta_cobro
@@ -34,13 +35,15 @@ select e.nro_referencia_pago,
 
 --Verifica si el acta ya fue creada
 select * 
-from  ogt_documento
+from  
+--delete
+ogt_documento
 where tipo='ALE'
 --and estado='AP'
 and unte_codigo='FINANCIERO'
-and numero in (55502,55503,54861)
-and numero_externo in ('2025000001','2025000003','2025000012')
-AND extract(year from fecha) IN (2025)
+and numero in (58818)
+and numero_externo in ('2026000214') --,'2025000003','2025000012')
+AND extract(year from fecha) IN (2026)
 
 ;
 
@@ -49,11 +52,13 @@ select * /*ogt_documento.numero, ogt_documento.numero_legal,
           ogt_documento.numero, ogt_documento.tipo,
           ogt_documento.fecha, ogt_documento.fecha_emision_titulo, 
           ogt_documento.fecha_compra_titulo*/
-from ogt_documento
-where numero_legal in ('55502','55503','54914','56826')
+from 
+--delete
+ogt_documento
+where numero_legal in ('58818')
 --and  bin_tipo_cuenta = 'FD'
-AND  extract(year from fecha) IN (2025)
-AND extract(month from fecha) IN (10,11)
+AND  extract(year from fecha) IN (2026)
+--AND extract(month from fecha) IN (10,11)
 ;*/
 
      ( select numero
@@ -75,39 +80,29 @@ AND extract(month from fecha) IN (10,11)
 
 --Verifica detalle documento
 select *
-from ogt_detalle_documento --where valor = 822356068.70 
-where doc_numero in ('55502','54861')
-where numero||'-'||tipo in
-  (select  * 
-         -- ogt_documento.numero||'-'||ogt_documento.tipo
+from 
+--delete
+ogt_detalle_documento --where valor = 822356068.70 
+--where doc_numero in ('55815')
+where doc_numero||'-'||doc_tipo in
+  (select ogt_documento.numero||'-'||ogt_documento.tipo
     from ogt_documento
    
-    where numero_legal in ('55502','55503','54914','56826')
-    and extract(year from fecha) IN (2025)
-  )
-      ;
-     ( select numero
-      from --DELETE 
-      ogt_documento
-      where tipo='ALE'
-      and estado='AP'
-      and unte_codigo='FINANCIERO'
-      AND numero_externo = '2025000001')
-      and tipo='XYZ'  
-    --  and estado = 'RE'
+    where numero_legal in ('58818')
+    and extract(year from fecha) IN (2026)
   )
 ;
 
 
 --Verifica ingreso
 select *
-from   ogt_ingreso
+from  
+delete
+ ogt_ingreso
 where --id=68375 and doc_numero='55608' 
 extract(year from fecha_consignacion)=2026
-order by fecha_legalizacion desc
-and 
-doc_tipo='XYZ'*/
-doc_numero||'-'||doc_tipo in ('55608-XYZ')
+--order by doc_numero desc
+and doc_numero||'-'||doc_tipo in ('58818-XYZ')
 in
   (select doc_numero||'-'||doc_tipo
     from ogt_detalle_documento 
@@ -135,14 +130,16 @@ order by id desc
 ----Verifica detalles ingreso
 
 select *
-from  ogt_detalle_ing 
+from  
+--delete
+ogt_detalle_ing 
 where ing_id in 
-  (select * --id
+  (select id
   from   ogt_ingreso
   where --id=68375 and
   /*doc_numero>='55502' and 
   doc_tipo='XYZ'*/
-  doc_numero||'-'||doc_tipo in ('55502-XYZ','54914-XYZ'))
+  doc_numero||'-'||doc_tipo in ('58818-XYZ'))
     (select doc_numero||'-'||doc_tipo
       from ogt_detalle_documento 
       where doc_numero||'-'||doc_tipo in
@@ -164,7 +161,9 @@ where ing_id in
 
 --
 select *
-from ogt_info_cuenta
+from 
+--delete
+ogt_info_cuenta
 where DEIN_CUCO_CODIGO||''||DEIN_ING_ID||''|| DEIN_ID in 
       (select CUCO_CODIGO||''||ING_ID||''||ID
       from  ogt_detalle_ing 
@@ -174,7 +173,7 @@ where DEIN_CUCO_CODIGO||''||DEIN_ING_ID||''|| DEIN_ID in
         where --id=68375 and
         /*doc_numero>='55502' and 
         doc_tipo='XYZ'*/
-        doc_numero||'-'||doc_tipo in  ('55502-XYZ','54914-XYZ')))
+        doc_numero||'-'||doc_tipo in  ('58818-XYZ')))
           (select doc_numero||'-'||doc_tipo
             from ogt_detalle_documento 
             where doc_numero||'-'||doc_tipo in
@@ -187,7 +186,7 @@ where DEIN_CUCO_CODIGO||''||DEIN_ING_ID||''|| DEIN_ID in
                     where tipo='ALE'
                     and estado='AP'
                     and unte_codigo='FINANCIERO'
-                    AND numero_externo = '2025000001')
+                    AND numero_externo = '2026000214')
                     and tipo='XYZ'  
                     and estado = 'RE'
                 )
@@ -207,14 +206,14 @@ where dp.id_ingreso in
       where doc_numero||'-'||doc_tipo in
           (select numero_legal||'-'||tipo
               from ogt_documento
-          where numero_legal in -- '55502'
-            ( select numero
+          where numero_legal = '58818'
+            /*( select numero
               from --DELETE 
               ogt_documento
               where tipo='ALE'
               and estado='RE'
               and unte_codigo='FINANCIERO'
-              AND numero_externo = '2025000001')
+              AND numero_externo = '2026000214')*/
               and tipo='XYZ'  
               and estado = 'RE'
           )
@@ -335,3 +334,5 @@ select cc.id_cuenta_cobro
        sl_pcp_cuenta_cobro cc
  where e.id = cc.id_encabezado
    and e.nro_referencia_pago in ('2025000001'));
+
+   commit;

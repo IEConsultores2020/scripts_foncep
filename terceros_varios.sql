@@ -157,8 +157,31 @@ full outer join trc.trc_informacion_comercial ic on ic.id = ib.id
 
 select *
 from shd_terceros
-where codigo_identificacion in ('41341647','51843547');
+where id in (31615)
+;
 
-select *
+select * --id, ib_fecha_inicial, ib_fecha_final, ib_tipo_identificacion, ib_codigo_identificacion, ib_primer_nombre
 from shd_informacion_basica
-where ib_codigo_identificacion in ('41341647','51843547');
+where ib_codigo_identificacion in ('892115015','892000148')
+order by ib_fecha_inicial desc;
+
+select id, ib_fecha_inicial, ib_fecha_final, ib_tipo_identificacion, ib_codigo_identificacion, ib_primer_nombre
+from shd_informacion_basica
+where ib_primer_nombre = 'ALIANZA FIDUCIARIA SA';
+
+ select * --ic.ic_banco codigo_banco, ic.ic_tipo_cuenta tipo_cuenta, ic.ic_cuenta numero_cuenta, ic.ic_sucursal sucursal
+ from trc.trc_informacion_comercial ic
+where id in (31615);
+
+
+
+-------
+
+
+  SELECT  * ---COUNT(*)
+    FROM 
+    PR_TERCEROS
+    WHERE
+    --CODIGO_COMPANIA = 206
+    TIPO_DOCUMENTO = 'NIT'
+    AND NUMERO_DOCUMENTO IN ('892115015','101094796');
