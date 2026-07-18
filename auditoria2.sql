@@ -25,3 +25,11 @@ having count(1)>1
 select *
 from RH_PERSONAS
 where numero_identificacion = '51653368';
+
+
+select *
+  from auditoria
+ where usuario = 'CCHICO'
+ order by fecha desc
+
+SL_NOVEDAD_X_ENTIDAD_CP

@@ -140,7 +140,7 @@ where t.codigo_identificacion in ('860002503','800126785',
 '900116609','830084033','901652098','860078828','860002964','830070784')
  ;
 
- select ic.ic_banco codigo_banco, ic.ic_tipo_cuenta tipo_cuenta, ic.ic_cuenta numero_cuenta, ic.ic_sucursal sucursal
+ select * --ic.ic_banco codigo_banco, ic.ic_tipo_cuenta tipo_cuenta, ic.ic_cuenta numero_cuenta, ic.ic_sucursal sucursal
  from trc.trc_informacion_comercial ic;
 
  create or replace view vw_terceros_foncep as
@@ -155,33 +155,33 @@ full outer join trc.trc_informacion_comercial ic on ic.id = ib.id
 
 
 
+
 select *
-from shd_terceros
-where id in (31615)
-;
+from trc_informacion_comercial
+where id in (31615,15133,302019);
 
-select * --id, ib_fecha_inicial, ib_fecha_final, ib_tipo_identificacion, ib_codigo_identificacion, ib_primer_nombre
+select *
+from shd_informacion_comercial
+where id in (31615,353995);
+
+select *
 from shd_informacion_basica
-where ib_codigo_identificacion in ('892115015','892000148')
-order by ib_fecha_inicial desc;
+where id in (31615,353995);
 
-select id, ib_fecha_inicial, ib_fecha_final, ib_tipo_identificacion, ib_codigo_identificacion, ib_primer_nombre
-from shd_informacion_basica
-where ib_primer_nombre = 'ALIANZA FIDUCIARIA SA';
+select *
+from trc_informacion_basica
+where id in (31615,15133,302019)
+and ib_fecha_final is null;
 
- select * --ic.ic_banco codigo_banco, ic.ic_tipo_cuenta tipo_cuenta, ic.ic_cuenta numero_cuenta, ic.ic_sucursal sucursal
- from trc.trc_informacion_comercial ic
-where id in (31615);
+  select rowid,ID,IC_FECHA_INICIAL,
+  IC_FECHA_FINAL,
+  IC_BANCO,
+  IC_SUCURSAL,
+  IC_TIPO_CUENTA,
+  IC_CUENTA,
+  IC_TIPO_PAGO     
+	FROM SHD_INFORMACION_COMERCIAL
+	WHERE ID = 31615
+	AND IC_FECHA_FINAL IS NULL;
 
 
-
--------
-
-
-  SELECT  * ---COUNT(*)
-    FROM 
-    PR_TERCEROS
-    WHERE
-    --CODIGO_COMPANIA = 206
-    TIPO_DOCUMENTO = 'NIT'
-    AND NUMERO_DOCUMENTO IN ('892115015','101094796');

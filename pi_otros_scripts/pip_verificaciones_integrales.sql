@@ -1,3 +1,8 @@
+select e.id, e.nro_referencia_pago, e.estado
+from sl_pcp_encabezado e
+where e.nro_referencia_pago = '2026000216';
+
+
 --CUENTAS DE COBRO EN SISLA
 select e.nro_referencia_pago,
        e.estado eest,
@@ -25,7 +30,7 @@ select e.nro_referencia_pago,
    and cc.id = l.id_det_cuenta_cobro
    and e.nro_referencia_pago = p.nro_referencia_pago
    --and e.estado = 'PAG'
-   and e.nro_referencia_pago in ('2026000215'); --,'2025000003');
+   and e.nro_referencia_pago in ('2026000216'); --,'2025000003');
 
    select id_sisla, id_tercero
    from SL_RELACION_TERCEROS
@@ -102,8 +107,10 @@ and tipo = 'XYZ'
 
 select * --distinct mensaje 
 from sl.tab_lch_segui   
-where fecha >= '27/JUN/2026'
+where fecha >= '02/JUL/2026'
+and mensaje like 'Tiempo llenar_tabla_tmp_liquidaciones%'
 order by consec desc
+;
 
 and consec = (select max(consec) from tab_lch_segui 
               where /*mensaje like '%55585%'*/

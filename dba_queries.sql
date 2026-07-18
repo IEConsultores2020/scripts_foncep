@@ -5,7 +5,7 @@ WHERE table_name = 'OGT_DETALLE_ACTAS';
 
 select *
 from dictionary
-where table_name like '%CENTRO%COSTO%'
+where table_name like 'PR_ORDEN_DE_PAGO_REGISTRO'
 ;
 
 SELECT *
@@ -36,4 +36,18 @@ select * from v$session
 
 SELECT sid, serial#, status, program FROM v$session WHERE program NOT LIKE '%oracle%';
 
-alter system kill session '780,3525'
+/*
+alter system kill session '326,40986'
+alter system kill session '780,42264'
+*/
+
+
+SELECT BLOCKING_SESSION, SID, SERIAL#, WAIT_CLASS, SECONDS_IN_WAIT, schemaname
+FROM V$SESSION
+WHERE --SCHEMANAME='SL' AND   
+BLOCKING_SESSION IS NOT NULL
+ORDER BY BLOCKING_SESSION;
+
+SELECT sid, event, p1raw AS object_handle 
+FROM v$session 
+WHERE username = 'SL';

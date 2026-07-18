@@ -1,429 +1,3 @@
-function CF_Compromisos_MesFormula return Number is
-  mi_valor_registro        NUMBER(16, 2);
-  mi_valor_rp_anulados     NUMBER(16, 2);
-  mi_valor_rp_parciales    NUMBER(16, 2);
-  mi_valor_compromisos_mes NUMBER(16, 2);
-  mi_valor_ajustes         NUMBER(16, 2);
-  mi_valor_reintegro       NUMBER(16, 2);
-  mi_valor_ajuste_rp       NUMBER(16, 2);
-begin
-
-  mi_valor_registro        := NULL; -- Valor Total Registros del Mes
-  mi_valor_rp_anulados     := NULL; -- Valor Total RP Anulados del Mes
-  mi_valor_rp_parciales    := NULL; -- Valor Liberaciones Parciales de RP del Mes
-  mi_valor_compromisos_mes := NULL; -- Compromisos del Mes
-  mi_valor_ajustes         := NULL;
-  mi_valor_reintegro       := NULL;
-
-  -- Calcula el Valor Total de Registros del Mes
-  BEGIN
-    SELECT * --NVL(SUM(NVL(pr_registro_disponibilidad.valor,0)),0) valor_registro --INTO mi_valor_registro
-      FROM pr_registro_disponibilidad, pr_registro_presupuestal
-     WHERE pr_registro_disponibilidad.vigencia =
-           pr_registro_presupuestal.vigencia
-       AND pr_registro_disponibilidad.codigo_compania =
-           pr_registro_presupuestal.codigo_compania
-       AND pr_registro_disponibilidad.codigo_unidad_ejecutora =
-           pr_registro_presupuestal.codigo_unidad_ejecutora
-       AND pr_registro_disponibilidad.numero_disponibilidad =
-           pr_registro_presupuestal.numero_disponibilidad
-       AND pr_registro_disponibilidad.numero_registro =
-           pr_registro_presupuestal.numero_registro
-       AND pr_registro_disponibilidad.vigencia = :vigencia
-       AND pr_registro_disponibilidad.codigo_compania = :codigo_compania
-       AND pr_registro_disponibilidad.codigo_unidad_ejecutora =
-           :codigo_unidad_ejecutora
-       AND pr_registro_disponibilidad.rubro_interno /*= :rubro_interno AND*/
-           in (1831, 1832)
-       AND --
-           TO_NUMBER(TO_CHAR(pr_registro_presupuestal.fecha_registro, 'MM')) =
-           TO_NUMBER(:P_MES);
-  EXCEPTION
-    WHEN OTHERS THEN
-      mi_valor_registro := 0;
-  END;
-
-  BEGIN
-    SELECT NVL(SUM(NVL(pr_registro_disponibilidad.valor, 0)), 0)
-      INTO mi_valor_rp_anulados
-      FROM pr_registro_disponibilidad, pr_registro_presupuestal
-     WHERE pr_registro_disponibilidad.vigencia =
-           pr_registro_presupuestal.vigencia
-       AND pr_registro_disponibilidad.codigo_compania =
-           pr_registro_presupuestal.codigo_compania
-       AND pr_registro_disponibilidad.codigo_unidad_ejecutora =
-           pr_registro_presupuestal.codigo_unidad_ejecutora
-       AND pr_registro_disponibilidad.numero_disponibilidad =
-           pr_registro_presupuestal.numero_disponibilidad
-       AND pr_registro_disponibilidad.numero_registro =
-           pr_registro_presupuestal.numero_registro
-       AND pr_registro_disponibilidad.vigencia = :vigencia
-       AND pr_registro_disponibilidad.codigo_compania = :codigo_compania
-       AND pr_registro_disponibilidad.codigo_unidad_ejecutora =
-           :codigo_unidad_ejecutora
-       AND pr_registro_disponibilidad.rubro_interno = :rubro_interno
-       AND EXISTS
-     (SELECT numero_documento_anulado
-              FROM pr_anulaciones
-             WHERE vigencia = :vigencia
-               AND codigo_compania = :codigo_compania
-               AND codigo_unidad_ejecutora = :codigo_unidad_ejecutora
-               AND documento_anulado = 'REGISTRO'
-               and numero_documento_anulado =
-                   pr_registro_presupuestal.numero_registro
-               AND TO_NUMBER(TO_CHAR(fecha_registro, 'MM')) =
-                   TO_NUMBER(:P_MES));
-  EXCEPTION
-    WHEN OTHERS THEN
-      mi_valor_rp_anulados := 0;
-  END;
-
-  -- Liberaciones Parciales del Mes
-
-  BEGIN
-    SELECT NVL(SUM(NVL(pr_rp_anulados.valor_anulado, 0)), 0)
-      INTO mi_valor_rp_parciales
-      FROM pr_rp_anulados
-     WHERE vigencia = :vigencia
-       AND codigo_compania = :codigo_compania
-       AND codigo_unidad_ejecutora = :codigo_unidad_ejecutora
-       AND rubro_interno = :rubro_interno
-       AND TO_NUMBER(TO_CHAR(fecha_anulacion, 'MM')) = TO_NUMBER(:P_MES)
-       AND EXISTS
-     (SELECT numero_registro
-              FROM pr_registro_presupuestal
-             WHERE vigencia = pr_rp_anulados.vigencia
-               AND codigo_compania = pr_rp_anulados.codigo_compania
-               AND codigo_unidad_ejecutora =
-                   pr_rp_anulados.codigo_unidad_ejecutora
-               AND numero_registro = pr_rp_anulados.numero_registro
-               AND TO_NUMBER(TO_CHAR(fecha_registro, 'MM')) <=
-                   TO_NUMBER(:P_MES));
-  EXCEPTION
-    WHEN OTHERS THEN
-      mi_valor_rp_parciales := 0;
-  END;
-
-  -- Ajustes/Reintegros Acumulados
-
-  BEGIN
-    SELECT NVL(SUM(NVL(pr_reintegro_ajustes_rubro.valor, 0)), 0)
-      INTO mi_valor_ajustes
-      FROM pr_reintegro_ajustes_rubro, pr_reintegro_ajustes
-     WHERE pr_reintegro_ajustes_rubro.vigencia =
-           pr_reintegro_ajustes.vigencia
-       AND pr_reintegro_ajustes_rubro.codigo_compania =
-           pr_reintegro_ajustes.codigo_compania
-       AND pr_reintegro_ajustes_rubro.codigo_unidad_ejecutora =
-           pr_reintegro_ajustes.codigo_unidad_ejecutora
-       AND pr_reintegro_ajustes_rubro.numero_disponibilidad =
-           pr_reintegro_ajustes.numero_disponibilidad
-       AND pr_reintegro_ajustes_rubro.numero_registro =
-           pr_reintegro_ajustes.numero_registro
-       AND pr_reintegro_ajustes_rubro.numero_orden =
-           pr_reintegro_ajustes.numero_orden
-       AND pr_reintegro_ajustes_rubro.consecutivo_orden =
-           pr_reintegro_ajustes.consecutivo_orden
-       AND pr_reintegro_ajustes_rubro.consecutivo_ajuste =
-           pr_reintegro_ajustes.consecutivo_ajuste
-       AND pr_reintegro_ajustes_rubro.vigencia = :vigencia
-       AND pr_reintegro_ajustes_rubro.codigo_compania = :codigo_compania
-       AND pr_reintegro_ajustes_rubro.codigo_unidad_ejecutora =
-           :codigo_unidad_ejecutora
-       AND pr_reintegro_ajustes_rubro.rubro_interno = :rubro_interno
-       AND TO_NUMBER(to_char(pr_reintegro_ajustes.fecha_registro, 'mm')) =
-           TO_NUMBER(:p_mes)
-       AND pr_reintegro_ajustes.tipo_movimiento = 'AJUSTE';
-  EXCEPTION
-    WHEN OTHERS THEN
-      mi_valor_ajustes := 0;
-  END;
-
-  -- Se incluye manejo de ajuste a compromiso, no afecta giros
-  BEGIN
-    SELECT NVL(SUM(NVL(pr_reintegro_ajustes_rubro.valor, 0)), 0)
-      INTO mi_valor_ajuste_rp
-      FROM pr_reintegro_ajustes, pr_reintegro_ajustes_rubro
-     WHERE pr_reintegro_ajustes_rubro.vigencia =
-           pr_reintegro_ajustes.vigencia
-       AND pr_reintegro_ajustes_rubro.codigo_compania =
-           pr_reintegro_ajustes.codigo_compania
-       AND pr_reintegro_ajustes_rubro.codigo_unidad_ejecutora =
-           pr_reintegro_ajustes.codigo_unidad_ejecutora
-       AND pr_reintegro_ajustes_rubro.numero_disponibilidad =
-           pr_reintegro_ajustes.numero_disponibilidad
-       AND pr_reintegro_ajustes_rubro.numero_registro =
-           pr_reintegro_ajustes.numero_registro
-       AND pr_reintegro_ajustes_rubro.numero_orden =
-           pr_reintegro_ajustes.numero_orden
-       AND pr_reintegro_ajustes_rubro.consecutivo_orden =
-           pr_reintegro_ajustes.consecutivo_orden
-       AND pr_reintegro_ajustes_rubro.consecutivo_ajuste =
-           pr_reintegro_ajustes.consecutivo_ajuste
-       AND pr_reintegro_ajustes_rubro.vigencia = :vigencia
-       AND pr_reintegro_ajustes_rubro.codigo_compania = :codigo_compania
-       AND pr_reintegro_ajustes_rubro.codigo_unidad_ejecutora =
-           :codigo_unidad_ejecutora
-       AND pr_reintegro_ajustes_rubro.rubro_interno = :rubro_interno
-       AND TO_NUMBER(to_char(pr_reintegro_ajustes.fecha_registro, 'mm')) =
-           TO_NUMBER(:p_mes)
-       AND pr_reintegro_ajustes.tipo_movimiento = 'RP_AJUSTE'
-       AND pr_reintegro_ajustes.cerrado = 9;
-  EXCEPTION
-    WHEN OTHERS THEN
-      mi_valor_ajuste_rp := 0;
-  END;
-
-  -- inicio RQ 2023000806 famanjarres
-  --  mi_valor_ajustes :=0;
-  mi_valor_reintegro := 0;
-  --  mi_valor_ajuste_rp := 0;
-  -- fin RQ 2023000806
-
-  mi_valor_compromisos_mes := NVL(mi_valor_registro, 0) -
-                              NVL(mi_valor_rp_anulados, 0) -
-                              NVL(mi_valor_rp_parciales, 0) +
-                              NVL(mi_valor_ajustes, 0) +
-                              NVL(mi_valor_reintegro, 0) +
-                              NVL(mi_valor_ajuste_rp, 0);
-
-  RETURN NVL(mi_valor_compromisos_mes, 0);
-
-EXCEPTION
-  WHEN OTHERS THEN
-    RETURN 0;
-end CF_Compromisos_MesFormula;
-
-function CF_CompromisosAcumuladoFormula return Number is
-
-  mi_valor_registro        NUMBER(16, 2);
-  mi_valor_rp_anulados     NUMBER(16, 2);
-  mi_valor_rp_parciales    NUMBER(16, 2);
-  mi_valor_comp_acumulados NUMBER(16, 2);
-  mi_valor_ajustes         NUMBER(16, 2);
-  mi_valor_reintegro       NUMBER(16, 2);
-  mi_valor_ajuste_rp       NUMBER(16, 2);
-
-begin
-
-  mi_valor_registro        := NULL; -- Valor Total Registros  Acumulado
-  mi_valor_rp_anulados     := NULL; -- Valor Total RP Anulados Acumulado 
-  mi_valor_rp_parciales    := NULL; -- Valor Liberaciones Parciales de RP Acumulados
-  mi_valor_comp_acumulados := NULL; -- Compromisos Acumulados
-  mi_valor_ajustes         := NULL;
-  mi_valor_reintegro       := NULL;
-
-  -- Calcula el Valor Total de Registros Acumulados
-
-  BEGIN
-    SELECT NVL(SUM(NVL(pr_registro_disponibilidad.valor, 0)), 0)
-      INTO mi_valor_registro
-      FROM pr_registro_disponibilidad, pr_registro_presupuestal
-     WHERE pr_registro_disponibilidad.vigencia =
-           pr_registro_presupuestal.vigencia
-       AND pr_registro_disponibilidad.codigo_compania =
-           pr_registro_presupuestal.codigo_compania
-       AND pr_registro_disponibilidad.codigo_unidad_ejecutora =
-           pr_registro_presupuestal.codigo_unidad_ejecutora
-       AND pr_registro_disponibilidad.numero_disponibilidad =
-           pr_registro_presupuestal.numero_disponibilidad
-       AND pr_registro_disponibilidad.numero_registro =
-           pr_registro_presupuestal.numero_registro
-       AND pr_registro_disponibilidad.vigencia = :vigencia
-       AND pr_registro_disponibilidad.codigo_compania = :codigo_compania
-       AND pr_registro_disponibilidad.codigo_unidad_ejecutora =
-           :codigo_unidad_ejecutora
-       AND pr_registro_disponibilidad.rubro_interno = :rubro_interno
-       AND TO_NUMBER(TO_CHAR(pr_registro_presupuestal.fecha_registro, 'MM')) <=
-           TO_NUMBER(:P_MES);
-  EXCEPTION
-    WHEN OTHERS THEN
-      mi_valor_registro := 0;
-  END;
-
-  -- Anulaciones de RP Acumuladas
-  BEGIN
-    SELECT NVL(SUM(NVL(pr_registro_disponibilidad.valor, 0)), 0)
-      INTO mi_valor_rp_anulados
-      FROM pr_registro_disponibilidad, pr_registro_presupuestal
-     WHERE pr_registro_disponibilidad.vigencia =
-           pr_registro_presupuestal.vigencia
-       AND pr_registro_disponibilidad.codigo_compania =
-           pr_registro_presupuestal.codigo_compania
-       AND pr_registro_disponibilidad.codigo_unidad_ejecutora =
-           pr_registro_presupuestal.codigo_unidad_ejecutora
-       AND pr_registro_disponibilidad.numero_disponibilidad =
-           pr_registro_presupuestal.numero_disponibilidad
-       AND pr_registro_disponibilidad.numero_registro =
-           pr_registro_presupuestal.numero_registro
-       AND pr_registro_disponibilidad.vigencia = :vigencia
-       AND pr_registro_disponibilidad.codigo_compania = :codigo_compania
-       AND pr_registro_disponibilidad.codigo_unidad_ejecutora =
-           :codigo_unidad_ejecutora
-       AND pr_registro_disponibilidad.rubro_interno = :rubro_interno
-       AND TO_NUMBER(TO_CHAR(pr_registro_presupuestal.fecha_registro, 'MM')) <=
-           TO_NUMBER(:P_MES)
-       AND EXISTS (SELECT numero_documento_anulado
-              FROM pr_anulaciones
-             WHERE vigencia = pr_registro_presupuestal.vigencia
-               AND codigo_compania =
-                   pr_registro_presupuestal.codigo_compania
-               AND codigo_unidad_ejecutora =
-                   pr_registro_presupuestal.codigo_unidad_ejecutora
-               AND documento_anulado = 'REGISTRO'
-               and numero_documento_anulado =
-                   pr_registro_presupuestal.numero_registro
-               AND TO_NUMBER(TO_CHAR(fecha_registro, 'MM')) <=
-                   TO_NUMBER(:P_MES));
-  EXCEPTION
-    WHEN OTHERS THEN
-      mi_valor_rp_anulados := 0;
-  END;
-
-  -- Liberaciones Parciales Acumuladas
-  BEGIN
-    SELECT NVL(SUM(NVL(pr_rp_anulados.valor_anulado, 0)), 0)
-      INTO mi_valor_rp_parciales
-      FROM pr_rp_anulados
-     WHERE vigencia = :vigencia
-       AND codigo_compania = :codigo_compania
-       AND codigo_unidad_ejecutora = :codigo_unidad_ejecutora
-       AND rubro_interno = :rubro_interno
-       AND TO_NUMBER(TO_CHAR(fecha_anulacion, 'MM')) <= TO_NUMBER(:P_MES)
-       AND EXISTS
-     (SELECT numero_registro
-              FROM pr_registro_presupuestal
-             WHERE vigencia = pr_rp_anulados.vigencia
-               AND codigo_compania = pr_rp_anulados.codigo_compania
-               AND codigo_unidad_ejecutora =
-                   pr_rp_anulados.codigo_unidad_ejecutora
-               AND numero_registro = pr_rp_anulados.numero_registro
-               AND TO_NUMBER(TO_CHAR(fecha_registro, 'MM')) <=
-                   TO_NUMBER(:P_MES));
-  EXCEPTION
-    WHEN OTHERS THEN
-      mi_valor_rp_parciales := 0;
-  END;
-
-  -- Ajustes
-  BEGIN
-    SELECT NVL(SUM(NVL(pr_reintegro_ajustes_rubro.valor, 0)), 0)
-      INTO mi_valor_ajustes
-      FROM pr_reintegro_ajustes_rubro, pr_reintegro_ajustes
-     WHERE pr_reintegro_ajustes_rubro.vigencia =
-           pr_reintegro_ajustes.vigencia
-       AND pr_reintegro_ajustes_rubro.codigo_compania =
-           pr_reintegro_ajustes.codigo_compania
-       AND pr_reintegro_ajustes_rubro.codigo_unidad_ejecutora =
-           pr_reintegro_ajustes.codigo_unidad_ejecutora
-       AND pr_reintegro_ajustes_rubro.numero_disponibilidad =
-           pr_reintegro_ajustes.numero_disponibilidad
-       AND pr_reintegro_ajustes_rubro.numero_registro =
-           pr_reintegro_ajustes.numero_registro
-       AND pr_reintegro_ajustes_rubro.numero_orden =
-           pr_reintegro_ajustes.numero_orden
-       AND pr_reintegro_ajustes_rubro.consecutivo_ajuste =
-           pr_reintegro_ajustes.consecutivo_ajuste
-       AND pr_reintegro_ajustes_rubro.consecutivo_orden =
-           pr_reintegro_ajustes.consecutivo_orden
-       AND pr_reintegro_ajustes_rubro.vigencia = :vigencia
-       AND pr_reintegro_ajustes_rubro.codigo_compania = :codigo_compania
-       AND pr_reintegro_ajustes_rubro.codigo_unidad_ejecutora =
-           :codigo_unidad_ejecutora
-       AND pr_reintegro_ajustes_rubro.rubro_interno = :rubro_interno
-       AND TO_NUMBER(to_char(pr_reintegro_ajustes.fecha_registro, 'mm')) <=
-           TO_NUMBER(:p_mes)
-       AND pr_reintegro_ajustes.tipo_movimiento = 'AJUSTE';
-  EXCEPTION
-    WHEN OTHERS THEN
-      mi_valor_ajustes := 0;
-  END;
-  -- Reintegro
-
-  BEGIN
-    SELECT NVL(SUM(NVL(pr_reintegro_ajustes_rubro.valor, 0)), 0)
-      INTO mi_valor_reintegro
-      FROM pr_reintegro_ajustes_rubro, pr_reintegro_ajustes
-     WHERE pr_reintegro_ajustes_rubro.vigencia =
-           pr_reintegro_ajustes.vigencia
-       AND pr_reintegro_ajustes_rubro.codigo_compania =
-           pr_reintegro_ajustes.codigo_compania
-       AND pr_reintegro_ajustes_rubro.codigo_unidad_ejecutora =
-           pr_reintegro_ajustes.codigo_unidad_ejecutora
-       AND pr_reintegro_ajustes_rubro.numero_disponibilidad =
-           pr_reintegro_ajustes.numero_disponibilidad
-       AND pr_reintegro_ajustes_rubro.numero_registro =
-           pr_reintegro_ajustes.numero_registro
-       AND pr_reintegro_ajustes_rubro.numero_orden =
-           pr_reintegro_ajustes.numero_orden
-       AND pr_reintegro_ajustes_rubro.consecutivo_ajuste =
-           pr_reintegro_ajustes.consecutivo_ajuste
-       AND pr_reintegro_ajustes_rubro.consecutivo_orden =
-           pr_reintegro_ajustes.consecutivo_orden
-       AND pr_reintegro_ajustes_rubro.vigencia = :vigencia
-       AND pr_reintegro_ajustes_rubro.codigo_compania = :codigo_compania
-       AND pr_reintegro_ajustes_rubro.codigo_unidad_ejecutora =
-           :codigo_unidad_ejecutora
-       AND pr_reintegro_ajustes_rubro.rubro_interno = :rubro_interno
-       AND TO_NUMBER(to_char(pr_reintegro_ajustes.fecha_registro, 'mm')) <=
-           TO_NUMBER(:p_mes)
-       AND pr_reintegro_ajustes.tipo_movimiento = 'REINTEGRO';
-  EXCEPTION
-    WHEN OTHERS THEN
-      mi_valor_reintegro := 0;
-  END;
-
-  --Se incluye manejo ajuste compromisos, no influye giros 30/12/2002
-  BEGIN
-    SELECT NVL(SUM(NVL(pr_reintegro_ajustes_rubro.valor, 0)), 0)
-      INTO mi_valor_ajuste_rp
-      FROM pr_reintegro_ajustes_rubro, pr_reintegro_ajustes
-     WHERE pr_reintegro_ajustes_rubro.vigencia =
-           pr_reintegro_ajustes.vigencia
-       AND pr_reintegro_ajustes_rubro.codigo_compania =
-           pr_reintegro_ajustes.codigo_compania
-       AND pr_reintegro_ajustes_rubro.codigo_unidad_ejecutora =
-           pr_reintegro_ajustes.codigo_unidad_ejecutora
-       AND pr_reintegro_ajustes_rubro.numero_disponibilidad =
-           pr_reintegro_ajustes.numero_disponibilidad
-       AND pr_reintegro_ajustes_rubro.numero_registro =
-           pr_reintegro_ajustes.numero_registro
-       AND pr_reintegro_ajustes_rubro.numero_orden =
-           pr_reintegro_ajustes.numero_orden
-       AND pr_reintegro_ajustes_rubro.consecutivo_ajuste =
-           pr_reintegro_ajustes.consecutivo_ajuste
-       AND pr_reintegro_ajustes_rubro.consecutivo_orden =
-           pr_reintegro_ajustes.consecutivo_orden
-       AND pr_reintegro_ajustes_rubro.vigencia = :vigencia
-       AND pr_reintegro_ajustes_rubro.codigo_compania = :codigo_compania
-       AND pr_reintegro_ajustes_rubro.codigo_unidad_ejecutora =
-           :codigo_unidad_ejecutora
-       AND pr_reintegro_ajustes_rubro.rubro_interno = :rubro_interno
-       AND TO_NUMBER(to_char(pr_reintegro_ajustes.fecha_registro, 'mm')) <=
-           TO_NUMBER(:p_mes)
-       AND pr_reintegro_ajustes.tipo_movimiento = 'RP_AJUSTE'
-       AND pr_reintegro_ajustes.cerrado = 9;
-  EXCEPTION
-    WHEN OTHERS THEN
-      mi_valor_ajuste_rp := 0;
-  END;
-  -- inicio RQ 2023000806 famanjarres
-  mi_valor_reintegro := 0;
-  -- fin RQ 2023000806
-  mi_valor_comp_acumulados := NVL(mi_valor_registro, 0) -
-                              NVL(mi_valor_rp_anulados, 0) -
-                              NVL(mi_valor_rp_parciales, 0) +
-                              NVL(mi_valor_ajustes, 0) +
-                              NVL(mi_valor_reintegro, 0) +
-                              NVL(mi_valor_ajuste_rp, 0);
-
-  RETURN NVL(mi_valor_comp_acumulados, 0);
-
-EXCEPTION
-  WHEN OTHERS THEN
-    RETURN 0;
-end CF_CompromisosAcumuladoFormula;
-
 function CF_GirosMesFormula return Number is
   mi_valor_op         NUMBER(16, 2);
   mi_valor_op_anulado NUMBER(16, 2);
@@ -437,6 +11,7 @@ function CF_GirosMesFormula return Number is
   mi_valor_ajustes_ogt    NUMBER(16, 2);
   mi_valor_reintegro_ogt  NUMBER(16, 2);
   mi_valor_total          NUMBER(16, 2);
+  mi_rubro_interno_sb       NUMBER; --GLP 256
 begin
 
   mi_valor_op         := NULL;
@@ -455,9 +30,12 @@ begin
   -- Valor Total de OP registradas en el mes
 
   BEGIN
-    SELECT NVL(SUM(NVL(pr_v_orden_pago_regis_predis.valor, 0)), 0)
-      INTO mi_valor_op
-      FROM pr_v_orden_pago_regis_predis, pr_v_orden_de_pago_predis
+
+    SELECT rubro_interno, NVL(SUM(NVL(pr_v_orden_pago_regis_predis.valor, 0)), 0) total
+      --INTO mi_valor_op
+      --select *
+      FROM PR_comun.PR_ORDEN_DE_PAGO_REGISTRO pr_v_orden_pago_regis_predis, 
+           PR_comun.PR_ORDEN_DE_PAGO pr_v_orden_de_pago_predis
      WHERE pr_v_orden_pago_regis_predis.vigencia =
            pr_v_orden_de_pago_predis.vigencia
        AND pr_v_orden_pago_regis_predis.codigo_compania =
@@ -476,17 +54,57 @@ begin
        AND pr_v_orden_pago_regis_predis.codigo_compania = :codigo_compania
        AND pr_v_orden_pago_regis_predis.codigo_unidad_ejecutora =
            :codigo_unidad_ejecutora
-       AND pr_v_orden_pago_regis_predis.rubro_interno = :rubro_interno
+       AND pr_v_orden_pago_regis_predis.rubro_interno between 1831 and 1834 --:rubro_interno
        AND TO_CHAR(pr_v_orden_de_pago_predis.fecha_registro, 'YYYY') =
            :vigencia
        AND TO_NUMBER(TO_CHAR(pr_v_orden_de_pago_predis.fecha_registro, 'MM')) =
            TO_NUMBER(:P_MES)
-       AND pr_v_orden_de_pago_predis.ESTADO <> 'ANULADO';
+       AND pr_v_orden_de_pago_predis.ESTADO <> 'ANULADO'
+       group by pr_v_orden_pago_regis_predis.rubro_interno  ;
   EXCEPTION
     WHEN OTHERS THEN
       mi_valor_op := 0;
   END;
 
+
+
+
+    --GLP 256 FTV Alineacion CUD, 2. se suma los a los aportes se salud, pensión y solidaridad pago por emepleado de la nómina del mes anterior.
+   
+    
+    begin
+        select interno_rubro
+          into mi_rubro_interno_sb
+        from pr_v_rubros
+        where descripcion = 'Sueldo básico'
+        and vigencia = :vigencia;
+
+        -- --5 es APORTE SALUD, 1285 es APORTE REGIMEN SOLIDARIDAD, 1267 es APORTE PENSION
+        select *
+        from ogt_centro_costos
+        where entidad=206
+        and unidad_ejecutora = '01'
+        and vigencia = 2026
+        and extract(month from fecha_desde) =5
+        --and consecutivo=10
+        and codigo_centro_costos IN (5, 1285, 1267);
+        and exists (select 1 from ogt_relacion_autorizacion b
+                    where b.consecutivo = ogt_centro_costos.consecutivo
+                      and b.entidad_ra = ogt_centro_costos.entidad
+                      and b.tipo_documento = ogt_centro_costos.tipo_documento
+                      and b.unidad_ejecutora = ogt_centro_costos.unidad_ejecutora
+                      and b.vigencia = ogt_centro_costos.vigencia
+                      and b.tipo_ra = ogt_centro_costos.tipo_ra
+                      and b.ind_aprobado = mi_valor_uno
+                      and substr(b.estado, 4, 1) = mi_estado_uno
+                      )
+        and ogt_relacion_autorizacion.mes = ogt_centro_costos.mes
+        and ogt_relacion_autorizacion.fecha_desde = ogt_centro_costos.fecha_desde
+
+        
+    exception
+        valor_aportes_empleado_mes := 0;
+    end;
   -- Valor Total de OP registradas en el mes por el sistema OPGET
 
   mi_valor_op_ogt := OGT_PK_PREDIS.ogt_fn_valor_mes(:vigencia,
@@ -523,9 +141,7 @@ begin
        AND TO_CHAR(pr_v_orden_de_pago_predis.fecha_registro, 'YYYY') =
            :vigencia
        AND EXISTS
-     (SELECT numero_documento_anulado,
-                   numero_registro,
-                   consecutivo_orden
+     (SELECT distinct vigencia
               FROM pr_v_anulaciones_predis
              WHERE vigencia = pr_v_orden_pago_regis_predis.vigencia
                AND codigo_compania =

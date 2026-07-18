@@ -184,3 +184,67 @@ commit
 
    alter user lm2 identified by "#FonC3p2026";
    ALTER USER smithj IDENTIFIED BY "MyNewPassword123#";
+
+
+select *
+from pr_v_rubros
+where vigencia=2026
+and descripcion in ('Aportes a la seguridad social en pensiones públicas',  --1831
+                    'Aportes a la seguridad social en pensiones privadas')
+;
+
+
+select *
+from ogt_orden_pago
+where vigencia=2026
+and entidad=206
+and unidad_ejecutora='02'
+and num_radicacion in (295,297);
+
+
+
+select *
+from ogt_detalle_pago
+where id_pago = 110046;
+
+select count(1)
+from sl_relacion_tac;
+
+
+select *
+from pr_v_rubros
+where vigencia=2026
+and descripcion in ('Aportes a la seguridad social en pensiones públicas',  --1831
+                    'Aportes a la seguridad social en pensiones privadas',--1832
+                    'Aportes a la seguridad social en salud pública',  --1834
+                    'Aportes a la seguridad social en salud privada',  --1834
+                    'Aportes generales al sistema de riesgos laborales públicos', --1838
+                    'Sueldo básico')  --1804
+;
+
+   select * --valor     into valor_aportes_empleado_mes
+        from ogt_centro_costos
+        where entidad         =  206
+        and unidad_ejecutora  = '01'
+        and vigencia          = 2026
+        and extract(month from fecha_desde) = 1
+        --and consecutivo=10
+        and codigo_centro_costos IN (5, 1285, 1267)
+        and exists (select 1 from ogt_relacion_autorizacion b
+                where b.consecutivo = ogt_centro_costos.consecutivo
+                  and b.entidad = ogt_centro_costos.entidad
+                  and b.tipo_documento = ogt_centro_costos.tipo_documento
+                  and b.unidad_ejecutora = ogt_centro_costos.unidad_ejecutora
+                  and b.vigencia = ogt_centro_costos.vigencia
+                  and b.tipo_ra = ogt_centro_costos.tipo_ra
+                  and b.ind_aprobado = 1
+                  and substr(b.estado, 4, 1) = '1'
+                  );
+
+
+  select descripcion
+      from pr_v_rubros
+     where interno_rubro = 1804
+       and vigencia = 2026
+       and codigo=compania=206
+       and codigo_uidad_ejecutora='01';                  
