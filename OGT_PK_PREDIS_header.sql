@@ -22,11 +22,11 @@ create or replace PACKAGE     Ogt_Pk_Predis AS
   mi_valor_ar          NUMBER(20,2) := 0;
   --
   --INI GLP2025002642
-  FUNCTION Ogt_Fn_Valor_aportes_Mes(una_vigencia         NUMBER,
-                                    una_entidad          VARCHAR2,
-                                    una_unidad_ejecutora VARCHAR2,
-                                    un_mes               NUMBER,
-                                    un_rubro_interno     NUMBER) RETURN NUMBER;
+  FUNCTION Ogt_Fn_aportesemp_Mes( una_vigencia         NUMBER,
+                                  una_entidad          VARCHAR2,
+                                  una_unidad_ejecutora VARCHAR2,
+                                  un_mes               NUMBER,
+                                  un_rubro_interno     NUMBER) RETURN NUMBER;
   --FIN GLP2025002642  
 
 

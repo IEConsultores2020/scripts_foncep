@@ -107,7 +107,7 @@ and tipo = 'XYZ'
 
 select * --distinct mensaje 
 from sl.tab_lch_segui   
-where fecha >= '02/JUL/2026'
+where fecha >= '28/JUL/2026'
 and mensaje like 'Tiempo llenar_tabla_tmp_liquidaciones%'
 order by consec desc
 ;

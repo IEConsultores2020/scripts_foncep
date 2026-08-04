@@ -120,24 +120,22 @@ from rh_funcionario;
 
 select *
 from trc.trc_terceros
-where codigo_identificacion in ('41341647','51843547');
+where codigo_identificacion in ('830053630');
 
 select b.primer
 from trc.trc_informacion_basica B
 where id in (select id
 from trc.trc_terceros
-where codigo_identificacion in ('41341647','51843547'));
+where codigo_identificacion in ('830053630');
 
-select ib.ib_primer_nombre nombre1, ib.ib_segundo_nombre nombre2, ib.ib_primer_apellido apellido1, ib.ib_segundo_apellido apellido2,
+select ib.id, ib.ib_primer_nombre nombre1, ib.ib_segundo_nombre nombre2, ib.ib_primer_apellido apellido1, ib.ib_segundo_apellido apellido2,
       ib.ib_regimen_tributario regiment_tibutario, ib.ib_gran_contribuyente gran_contribuyente, ib.ib_autorretenedor autoretenedor, ib_pais, ib_depto, ib_ciudad,
       ic.ic_banco codigo_banco, ic.ic_tipo_cuenta tipo_cuenta, ic.ic_cuenta numero_cuenta, ic.ic_sucursal sucursal
-     -- select distinct t.codigo_identificacion, ib.ib_primer_nombre nombre1, ib.ib_segundo_nombre nombre2
+     -- select*
 from trc.trc_informacion_basica ib
 full outer join trc.trc_terceros t on t.id = ib.id
 full outer join trc.trc_informacion_comercial ic on ic.id = ib.id
-where t.codigo_identificacion in ('860002503','800126785',
-'901104588','860041163','860066942','860514823','80182608',
-'900116609','830084033','901652098','860078828','860002964','830070784')
+where t.codigo_identificacion in ('830053630')
  ;
 
  select * --ic.ic_banco codigo_banco, ic.ic_tipo_cuenta tipo_cuenta, ic.ic_cuenta numero_cuenta, ic.ic_sucursal sucursal
@@ -153,25 +151,27 @@ full outer join trc.trc_terceros t on t.id = ib.id
 full outer join trc.trc_informacion_comercial ic on ic.id = ib.id
  ;
 
-
-
-
 select *
 from trc_informacion_comercial
-where id in (31615,15133,302019);
+where id in (352874, 49693)
 
 select *
 from shd_informacion_comercial
-where id in (31615,353995);
+where id in (190597);
 
 select *
 from shd_informacion_basica
-where id in (31615,353995);
+where id in (190597);
 
 select *
 from trc_informacion_basica
-where id in (31615,15133,302019)
+--where ib_primer_nombre like '%Patrim%Auto%Socid%Fid%Desa%'
+where id --<= 352878 
+        in (352874, 352754)
+order by id desc
 and ib_fecha_final is null;
+
+SELECT 0 ID_BANCO, 'A' NOMBRE, 'B' CUENTA, 'C' TIPO FROM DUAL
 
   select rowid,ID,IC_FECHA_INICIAL,
   IC_FECHA_FINAL,
@@ -181,7 +181,27 @@ and ib_fecha_final is null;
   IC_CUENTA,
   IC_TIPO_PAGO     
 	FROM SHD_INFORMACION_COMERCIAL
-	WHERE ID = 31615
+	WHERE ID in in (352874, 352754)
 	AND IC_FECHA_FINAL IS NULL;
 
 
+  select ib.id, max(ib.ib_fecha_final)
+	      from trc_terceros t, trc_informacion_basica ib
+	     where ib.id = t.id 
+	       and t.tipo_identificacion   = 'NIT'
+         and t.codigo_identificacion = '830053630'
+	     group by ib.id;
+
+  select  *  --ib.id, ib.ib_fecha_final
+	      from trc_terceros t, trc_informacion_basica ib
+	     where ib.id = t.id  and t.id in (352874, 352754, 49693)
+
+;
+
+	    select * ---c1.observacion
+	      --into mi_observacion
+	      from trc_soporte_cambio c1
+	     where c1.id = 352874
+	       and c1.consecutivo = (select max(c2.consecutivo)
+	                               from trc_soporte_cambio c2
+	                              where c2.id = 352874);       

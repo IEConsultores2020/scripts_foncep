@@ -31,14 +31,15 @@ SELECT
     CONTABILIZADO          CTDO,
     CONTABILIZAR           CTAR 
    -- UPDATE
+   ---select *
 FROM
     RH_LM_RA 
  -- SET    ACTUALIZADO_CONTAB='N',   CONTABILIZADO = 'N', CONTABILIZAR = 'N' --/*,  GEN_CXP_OPGET = 'N' , */
 WHERE
     SCOMPANIA = 206 --AND DFECHA_INICIAL_PERIODO = '28-FEB-26';
     AND EXTRACT(YEAR FROM DFECHA_INICIAL_PERIODO) = 2026
-    AND EXTRACT(MONTH FROM DFECHA_INICIAL_PERIODO) = 4 --:MES
-    AND NRO_RA in (7,10,11)
+   -- AND EXTRACT(MONTH FROM DFECHA_INICIAL_PERIODO) = 7 --:MES
+   -- AND NRO_RA in (7,10,11)
 ORDER BY
     DFECHA_INICIAL_PERIODO ASC,
     TIPO_RA ASC;
@@ -47,7 +48,7 @@ ORDER BY
 select * from 
 --delete 
 RH_LM_RA
-where nro_ra IN (6) and ANO_PAC is null and vigencia_presupuesto=2026
+where nro_ra IN (16) and vigencia_presupuesto=2026
 ;
 
 --commit;

@@ -24,6 +24,35 @@
 
 --Valida iputación igual a distribución
 pr_validar_imputacion_pre
+    --CURSOR cur_imputacion IS
+        SELECT NVL(SUM(valor_bruto),0) 
+            FROM rh_lm_ra_presupuesto
+        WHERE compania             = 206 --una_compania
+        AND   vigencia             = 2026 --una_vigencia
+        AND   vigencia_presupuesto = 2026 ---una_vigencia_presupuesto
+        AND   unidad_ejecutora     = '01'   --una_unidad_ejecutora
+        AND   nro_ra               = 16 --un_nro_ra;
+
+    --CURSOR cur_distribucion IS
+        SELECT NVL(SUM(valor),0)
+        FROM  rh_t_lm_valores a, rh_lm_cuenta b, pr_v_rubros c
+        WHERE b.stipo_funcionario = a.stipofuncionario
+        AND   b.sconcepto         = a.sconcepto
+        AND   c.interno_rubro     = b.codigo_presupuesto
+        AND   c.vigencia          = 2026 --una_vigencia
+        AND   a.periodo           = '31/jul/2026' --una_fecha_final
+        AND   a.ntipo_nomina      = 0   --un_tipo_nomina
+        AND   a.nro_ra            = 16  --un_nro_ra
+        AND   b.scompania         = 206 --una_compania
+        AND   b.tipo_ra           = 1   --un_tipo_ra
+        AND   b.grupo_ra          = '5' --un_grupo_ra
+        AND   b.ncierre           = 1
+        -- RQ2523-2005   05/12/2005
+        AND   b.dfecha_inicio_vig <= '31/jul/2026' --una_fecha_final
+        AND  (b.dfecha_final_vig  >= '31/jul/2026' /*una_fecha_final*/ 
+            OR b.dfecha_final_vig IS NULL)
+        -- Fin RQ2523
+        AND   b.codigo_presupuesto IS NOT NULL;        
 
 --llena mi_Tbl_RA_Ogt OUT pk_ogt_bd_crear_ra.rarec
 pr_llenar_ra(

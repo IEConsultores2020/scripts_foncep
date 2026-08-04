@@ -1,3 +1,7 @@
+
+   alter user lm2 identified by "#FonC3p2026";
+   ALTER USER smithj IDENTIFIED BY "MyNewPassword123#";
+
 --Triggers of a table
 SELECT trigger_name, triggering_event, trigger_type, table_name, status
 FROM user_triggers

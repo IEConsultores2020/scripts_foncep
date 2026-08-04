@@ -33,13 +33,6 @@ interno_persona IN (519,614)   --  20730522
 --649 --1030575813
 ;
 
-
-SELECT *
-FROM shd_informacion_entidades
-      WHERE id = 51 AND ie_fecha_inicial <= SYSDATE AND
-      (ie_fecha_final >= SYSDATE OR ie_fecha_final IS NULL);
-
-
 select *
 from rh_personas
 where interno_persona in (11) --20730522, 52876090
@@ -49,18 +42,6 @@ nombres like 'MARGARITA%' --numero_identificacion= 79693028
 select *
 from pr_rubro
 where interno = 1547
-;
-
-
-
-select *
-from rh_personas
-where numero_identificacion in (51604666);
-/*
-JF 79355621 65 PUBLICO
-SUESCA 52316271 595 PRIVADO
-SANDOVAL 1049606827 607 PRIVADO
-*/
 ;
 
 select *
@@ -78,13 +59,6 @@ and sproceso = 'NEWNOVELTIES'
 and hn.ncorrida=1   1994
 ;
 
-commit
-
-select *
-from rh_novedad
-;
-
-
 
 
 select *
@@ -98,24 +72,6 @@ select * from pr_apropiacion
 where vigencia=2016
 ;
 
-select *
-from pr_rubro
-where vigencia=2016
-
-select *  --personas_interno
-from rh_funcionario
-where personas_interno=613
-/*and  codigo_fondo_pensiones <>61
-and estado_funcionario =1*/
-order by personas_interno asc
-;
-
-
-select TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')  as fysdate from dual
-;
-
-select *
-from pr_rubro;
 
 select *
 from rh_concepto   
@@ -138,42 +94,9 @@ where codigo_hash = 2091789934
     and nfuncionario=33
     ;
 
-select usu.id, usu.usuario, usu.nombre_usuario, bin.resultado, usu.estado
-     from   SL_PCP_USUARIOS usu, bintablas bin
-     where  usu.centro_costo = bin.argumento
-     and    bin.grupo = 'SISLA'
-     and    nombre = 'CENTROS_COSTO_CP'
-     and    usu.centro_costo = null
-     order by bin.resultado;
 
 
-SELECT * /*cot.afecta_ingreso,
-         ing.ing_id*/
-    FROM ogt_ingreso ing,
-         ogt_concepto_tesoreria cot
-   WHERE ing.cote_id = cot.id
-     AND ing.id = 622526;
-
-
-  CURSOR cur_documento IS
- SELECT atr_nombre,clmo_nombre,valor
-     FROM   ogt_info_ing
-     WHERE  ing_id=622526;
-
-
-             select resultado
-         from bintablas
-         where grupo = 'OPGET'
-         and nombre = 'LIMAY_INGRESO_PORTAL'
-         and argumento ='CENTRO CONTABLE';
-
-         insert into bintablas (grupo,nombre,argumento,resultado,vig_inicial)
-values ('OPGET','LIMAY_INGRESO_PORTAL','CENTRO CONTABLE','02',TO_DATE('01/01/2026','DD/MM/YYYY'));
-
-delete bintablas
-where grupo ='OPGET' AND NOMBRE='LIMAY_INGRESO_PORTAL'AND ARGUMENTO='CONTABLE'
-
-commit
+--commit
 
 
  select * --id_tercero
@@ -182,16 +105,7 @@ commit
    and fecha_fin is null
    and nvl(fecha_fin,sysdate) = sysdate; 
 
-   alter user lm2 identified by "#FonC3p2026";
-   ALTER USER smithj IDENTIFIED BY "MyNewPassword123#";
 
-
-select *
-from pr_v_rubros
-where vigencia=2026
-and descripcion in ('Aportes a la seguridad social en pensiones públicas',  --1831
-                    'Aportes a la seguridad social en pensiones privadas')
-;
 
 
 select *
@@ -210,41 +124,126 @@ where id_pago = 110046;
 select count(1)
 from sl_relacion_tac;
 
+select * from rh_lm_ra
+
+select --distinct extract(month from rra.dfecha_inicial_periodo) --, 
+    op.*
+from rh_lm_ra rra,
+    (select pr_v_orden_pago_regis_predis.vigencia, 
+        pr_v_orden_pago_regis_predis.codigo_compania, 
+        pr_v_orden_pago_regis_predis.codigo_unidad_ejecutora,
+        pr_v_orden_pago_regis_predis.numero_disponibilidad,
+        pr_v_orden_pago_regis_predis.numero_orden, 
+        pr_v_orden_pago_regis_predis.numero_registro, 
+        pr_v_orden_pago_regis_predis.consecutivo_orden, 
+        pr_v_orden_pago_regis_predis.sistema, 
+        pr_v_orden_de_pago_predis.origen, 
+        pr_v_orden_de_pago_predis.fecha_orden ,
+        pr_v_orden_de_pago_predis.fecha_registro, 
+        pr_v_orden_de_pago_predis.tipo_pago, 
+        pr_v_orden_de_pago_predis.estado, 
+        pr_v_orden_de_pago_predis.objeto, 
+        pr_v_orden_de_pago_predis.numero_relacion, 
+        pr_v_orden_de_pago_predis.tipo_documento, 
+        pr_v_orden_de_pago_predis.numero_documento,
+        pr_v_orden_de_pago_predis.codigo_entidad, 
+        pr_v_orden_de_pago_predis.digito_verificacion, 
+        pr_v_orden_de_pago_predis.id_interno, 
+        pr_v_orden_de_pago_predis.id_limay, 
+        pr_v_orden_pago_regis_predis.rubro_interno,
+        pr_v_orden_pago_regis_predis.valor
+        --,    NVL(SUM(NVL(pr_v_orden_pago_regis_predis.valor, 0)), 0) total   --INTO mi_valor_op
+      --select *
+      from PR_comun.PR_ORDEN_DE_PAGO_REGISTRO pr_v_orden_pago_regis_predis, 
+           PR_comun.PR_ORDEN_DE_PAGO pr_v_orden_de_pago_predis
+     where pr_v_orden_pago_regis_predis.vigencia =
+           pr_v_orden_de_pago_predis.vigencia
+       and pr_v_orden_pago_regis_predis.codigo_compania =
+           pr_v_orden_de_pago_predis.codigo_compania
+       and pr_v_orden_pago_regis_predis.codigo_unidad_ejecutora =
+           pr_v_orden_de_pago_predis.codigo_unidad_ejecutora
+       and pr_v_orden_pago_regis_predis.numero_registro =
+           pr_v_orden_de_pago_predis.numero_registro
+       and pr_v_orden_pago_regis_predis.numero_disponibilidad =
+           pr_v_orden_de_pago_predis.numero_disponibilidad
+       and pr_v_orden_pago_regis_predis.numero_orden =
+           pr_v_orden_de_pago_predis.numero_orden
+       and pr_v_orden_pago_regis_predis.consecutivo_orden =
+           pr_v_orden_de_pago_predis.consecutivo_orden
+       and pr_v_orden_pago_regis_predis.vigencia = :vigencia
+       and pr_v_orden_pago_regis_predis.codigo_compania = :codigo_compania
+       and pr_v_orden_pago_regis_predis.codigo_unidad_ejecutora =
+           :codigo_unidad_ejecutora
+       and pr_v_orden_pago_regis_predis.rubro_interno in
+       --between  1387 and 1390 en 20025. between 1831 and 1834 en 2026--:rubro_interno
+       (select interno_rubro
+        from pr_v_rubros
+        where vigencia=:vigencia
+        and descripcion in ('Aportes a la seguridad social en pensiones públicas',
+        'Aportes a la seguridad social en pensiones privadas',
+        'Aportes a la seguridad social en salud pública',
+        'Aportes a la seguridad social en salud privada')
+        )
+       and TO_CHAR(pr_v_orden_de_pago_predis.fecha_registro, 'YYYY') =
+           :vigencia
+       and TO_NUMBER(TO_CHAR(pr_v_orden_de_pago_predis.fecha_registro, 'MM')) =
+           TO_NUMBER(:P_MES)
+       and pr_v_orden_de_pago_predis.ESTADO <> 'ANULADO') op
+where rra.scompania=206
+and rra.vigencia=op.vigencia
+and rra.scompania= op.codigo_compania
+and op.codigo_unidad_ejecutora = '01'
+and rra.vigencia=op.vigencia
+and instr(op.objeto,'[RA = '||rra.nro_ra||']',1) > 1 -- --= '[RA = 2]'
+and rra.tipo_ra=2
+and rra.ntipo_nomina=0
+;
 
 select *
 from pr_v_rubros
-where vigencia=2026
-and descripcion in ('Aportes a la seguridad social en pensiones públicas',  --1831
-                    'Aportes a la seguridad social en pensiones privadas',--1832
-                    'Aportes a la seguridad social en salud pública',  --1834
-                    'Aportes a la seguridad social en salud privada',  --1834
-                    'Aportes generales al sistema de riesgos laborales públicos', --1838
-                    'Sueldo básico')  --1804
+where vigencia=2025
+and descripcion in ('Aportes a la seguridad social en pensiones públicas',
+'Aportes a la seguridad social en pensiones privadas',
+'Aportes a la seguridad social en salud pública',
+'Aportes a la seguridad social en salud privada')
+and interno_rubro between 1831 and 1834 
 ;
 
-   select * --valor     into valor_aportes_empleado_mes
-        from ogt_centro_costos
-        where entidad         =  206
-        and unidad_ejecutora  = '01'
-        and vigencia          = 2026
-        and extract(month from fecha_desde) = 1
-        --and consecutivo=10
-        and codigo_centro_costos IN (5, 1285, 1267)
-        and exists (select 1 from ogt_relacion_autorizacion b
-                where b.consecutivo = ogt_centro_costos.consecutivo
-                  and b.entidad = ogt_centro_costos.entidad
-                  and b.tipo_documento = ogt_centro_costos.tipo_documento
-                  and b.unidad_ejecutora = ogt_centro_costos.unidad_ejecutora
-                  and b.vigencia = ogt_centro_costos.vigencia
-                  and b.tipo_ra = ogt_centro_costos.tipo_ra
-                  and b.ind_aprobado = 1
-                  and substr(b.estado, 4, 1) = '1'
-                  );
+
+select shd_pg_bintablas.fn_buscar_rdf('FECHA_INICIO','NOMINA','CUD','01/01/2026') RES,
+to_date(nvl(shd_pg_bintablas.fn_buscar_rdf('FECHA_INICIO','NOMINA','CUD','01/01/2026'),'20250401'),'YYYYMMDD') fecha
+from dual;
+
+ GRANT SELECT
+ON TRC.TRC_INFORMACION_BASICA
+TO gecruz;
+
+ CURSOR CResulBinTab (Var_Argumento Varchar2,
+            Var_Grupo Varchar2,
+            Var_Nombre Varchar2,
+            Var_Vigencia DATE) IS
+        SELECT * --Resultado 
+        From BinTablas
+        WHERE Grupo = 'NOMINA' AND
+            Nombre = 'CUD' Var_Nombre AND
+            Argumento = Var_Argumento AND
+            Vig_Inicial <= Var_Vigencia AND
+            (Vig_Final >= Var_Vigencia OR
+            Vig_final IS NULL);
 
 
-  select descripcion
-      from pr_v_rubros
-     where interno_rubro = 1804
-       and vigencia = 2026
-       and codigo=compania=206
-       and codigo_uidad_ejecutora='01';                  
+select *
+from ogt_documento_pago 
+where vigencia = 2026
+and tipo_documento ='RA'
+order by fecha_diligenciamiento;
+
+select tipo_ra, fecha_desde, fecha_hasta, consecutivo, descripcion, fecha_radicacion, fecha_aprobacion, estado, numero_compromiso, ind_aprobado
+from ogt_relacion_autorizacion
+where vigencia = 2026
+and tipo_documento='RA'
+and unidad_ejecutora='01'
+order by fecha_desde, fecha_hasta, fecha_aprobacion
+
+grant select on rh_lm_ra to ogt_comun
+

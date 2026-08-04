@@ -31,7 +31,7 @@ begin
 
   BEGIN
 
-    SELECT rubro_interno, NVL(SUM(NVL(pr_v_orden_pago_regis_predis.valor, 0)), 0) total
+    SELECT * --rubro_interno, NVL(SUM(NVL(pr_v_orden_pago_regis_predis.valor, 0)), 0) total
       --INTO mi_valor_op
       --select *
       FROM PR_comun.PR_ORDEN_DE_PAGO_REGISTRO pr_v_orden_pago_regis_predis, 
@@ -66,11 +66,6 @@ begin
       mi_valor_op := 0;
   END;
 
-
-
-
-    --GLP 256 FTV Alineacion CUD, 2. se suma los a los aportes se salud, pensión y solidaridad pago por emepleado de la nómina del mes anterior.
-   
     
     begin
         select interno_rubro
@@ -80,7 +75,8 @@ begin
         and vigencia = :vigencia;
 
         -- --5 es APORTE SALUD, 1285 es APORTE REGIMEN SOLIDARIDAD, 1267 es APORTE PENSION
-        select *
+        select valor
+        into valor_aportes_empleado_mes
         from ogt_centro_costos
         where entidad=206
         and unidad_ejecutora = '01'
@@ -105,9 +101,9 @@ begin
     exception
         valor_aportes_empleado_mes := 0;
     end;
-  -- Valor Total de OP registradas en el mes por el sistema OPGET
 
-  mi_valor_op_ogt := OGT_PK_PREDIS.ogt_fn_valor_mes(:vigencia,
+  -- Valor Total de OP registradas en el mes por el sistema OPGET
+    mi_valor_op_ogt := OGT_PK_PREDIS.ogt_fn_valor_mes(:vigencia,
                                                     :codigo_compania,
                                                     :codigo_unidad_ejecutora,
                                                     TO_NUMBER(:p_mes),
