@@ -48,7 +48,7 @@ ORDER BY
 select * from 
 --delete 
 RH_LM_RA
-where nro_ra IN (16) and vigencia_presupuesto=2026
+where nro_ra IN (17) and vigencia_presupuesto=2026
 ;
 
 --commit;
@@ -78,23 +78,24 @@ WHERE DFECHA_INICIAL_PERIODO = TO_DATE('01/04/2026','DD/MM/YYYY')
     ;
 
 
-SELECT sconcepto, sum(valor)
+SELECT /*nfuncionario,*/ sconcepto, sum(valor)
 FROM
     --UPDATE 
     RH_T_LM_VALORES
 WHERE
     EXTRACT(YEAR FROM PERIODO) = 2026
-    and periodo = '30/APR/2026' 
+    and periodo = '31/JUL/2026' 
     and stipofuncionario = 'PLANTA' 
     and ntipo_nomina=0
-    and nro_ra = 7
---ORDER BY SCONCEPTO    
-    --and sconcepto like '%VACACIONESDINERO%' 
-    --NRO_RA in (28,29)*/
-GROUP BY SCONCEPTO
+    and nro_ra = 17   
+    and sconcepto IN ('SENA','ICBF','CAJA')
+    and nfuncionario =219
+GROUP BY --nfuncionario, 
+    SCONCEPTO
 --,    VARIABLE_VALOR */
 ORDER BY  1
 ;
+
 
 select *
 from rh_lm_cuenta

@@ -611,7 +611,7 @@ create or replace package body pk_ogt_imputacion as
                         p_doc_numero,
                         p_doc_tipo,
                         p_ter_id_origen,
-                        null,
+                        p_ter_id_recaudador,
                         null,
                         p_vigencia_ingreso,
                         p_info_numero,

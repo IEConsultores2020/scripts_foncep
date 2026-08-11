@@ -24,10 +24,7 @@ select e.nro_referencia_pago,
  where e.id = cc.id_encabezado
    and cc.id = l.id_det_cuenta_cobro
    and e.nro_referencia_pago = p.nro_referencia_pago
-   and e.nro_referencia_pago in ('2026000214'); --,'2025000003');
-
-   select *
-   from sl_pcp_cuenta_cobro
+   and e.nro_referencia_pago in ('2026000230'); 
 
 
 ----------------------------------------------------------------------
@@ -41,8 +38,8 @@ ogt_documento
 where tipo='ALE'
 --and estado='AP'
 and unte_codigo='FINANCIERO'
-and numero in (58818)
-and numero_externo in ('2026000214') --,'2025000003','2025000012')
+and numero in (58824)
+and numero_externo in ('2026000230') --,'2025000003','2025000012')
 AND extract(year from fecha) IN (2026)
 
 ;
@@ -55,21 +52,18 @@ select * /*ogt_documento.numero, ogt_documento.numero_legal,
 from 
 --delete
 ogt_documento
-where numero_legal in ('58818')
---and  bin_tipo_cuenta = 'FD'
-AND  extract(year from fecha) IN (2026)
---AND extract(month from fecha) IN (10,11)
-;*/
-
+where bin_tipo_cuenta = 'FD'
+and extract(year from fecha) IN (2026)
+and numero_legal in --('58824')
      ( select numero
       from --DELETE 
       ogt_documento
       where tipo='ALE'
-      and estado='RE'
+      and estado='AP'
       and unte_codigo='FINANCIERO'
-      AND numero_externo in ('2025000001','2025000003','2025000012'))
+      AND numero_externo in ('2026000230'))
   and tipo='XYZ'
-  and estado = 'RE'
+  and estado = 'AP'
 --and fecha = SYSDATE
 ;
 
@@ -87,8 +81,7 @@ ogt_detalle_documento --where valor = 822356068.70
 where doc_numero||'-'||doc_tipo in
   (select ogt_documento.numero||'-'||ogt_documento.tipo
     from ogt_documento
-   
-    where numero_legal in ('58818')
+    where numero_legal in ('58824')
     and extract(year from fecha) IN (2026)
   )
 ;
@@ -97,27 +90,30 @@ where doc_numero||'-'||doc_tipo in
 --Verifica ingreso
 select *
 from  
-delete
+--delete
  ogt_ingreso
 where --id=68375 and doc_numero='55608' 
 extract(year from fecha_consignacion)=2026
+and doc_numero = 
 --order by doc_numero desc
-and doc_numero||'-'||doc_tipo in ('58818-XYZ')
+and doc_numero||'-'||doc_tipo --in ('58824-XYZ')
 in
-  (select doc_numero||'-'||doc_tipo
+  (select  * --doc_numero||'-'||doc_tipo
     from ogt_detalle_documento 
-    where doc_numero||'-'||doc_tipo in
-        (select numero_legal||'-'||tipo
+    where doc_numero||'-'||doc_tipo  = '58824-XYZ' 
+    in
+        (select numero_legal||'-'||tipo 
             from ogt_documento
-        where numero_legal in   --'55582'
-          ( select * --numero --, numero_externo
+        where numero_legal in  ('58824')
+          ( select numero , numero_externo
             from --DELETE 
             ogt_documento
             where tipo='ALE'
             --and estado='AP'
              and unte_codigo='FINANCIERO'
-            --and extract(year from fecha)=2026
-            AND numero_externo = '2026000206'  -- in ('2026000203','2026000204','2026000205','2026000206') 
+             and extract(year from fecha)=2026
+             --and numero = '58824'
+            AND numero_externo = '2026000230'  -- in ('2026000203','2026000204','2026000205','2026000206') 
           )
             and tipo='XYZ'  
             and estado = 'AP'
@@ -139,7 +135,7 @@ where ing_id in
   where --id=68375 and
   /*doc_numero>='55502' and 
   doc_tipo='XYZ'*/
-  doc_numero||'-'||doc_tipo in ('58818-XYZ'))
+  doc_numero||'-'||doc_tipo in ('58824-XYZ'))
     (select doc_numero||'-'||doc_tipo
       from ogt_detalle_documento 
       where doc_numero||'-'||doc_tipo in
@@ -154,7 +150,7 @@ where ing_id in
               and unte_codigo='FINANCIERO'
               AND numero_externo = '2025000001')
               and tipo='XYZ'  
-              and estado = 'RE'
+              and estado = 'AP'
           )
     ))
 ;

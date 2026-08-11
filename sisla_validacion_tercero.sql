@@ -9,7 +9,7 @@ where codigo_compania=944;
 select * from shd_terceros
 where id = 944;
 
-select * from shd_informacion_basica
+select distinct ib_tipo_identificacion from shd_informacion_basica
 where --id = 944;
 --ib_primer_nombre like '%ALCAL%BUCAR%' --'%CHOCONTA%'  350061
 ib_codigo_identificacion in ('899999357','890201222')
@@ -28,4 +28,8 @@ Proceso:
 select *  from sl_tmp_factura_cp_2017;
 
 select * from sl_log_procesos
-order by fecha desc
+order by fecha desc;
+
+---Validando tercero TAC
+select * from shd_informacion_basica
+where ib_tipo_identificacion = 'TAC'

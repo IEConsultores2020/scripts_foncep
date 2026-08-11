@@ -1,16 +1,87 @@
 create or replace PACKAGE BODY     Ogt_Pk_Predis IS
-  --GLP2025002642 20260704 Alinear predis CUD.
-  -- 06-09-2004. Sergio.
-  -- Se adiciono la linea
-  --            AND TO_CHAR(FECHA_APROBACION,'YYYY') = TO_CHAR(una_vigencia)
-  -- a todas las consultas excepto a las de reintegros para garantizar que la consulta se
-  -- haga a los documentos tramitados en esa vigencia.
-  -- Queda pendiente desarrollar los metodos para reservas.
-  -- Se adiciono la linea
-  --            AND NVL(A.VALOR_REGISTRO,0) > mi_valor_cero
-  -- a las consultas de RAs para garantizar que no tome los ajustes.
 
+FUNCTION fn_obtener_cursor_aportesemp_mes (
+    una_vigencia         NUMBER,
+    una_entidad          VARCHAR2,
+    una_unidad_ejecutora VARCHAR2,
+    un_mes               NUMBER)
+    RETURN SYS_REFCURSOR IS
+   c_datos SYS_REFCURSOR;
+BEGIN
+
+  OPEN c_datos for
+    select distinct extract(month from rra.dfecha_inicial_periodo) as mes_aportes_empleado
+          from rh_lm_ra rra,
+            (select pr_v_orden_pago_regis_predis.vigencia, 
+                pr_v_orden_pago_regis_predis.codigo_compania, 
+                pr_v_orden_pago_regis_predis.codigo_unidad_ejecutora,
+                pr_v_orden_pago_regis_predis.numero_disponibilidad,
+                pr_v_orden_pago_regis_predis.numero_orden, 
+                pr_v_orden_pago_regis_predis.numero_registro, 
+                pr_v_orden_pago_regis_predis.consecutivo_orden, 
+                pr_v_orden_de_pago_predis.fecha_registro, 
+                pr_v_orden_de_pago_predis.estado, 
+                pr_v_orden_de_pago_predis.objeto, 
+                pr_v_orden_pago_regis_predis.valor
+              from PR_comun.PR_ORDEN_DE_PAGO_REGISTRO pr_v_orden_pago_regis_predis, 
+                PR_comun.PR_ORDEN_DE_PAGO pr_v_orden_de_pago_predis
+            where pr_v_orden_pago_regis_predis.vigencia =
+                  pr_v_orden_de_pago_predis.vigencia
+              and pr_v_orden_pago_regis_predis.codigo_compania =
+                  pr_v_orden_de_pago_predis.codigo_compania
+              and pr_v_orden_pago_regis_predis.codigo_unidad_ejecutora =
+                  pr_v_orden_de_pago_predis.codigo_unidad_ejecutora
+              and pr_v_orden_pago_regis_predis.numero_registro =
+                  pr_v_orden_de_pago_predis.numero_registro
+              and pr_v_orden_pago_regis_predis.numero_disponibilidad =
+                  pr_v_orden_de_pago_predis.numero_disponibilidad
+              and pr_v_orden_pago_regis_predis.numero_orden =
+                  pr_v_orden_de_pago_predis.numero_orden
+              and pr_v_orden_pago_regis_predis.consecutivo_orden =
+                  pr_v_orden_de_pago_predis.consecutivo_orden
+              and pr_v_orden_pago_regis_predis.vigencia = una_vigencia
+              and pr_v_orden_pago_regis_predis.codigo_compania = una_entidad
+              and pr_v_orden_pago_regis_predis.codigo_unidad_ejecutora = una_unidad_ejecutora
+              and pr_v_orden_pago_regis_predis.rubro_interno in
+              --between  1387 and 1390 en 20025. between 1831 and 1834 en 2026--:rubro_interno
+              (select interno_rubro
+                from pr_v_rubros
+                where vigencia= una_vigencia
+                and descripcion in ('Aportes a la seguridad social en pensiones públicas',
+                'Aportes a la seguridad social en pensiones privadas',
+                'Aportes a la seguridad social en salud pública',
+                'Aportes a la seguridad social en salud privada'
+                )
+              )
+              and extract(year from pr_v_orden_de_pago_predis.fecha_registro) = una_vigencia
+              and extract(month from pr_v_orden_de_pago_predis.fecha_registro) = un_mes
+              and pr_v_orden_de_pago_predis.ESTADO <> 'ANULADO') op
+          where rra.vigencia=una_vigencia
+          and rra.scompania=una_entidad
+          and op.codigo_unidad_ejecutora = una_unidad_ejecutora          
+          and rra.vigencia=op.vigencia
+          and rra.scompania= op.codigo_compania
+          and instr(op.objeto,'[RA = '||rra.nro_ra||']',1) > 1 -- --ej:  '[RA = 2]'
+          and rra.tipo_ra=2        --2 RA de aportes
+          and rra.ntipo_nomina=0   --no se tienen en cuenta nominas adicionales, es decir con valor 1
+          ;
+
+    RETURN c_datos;
+  END fn_obtener_cursor_aportesemp_mes;    
+
+  --GLP2025002642 20260704 Alinear predis CUD.
+  /* 06-09-2004. Sergio.
+   Se adiciono la linea
+              AND TO_CHAR(FECHA_APROBACION,'YYYY') = TO_CHAR(una_vigencia)
+   a todas las consultas excepto a las de reintegros para garantizar que la consulta se
+   haga a los documentos tramitados en esa vigencia.
+   Queda pendiente desarrollar los metodos para reservas.
+   Se adiciono la linea 
+              AND NVL(A.VALOR_REGISTRO,0) > mi_valor_cero
+   a las consultas de RAs para garantizar que no tome los ajustes.
+  */
   --INI GLP2025002642
+  
   FUNCTION Ogt_Fn_aportesemp_Mes(
     una_vigencia         NUMBER,
     una_entidad          VARCHAR2,
@@ -20,7 +91,6 @@ create or replace PACKAGE BODY     Ogt_Pk_Predis IS
     mi_desc_rubro               pr_rubro.descripcion%TYPE;
     valor_aportes_empleado_mes  NUMBER;
   begin
-    
     select descripcion
       into mi_desc_rubro
       from pr_v_rubros
@@ -52,7 +122,7 @@ create or replace PACKAGE BODY     Ogt_Pk_Predis IS
     else 
       valor_aportes_empleado_mes := 0;
     end if;
-    return valor_aportes_empleado_mes;
+    return nvl(valor_aportes_empleado_mes,0);
   exception
     when others then
       return 0;
@@ -65,87 +135,33 @@ create or replace PACKAGE BODY     Ogt_Pk_Predis IS
     un_mes               NUMBER,
     un_rubro_interno     NUMBER) RETURN NUMBER IS
     mi_desc_rubro               pr_rubro.descripcion%TYPE;
-
-    cursor cur_val_aportes_empleado_mes is
-      select distinct extract(month from rra.dfecha_inicial_periodo) mes_aportes
-      from rh_lm_ra rra,
-        (select pr_v_orden_pago_regis_predis.vigencia, 
-            pr_v_orden_pago_regis_predis.codigo_compania, 
-            pr_v_orden_pago_regis_predis.codigo_unidad_ejecutora,
-            pr_v_orden_pago_regis_predis.numero_disponibilidad,
-            pr_v_orden_pago_regis_predis.numero_orden, 
-            pr_v_orden_pago_regis_predis.numero_registro, 
-            pr_v_orden_pago_regis_predis.consecutivo_orden, 
-            --pr_v_orden_de_pago_predis.origen, 
-            --pr_v_orden_de_pago_predis.fecha_orden ,
-            pr_v_orden_de_pago_predis.fecha_registro, 
-            --pr_v_orden_de_pago_predis.tipo_pago, 
-            pr_v_orden_de_pago_predis.estado, 
-            pr_v_orden_de_pago_predis.objeto, 
-            --pr_v_orden_de_pago_predis.numero_relacion, 
-            --pr_v_orden_de_pago_predis.tipo_documento, 
-            --pr_v_orden_de_pago_predis.numero_documento,
-            --pr_v_orden_de_pago_predis.codigo_entidad, 
-            --pr_v_orden_de_pago_predis.digito_verificacion, 
-            --pr_v_orden_de_pago_predis.id_interno, 
-            --pr_v_orden_de_pago_predis.id_limay, 
-            --pr_v_orden_pago_regis_predis.rubro_interno,
-            pr_v_orden_pago_regis_predis.valor
-            --,    NVL(SUM(NVL(pr_v_orden_pago_regis_predis.valor, 0)), 0) total   --INTO mi_valor_op
-          --select */
-          from pr_v_orden_pago_regis_predis, 
-             pr_v_orden_de_pago_predis
-        where pr_v_orden_pago_regis_predis.vigencia =
-              pr_v_orden_de_pago_predis.vigencia
-          and pr_v_orden_pago_regis_predis.codigo_compania =
-              pr_v_orden_de_pago_predis.codigo_compania
-          and pr_v_orden_pago_regis_predis.codigo_unidad_ejecutora =
-              pr_v_orden_de_pago_predis.codigo_unidad_ejecutora
-          and pr_v_orden_pago_regis_predis.numero_registro =
-              pr_v_orden_de_pago_predis.numero_registro
-          and pr_v_orden_pago_regis_predis.numero_disponibilidad =
-              pr_v_orden_de_pago_predis.numero_disponibilidad
-          and pr_v_orden_pago_regis_predis.numero_orden =
-              pr_v_orden_de_pago_predis.numero_orden
-          and pr_v_orden_pago_regis_predis.consecutivo_orden =
-              pr_v_orden_de_pago_predis.consecutivo_orden
-          and pr_v_orden_pago_regis_predis.vigencia = una_vigencia
-          and pr_v_orden_pago_regis_predis.codigo_compania = una_entidad
-          and pr_v_orden_pago_regis_predis.codigo_unidad_ejecutora = una_unidad_ejecutora
-          and pr_v_orden_pago_regis_predis.rubro_interno in
-          --between  1387 and 1390 en 20025. between 1831 and 1834 en 2026--:rubro_interno
-          (select interno_rubro
-            from pr_v_rubros
-            where vigencia= una_vigencia
-            and descripcion in ('Aportes a la seguridad social en pensiones públicas',
-            'Aportes a la seguridad social en pensiones privadas',
-            'Aportes a la seguridad social en salud pública',
-            'Aportes a la seguridad social en salud privada')
-            )
-          and TO_CHAR(pr_v_orden_de_pago_predis.fecha_registro, 'YYYY') = una_vigencia
-          and TO_NUMBER(TO_CHAR(pr_v_orden_de_pago_predis.fecha_registro, 'MM')) =
-              TO_NUMBER(un_mes)
-          and pr_v_orden_de_pago_predis.ESTADO <> 'ANULADO') op
-      where rra.scompania=206
-      and rra.vigencia=op.vigencia
-      and rra.scompania= op.codigo_compania
-      and op.codigo_unidad_ejecutora = '01'
-      and rra.vigencia=op.vigencia
-      and instr(op.objeto,'[RA = '||rra.nro_ra||']',1) > 1 -- --ej:  '[RA = 2]'
-      and rra.tipo_ra=2
-      and rra.ntipo_nomina=0   ---no se tienen en cuenta nominas adicionales, es decir con valor 1
-      ;
+   ----pendiente declarar cursor aqui.
 
     valor_aportes_empleado_mes  number;
-    mes_aportes                 number;
+    mi_mes_aportes                 number;
+    cur_val_aportes_empleado_mes SYS_REFCURSOR;
+    mi_nombre_rubro     varchar2(100) := 'Sueldo básico';
+    mi_interno_rubro     number := 1804;
+    --v_reg_val_aporte            rec_val_aporte;
   begin
+    begin
+      select interno_rubro
+      into mi_interno_rubro
+      from pr_v_rubros
+      where descripcion = 'mi_nombre_rubro'
+      and vigencia       = una_vigencia;
+    exception
+      when others then
+        mi_interno_rubro := 1804;
+    end;
     valor_aportes_empleado_mes:=0;
     --Consulta si en el mes se presenta la RA de aportes. Excluir las RA adicionales en nómina.
-    open cur_val_aportes_empleado_mes;
+    cur_val_aportes_empleado_mes := fn_obtener_cursor_aportesemp_mes(una_vigencia, una_entidad, una_unidad_ejecutora, un_mes);
     loop
-      fetch cur_val_aportes_empleado_mes into mes_aportes;
-      valor_aportes_empleado_mes := valor_aportes_empleado_mes + Ogt_Fn_aportespagemp_Mes(una_vigencia, una_entidad, una_unidad_ejecutora, mes_aportes, un_rubro_interno); 
+      fetch cur_val_aportes_empleado_mes into mi_mes_aportes;
       exit when cur_val_aportes_empleado_mes%notfound;
+      --mes_aportes := v_reg_val_aporte.mes_aportes_empleado;
+      valor_aportes_empleado_mes := valor_aportes_empleado_mes + Ogt_Fn_aportesemp_Mes(una_vigencia, una_entidad, una_unidad_ejecutora, mi_mes_aportes, un_rubro_interno); 
     end loop;
     close cur_val_aportes_empleado_mes;
     return (valor_aportes_empleado_mes);
@@ -242,7 +258,9 @@ create or replace PACKAGE BODY     Ogt_Pk_Predis IS
                              un_mes               NUMBER,
                              un_rubro_interno     NUMBER) RETURN NUMBER IS
   --INI GLP2025002642
-  valor_aportes_empleado_mes  NUMBER := 0;   
+  valor_aporte_empleado_mes  NUMBER := 0;  
+  valor_aporte_empleado_pagmes  NUMBER := 0; 
+  fecha_inicio_cud          DATE;
   --FIN GLP2025002642                          
   BEGIN
     -- 18-08-2004. Sergio.
@@ -286,16 +304,25 @@ create or replace PACKAGE BODY     Ogt_Pk_Predis IS
        AND TO_CHAR(B.FECHA_APROBACION, 'YYYY') = TO_CHAR(una_vigencia)
        AND NVL(A.VALOR_REGISTRO, 0) > mi_valor_cero;
 
-    --INI GLP2025002642
-    if to_date('01/'||un_mes||'/'||una_vigencia,'dd/mm/yyyy') >= to_date('01/04/2026','dd/mm/yyyy') then
-      valor_aportes_empleado_mes := Ogt_Fn_aportesemp_Mes(una_vigencia, una_entidad, una_unidad_ejecutora, un_mes, un_rubro_interno);  
+    --INI GLP2025002642 Alineación CUD
+    --01/04/2025 fecha en que se implementó CUD en Foncep 
+    fecha_inicio_cud := to_date(nvl(shd_pg_bintablas.fn_buscar_rdf('FECHA_INICIO','NOMINA','CUD','01/01/2026'),'20250401'),'YYYYMMDD');
+    if to_date('01/'||un_mes||'/'||una_vigencia,'dd/mm/yyyy') >= fecha_inicio_cud then
+      valor_aporte_empleado_mes := Ogt_Fn_aportesemp_Mes(una_vigencia, una_entidad, una_unidad_ejecutora, un_mes, un_rubro_interno);  
+      --1.Se resta al rubro SUELDO BASICO los pagos de aportes del empleado de la nómina del mes
+      valor_aporte_empleado_pagmes := 0; --Ogt_Fn_aportespagemp_Mes(una_vigencia, una_entidad, una_unidad_ejecutora, un_mes, un_rubro_interno);  
+      --2. Se suma aportes de salud, aportes de pensión y aportes de solidaridad pagados el mes anterior, a los aportes del mes actual
+      --Pendiente, si afecta rubro difente a sueldo básico. En ogt_diligenciamiento cruzando centro de costo con anexos nomina se trae el tercero y luego validar si es fondo privado o publico,
+    else --El presupuesto funciona igual.
+        valor_aporte_empleado_mes := 0;  
+        valor_aporte_empleado_pagmes  := 0;
     end if;
-    --FIN GLP2025002642
 
     RETURN(NVL(mi_valor_op, 0) + NVL(mi_valor_ra, 0))
-    --INI GLP2025002642
-      - valor_aportes_empleado_mes        
-    --FIN GLP2025002642
+      --INI GLP2025002642 El valor a restar o a sumar o restar al rubro aplica si el rubro corresponde a la descripción
+      - valor_aporte_empleado_mes      --Resta lo liquidado pero no pagado
+      + valor_aporte_empleado_pagmes   --Suma lo liquidado y pagado en el mes
+      --FIN GLP2025002642 
     ;
   END OGT_FN_VALOR_ACUM;
 

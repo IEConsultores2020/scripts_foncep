@@ -1,3 +1,29 @@
+---------ini privs
+
+select * from dba_roles
+;
+
+select * from dba_role_privs
+where GRANTEE --like 'OGT%' 
+    = 'YDARBOLEDA' AND GRANTED_ROLE like 'OGT%'
+;
+
+SELECT * FROM dictionary
+where table_name like '%PRIVS%';
+
+select 'GRANT ' || privilege || ' ON ' || 'OGT_PK_PREDIS'|| ' TO ' || grantee ||';' AS grant_statement
+from USER_TAB_PRIVS
+where table_name like 'OGT_PK_PREDIS'
+AND grantee in (select role from dba_roles);
+
+select *
+from user_tab_privs
+where grantor = 'YDARBOLEDA';
+
+
+
+---------fin privs
+
 
    alter user lm2 identified by "#FonC3p2026";
    ALTER USER smithj IDENTIFIED BY "MyNewPassword123#";
@@ -22,14 +48,10 @@ SELECT distinct
     a.column_name AS child_column,
     c.table_name AS parent_table,
     c.column_name AS parent_column
-FROM
-    all_cons_columns a
-JOIN
-    all_constraints b ON a.owner = b.owner AND a.constraint_name = b.constraint_name
-JOIN
-    all_cons_columns c ON b.r_owner = c.owner AND b.r_constraint_name = c.constraint_name
-WHERE
-    a.constraint_name = 'PK_SHD_TERCERO'
+FROM all_cons_columns a
+JOIN all_constraints b ON a.owner = b.owner AND a.constraint_name = b.constraint_name
+JOIN all_cons_columns c ON b.r_owner = c.owner AND b.r_constraint_name = c.constraint_name
+WHERE a.constraint_name = 'PK_SHD_TERCERO'
     AND a.owner = 'SHD';
 
 
@@ -55,3 +77,9 @@ ORDER BY BLOCKING_SESSION;
 SELECT sid, event, p1raw AS object_handle 
 FROM v$session 
 WHERE username = 'SL';
+
+---
+SELECT owner, object_name, object_type, status 
+  FROM all_objects 
+ WHERE object_name = 'PR_V_ORDEN_DE_PAGO_PREDIS';
+

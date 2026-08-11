@@ -1,5 +1,6 @@
-create or replace PACKAGE     Ogt_Pk_Predis AS
+create or replace PACKAGE Ogt_Pk_Predis AS
 --GLP2025002642 20260704 Alinear predis CUD.
+
 --AAGUIRRE
 --VARIABLES GLOBALES
   mi_tipo_documento_op VARCHAR2(2) :='OP';
@@ -22,11 +23,26 @@ create or replace PACKAGE     Ogt_Pk_Predis AS
   mi_valor_ar          NUMBER(20,2) := 0;
   --
   --INI GLP2025002642
+  FUNCTION fn_obtener_cursor_aportesemp_mes (
+    una_vigencia         NUMBER,
+    una_entidad          VARCHAR2,
+    una_unidad_ejecutora VARCHAR2,
+    un_mes               NUMBER)
+    RETURN SYS_REFCURSOR;
+
   FUNCTION Ogt_Fn_aportesemp_Mes( una_vigencia         NUMBER,
                                   una_entidad          VARCHAR2,
                                   una_unidad_ejecutora VARCHAR2,
                                   un_mes               NUMBER,
                                   un_rubro_interno     NUMBER) RETURN NUMBER;
+
+  FUNCTION Ogt_Fn_aportespagemp_Mes(
+    una_vigencia         NUMBER,
+    una_entidad          VARCHAR2,
+    una_unidad_ejecutora VARCHAR2,
+    un_mes               NUMBER,
+    un_rubro_interno     NUMBER) RETURN NUMBER ;                   
+    
   --FIN GLP2025002642  
 
 

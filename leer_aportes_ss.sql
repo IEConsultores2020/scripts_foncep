@@ -16,8 +16,8 @@ SELECT co_dv.devengado,
                FROM rh_reportes_nomina a
               WHERE a.nFuncionario = hino_dv.nFuncionario
                 AND a.nHash = 812839052
-                AND to_date(a.dInicioPeriodo, 'YYYYMMDD') <= '31/JAN/26'
-                AND to_date(a.dFinalPeriodo, 'YYYYMMDD') >=  '01/JAN/26'
+                AND to_date(a.dInicioPeriodo, 'YYYYMMDD') <= '31/JUL/26'
+                AND to_date(a.dFinalPeriodo, 'YYYYMMDD') >=  '01/JUL/26'
                 AND USER_SESS = USERENV('SESSIONID')) OR
            hino_dv.ntipoconcepto in (2, 3))
        AND hino_dv.nesnovedad = 0
@@ -25,8 +25,8 @@ SELECT co_dv.devengado,
        AND hino_dv.ncorrida_interna = 0
        AND hino_dv.ndCampo0 <> 0
        AND hino_dv.ncorrida = 0
-       AND to_date(hino_dv.dinicioperiodo, 'YYYYMMDD') >= '01/JAN/26' ----una_fecha_inicial
-       AND to_date(hino_dv.dfinalperiodo, 'YYYYMMDD') <= '01/JAN/26' ----una_fecha_final
+       AND to_date(hino_dv.dinicioperiodo, 'YYYYMMDD') >= '01/JUL/26' ----una_fecha_inicial
+       AND to_date(hino_dv.dfinalperiodo, 'YYYYMMDD') <= '01/JUL/26' ----una_fecha_final
        AND (co_dv.devengado = 'N')
        AND instr('5', tipo_funcionario) > 0
           --ADD
@@ -47,3 +47,6 @@ SELECT co_dv.devengado,
               hino_dv.ndcampo6,
               hino_dv.ndcampo3,
               RTRIM(LTRIM(hino_dv.sactoadmi));
+
+---VICTOR MANUEL CASANOVA
+              

@@ -246,4 +246,24 @@ and unidad_ejecutora='01'
 order by fecha_desde, fecha_hasta, fecha_aprobacion
 
 grant select on rh_lm_ra to ogt_comun
+grant select on rh_lm_ra to ogt
+
+
+
+PK_SL_INTERFAZ_OBGET_CP
+;
+
+select 
+    ogt_pk_predis.Ogt_Fn_aportesemp_Mes(2026, '206', '01', 1, 1804) Ogt_Fn_aportesemp_Mes ,
+    --ogt_pk_predis.Ogt_Fn_aportespagemp_Mes(2026, '206', '01', 1, 1804) Ogt_Fn_aportespagemp_Mes 
+from dual;
+
+
+select * --descripcion
+from pr_v_rubros
+--  where descripcion like '%Sueldo%sico%'
+where  interno_rubro = 1804
+and vigencia       = 2026;
+
+-----
 
