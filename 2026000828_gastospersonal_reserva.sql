@@ -112,7 +112,8 @@ select
                           :p_unidad,
                           ma.numero_registro,
                           ma.numero_disponibilidad,
-                          de.rubro_interno,                                               to_date(to_char('31-12-'||(:p_vigencia-1)),'dd-mm-yyyy'))vsaldo
+                          de.rubro_interno,
+                          to_date(to_char('31-12-'||(:p_vigencia-1)),'dd-mm-yyyy')) vsaldo
       from
         pr_compromisos                  co,
         pr_registro_presupuestal        ma          ,
@@ -192,10 +193,6 @@ pr_1.codigo_unidad_ejecutora = :p_unidad and
 pr_1.vsaldorp <> 0 and
 pr_nivel1.codigo = :p_nivel1 
 ;
-
-select *
-from pr_rubro
-wh
 
 select 
 pk_pr_consolidados_reservas.fn_pre_girosmes(:vigencia ,:compania ,:unidad_ejecutora , :p_mes ,pr_1.interno ) total_giros_mes,
@@ -295,6 +292,7 @@ pk_pr_consolidados_reservas.fn_pre_girosmes(:vigencia ,:compania ,:unidad_ejecut
                             ma.numero_disponibilidad,
                             de.rubro_interno,
                             to_date(to_char('31-12-'||(:p_vigencia-1)),'dd-mm-yyyy'))   > 0
+;
 
  select * from 
 --update 
@@ -302,4 +300,203 @@ ogt_relacion_autorizacion
 --set estado =  '00000000001'      ---00011100000 RADICADA
 where vigencia||'-'||consecutivo in  ('2025-25','2026-5','2026-1') 
 --and tipo_ra = 2
- for update;
+ --for update
+ ;
+
+ select *
+ from rh_lm_ra
+ ; 
+ 
+ ---20260812
+/* jun-30	 Fecha Reporte generado 	
+	 Rubros que no hacen parte de las reservas 	 
+              CD RP   Nombre                            Beneficiario                  Tipo
+	 2-3-02 	  9 9     Servicios de gestión documental   PROCESOS Y SERVICIOS S.A.S.   CPS
+            157 126 
+            160 150 
+            192 173 
+		
+		
+            201 194 
+            277 308 
+            271 314  
+            203 363 
+            225 245 
+            272 385 
+		
+	 2-1-01 	 39 310 
+	          39  400 
+            255 311 
+            278 401 
+             39 293 
+             39 310 
+            39 400 
+            278 401 
+*/
+ 
+ select * from 
+--update 
+ogt_relacion_autorizacion  
+--set estado =  '00000000001'      ---00011100000 RADICADA
+where vigencia=2025
+and numero_compromiso=9
+;
+-----Consulto interno de rubro en caso de alguna confusión.
+select *
+from pr_v_rubros
+where vigencia in (2025,2026)
+and (descripcion like '%Servi%gest%docu%'
+or descripcion like '%Servicios%admin%bien%inmu%no%res%')
+order by vigencia
+;
+
+
+select *
+from pr_comun.pr_registro_presupuestal
+where /*numero_disponibilidad||'-'||numero_registro='39-293'
+and*/ vigencia=2025;
+
+select * --tipo_documento||'-'||unidad_ejecutora||'-'||entidad
+from ogt_relacion_autorizacion
+where tipo_documento||'-'||unidad_ejecutora||'-'||entidad||'-'||vigencia in 
+  (
+  select * --distinct tipo_documento||'-'||unidad_ejecutora||'-'||entidad||'-'||vigencia
+  from ogt_registro_presupuestal
+  where disponibilidad='39' --||'-'||registro='39-293'
+  and vigencia=2025
+  );
+
+
+--Corrección RA 16 2025
+--Deshabilita el trigger que no permite actualizar cuando la RA está aprobado.
+ALTER TRIGGER OGT.OGT_TRG_ACTUALIZA_RP DISABLE;
+
+
+select valor_registro
+from ogt_registro_presupuestal
+where rubro_interno=1547
+and unidad_ejecutora='01'
+and vigencia=2025
+and consecutivo=16; -- for update
+--487350435 valor actual
+--Se suman 5854933 como resultado 493205368
+
+update ogt_registro_presupuestal
+set valor_registro=valor_registro+5854933
+where rubro_interno=1547
+and unidad_ejecutora='01'
+and vigencia=2025
+and consecutivo=16;
+
+commit;
+--Se habilita el trigger.
+ALTER TRIGGER OGT.OGT_TRG_ACTUALIZA_RP ENABLE;
+
+
+--Pendiente RA de nómina 27, Opget 28. 15.216.590 por aprobar
+--Verificar anulación parcial 2025, Disponibilidad 12 Registro 11 Compromiso 1
+
+
+--Se validan los RPs anulados para encontrar un faltante de 404524
+SELECT 
+       PR_RP_ANULADOS.VALOR_ANULADO,
+       PR_RP_ANULADOS.NUMERO_OFICIO,
+       
+  FROM PR_RP_ANULADOS, PR_COMPROMISOS, PR_RUBRO
+ WHERE ((PR_COMPROMISOS.VIGENCIA = PR_RP_ANULADOS.VIGENCIA) AND
+       (PR_COMPROMISOS.CODIGO_COMPANIA = PR_RP_ANULADOS.CODIGO_COMPANIA) AND
+       (PR_COMPROMISOS.CODIGO_UNIDAD_EJECUTORA =
+       PR_RP_ANULADOS.CODIGO_UNIDAD_EJECUTORA) AND
+       (PR_COMPROMISOS.NUMERO_REGISTRO = PR_RP_ANULADOS.NUMERO_REGISTRO))
+   AND PR_RUBRO.INTERNO = PR_RP_ANULADOS.RUBRO_INTERNO
+   AND PR_RUBRO.VIGENCIA = PR_RP_ANULADOS.VIGENCIA
+   AND PR_RP_ANULADOS.VIGENCIA=2025
+;
+
+WITH vals (id, van) AS (
+SELECT PR_RP_ANULADOS.NUMERO_OFICIO ID,
+      PR_RP_ANULADOS.VALOR_ANULADO VAN
+  FROM PR_RP_ANULADOS, PR_COMPROMISOS, PR_RUBRO
+ WHERE ((PR_COMPROMISOS.VIGENCIA = PR_RP_ANULADOS.VIGENCIA) AND
+       (PR_COMPROMISOS.CODIGO_COMPANIA = PR_RP_ANULADOS.CODIGO_COMPANIA) AND
+       (PR_COMPROMISOS.CODIGO_UNIDAD_EJECUTORA =
+       PR_RP_ANULADOS.CODIGO_UNIDAD_EJECUTORA) AND
+       (PR_COMPROMISOS.NUMERO_REGISTRO = PR_RP_ANULADOS.NUMERO_REGISTRO))
+   AND PR_RUBRO.INTERNO = PR_RP_ANULADOS.RUBRO_INTERNO
+   AND PR_RUBRO.VIGENCIA = PR_RP_ANULADOS.VIGENCIA
+   AND PR_RP_ANULADOS.VIGENCIA=2025
+   ), 
+sums (id, van, subset_sum) AS (
+    SELECT vals.*, SUM(van) OVER (ORDER BY id) FROM vals
+)
+SELECT MIN(subset_sum) KEEP (DENSE_RANK FIRST ORDER BY ABS(404524 - subset_sum)) AS closest_match
+FROM sums;
+;
+
+SELECT *
+FROM
+  (SELECT PR_RP_ANULADOS.NUMERO_OFICIO ID,
+        PR_RP_ANULADOS.VALOR_ANULADO VAN,
+        CASE 
+          WHEN PR_RP_ANULADOS.VALOR_ANULADO <=  404564
+            THEN 404564 - PR_RP_ANULADOS.VALOR_ANULADO
+          ELSE 999999
+        END RESULT
+    FROM PR_RP_ANULADOS, PR_COMPROMISOS, PR_RUBRO
+  WHERE ((PR_COMPROMISOS.VIGENCIA = PR_RP_ANULADOS.VIGENCIA) AND
+        (PR_COMPROMISOS.CODIGO_COMPANIA = PR_RP_ANULADOS.CODIGO_COMPANIA) AND
+        (PR_COMPROMISOS.CODIGO_UNIDAD_EJECUTORA =
+        PR_RP_ANULADOS.CODIGO_UNIDAD_EJECUTORA) AND
+        (PR_COMPROMISOS.NUMERO_REGISTRO = PR_RP_ANULADOS.NUMERO_REGISTRO))
+    AND PR_RUBRO.INTERNO = PR_RP_ANULADOS.RUBRO_INTERNO
+    AND PR_RUBRO.VIGENCIA = PR_RP_ANULADOS.VIGENCIA
+    AND PR_RP_ANULADOS.VIGENCIA=2025)
+WHERE result<999999
+;
+
+SELECT PR_RP_ANULADOS.NUMERO_OFICIO ID,
+        PR_RP_ANULADOS.VALOR_ANULADO VAN,
+        MOD(PR_RP_ANULADOS.VALOR_ANULADO,10) MOD10
+    FROM PR_RP_ANULADOS, PR_COMPROMISOS, PR_RUBRO
+  WHERE ((PR_COMPROMISOS.VIGENCIA = PR_RP_ANULADOS.VIGENCIA) AND
+        (PR_COMPROMISOS.CODIGO_COMPANIA = PR_RP_ANULADOS.CODIGO_COMPANIA) AND
+        (PR_COMPROMISOS.CODIGO_UNIDAD_EJECUTORA =
+        PR_RP_ANULADOS.CODIGO_UNIDAD_EJECUTORA) AND
+        (PR_COMPROMISOS.NUMERO_REGISTRO = PR_RP_ANULADOS.NUMERO_REGISTRO))
+    AND PR_RUBRO.INTERNO = PR_RP_ANULADOS.RUBRO_INTERNO
+    AND PR_RUBRO.VIGENCIA = PR_RP_ANULADOS.VIGENCIA
+    AND PR_RP_ANULADOS.VIGENCIA=2025
+    AND MOD(PR_RP_ANULADOS.VALOR_ANULADO,10)=7;
+
+select *
+from ogt_relacion_autorizacion
+where vigencia||'-'||tipo_documento||'-'||consecutivo 
+in (
+  select distinct i.vigencia||'-'||tipo_documento||'-'||consecutivo
+  from ogt_imputacion i
+  join pr_v_rubros r on i.vigencia=r.vigencia
+  and r.interno_rubro=i.rubro_interno 
+  and r.descripcion like '%Servicios de Seguro Sociales de Riesgos Laborales%'
+ -- and valor_bruto >0 and valor_bruto <= 150300
+  and i.vigencia=2025
+)
+order by tipo_documento, consecutivo
+;
+
+select c.*
+from pr_compromisos c
+where c.vigencia=2025 and c.codigo_unidad_ejecutora='01'
+;
+
+select *
+from pr_registro_presupuestal rp
+where rp.vigencia=2025 and rp.codigo_unidad_ejecutora='01'
+;
+
+select rd.*
+from pr_registro_disponibilidad rd
+join pr_v_rubros r on rd.rubro_interno=r.interno_rubro and
+  rd.vigencia=r.vigencia and rd.vigencia=2025 and rd.codigo_unidad_ejecutora='01'
+  and r.descripcion like '%Servicios de Seguro Sociales de Riesgos Laborales%'
+  ;
+

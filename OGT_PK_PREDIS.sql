@@ -1,4 +1,5 @@
 create or replace PACKAGE BODY     Ogt_Pk_Predis IS
+--GLP2025002642 20260704 Alinear predis CUD.
 
 FUNCTION fn_obtener_cursor_aportesemp_mes (
     una_vigencia         NUMBER,

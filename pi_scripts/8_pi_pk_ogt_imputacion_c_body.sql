@@ -291,6 +291,7 @@ create or replace package body pk_ogt_imputacion as
       mi_cuba_numero        varchar2(12) := '482800043630';
       mi_tipo_soporte       varchar2(3) := 'NCR';
       mi_id_cuenta_cobro10  varchar2(15);  --Se recorta a 10 caracateres si es mayor
+      mi_num_docs           number := 0; --Para contar el numero de documento existente
    begin
       --Si no encuentra la entidad
       if mi_entidad is null then
@@ -357,8 +358,20 @@ create or replace package body pk_ogt_imputacion as
                      seguimiento(p_resp);      
                   end if;
                end if;
-               mi_numero_documento := pk_secuencial.fn_traer_consecutivo(
-                  'OPGET', 'DOC_NUM', '2002', '000' ) + 1;
+               --loop --20261029 se verifica y garantiza que no exista el documento
+                  mi_numero_documento := pk_secuencial.fn_traer_consecutivo('OPGET', 'DOC_NUM', '2002', '000' ) + 1;
+                  
+               /*   begin
+                     select count(1) into mi_num_docs from ogt_documento
+                     where numero=mi_numero_documento and tipo=mi_tipo_documento;      
+                  exception
+                     when others then
+                        mi_num_docs :=0;
+                  end;
+                  seguimiento('OPGET->RD>Consecutivo documento: '||mi_numero_documento);
+                  exit when mi_num_docs = 0;
+               end loop;
+               */
                --Crea documento
                if mi_numero_documento is null then
                   p_resp := 'OPGET->RD>No fue posible obtener el consecutivo (DOC_NUM) para registrar documento '
@@ -407,17 +420,27 @@ create or replace package body pk_ogt_imputacion as
                               mi_vigencia,
                               p_acta_numero,
                               p_acta_tipo );
-                     ogt_pk_ingreso.pr_insertar_tercero(p_rec_pago.id_banco);
                      p_procesado := true;
                   exception
                      when others then
                         p_resp :='OPGET->RD>No ingresó documento para cuenta de cobro:'
-                                 || mi_rec_cuenta_cobro.id_cuenta_cobro|| '. '|| sqlerrm;
+                                 || mi_rec_cuenta_cobro.id_cuenta_cobro|| '. Binconsecutivo OPGET-DOC_CUM-2002: '||mi_numero_documento||'. sqlerrm' ||sqlerrm;
                         seguimiento(p_resp);
                         p_procesado := false;
                         exit;
                   end;
+                  begin
+                     ogt_pk_ingreso.pr_insertar_tercero(p_rec_pago.id_banco);
+                   exception
+                     when others then
+                        p_resp :='OPGET->RD>Después de crear el tercero no insertó el terceros para la cuenta de cobro '|| mi_rec_cuenta_cobro.id_cuenta_cobro;
+                        seguimiento(p_resp);
+                        p_procesado := false;
+                        exit;
+                  end ;
                end if; --if mi_numero_documento is null then
+
+
 
                --Inserción en la tabla detalle documento
                if p_procesado = true then
@@ -518,6 +541,7 @@ create or replace package body pk_ogt_imputacion as
       mi_cur_liquidacion    sys_refcursor;
       mi_id_ingreso_capital number;
       mi_id_ingreso_interes number;
+      mi_id_causa_ingreso_interes number;
       mi_det_pen_num        number;
       mi_situacion_fondos   varchar2(1) := 'S';
       mi_unidad_ejecutora   varchar2(2) := '02';
@@ -567,7 +591,7 @@ create or replace package body pk_ogt_imputacion as
                     p_doc_numero,
                     p_doc_tipo,
                     p_ter_id_origen,
-                    p_ter_id_recaudador,
+                    null,
                     null,
                     p_vigencia_ingreso,
                     p_info_numero,
@@ -585,7 +609,7 @@ create or replace package body pk_ogt_imputacion as
          --********************************
          --Registro intereses intereses
          if p_valor_interes > 0 then
-            --Recaudo de intereses
+            --Recaudo de intereses mi_concepto_interes
             insert into ogt_detalle_documento (
                cote_id,
                valor,
@@ -611,7 +635,7 @@ create or replace package body pk_ogt_imputacion as
                         p_doc_numero,
                         p_doc_tipo,
                         p_ter_id_origen,
-                        p_ter_id_recaudador,
+                        null,
                         null,
                         p_vigencia_ingreso,
                         p_info_numero,
@@ -624,6 +648,45 @@ create or replace package body pk_ogt_imputacion as
                         p_codigo_interno,
                         'PL' --por legalizar
                         );
+            --Causa de intereses mi_concepto_causa_interes 
+            insert into ogt_detalle_documento (
+               cote_id,
+               valor,
+               ter_id_destino,
+               doc_numero,
+               doc_tipo,
+               ter_id_origen,
+               ter_id_recaudador,
+               ter_id_entidad_origen,
+               vigencia_ingreso,
+               info_numero,
+               fecha_recaudo,
+               codigo_interno,
+               valor_base_impuestos,
+               unidad_ejecutora_origen,
+               porcentaje,
+               centro_costo,
+               numero_sisla,
+               estado_sisla
+            ) values ( mi_concepto_causa_interes,
+                        p_valor_interes,
+                        p_ter_id_destino,
+                        p_doc_numero,
+                        p_doc_tipo,
+                        p_ter_id_origen,
+                        null,
+                        null,
+                        p_vigencia_ingreso,
+                        p_info_numero,
+                        p_fecha_recaudo,
+                        p_id_cuenta_cobro,
+                        null,
+                        null,
+                        0,
+                        p_centro_costo,
+                        p_codigo_interno,
+                        'PL' --por legalizar
+                        );                        
             --insertar los id de los terceros en la tabla de terceros de ingresos
             if ( p_ter_id_origen is not null ) then
                ogt_pk_ingreso.pr_insertar_tercero(p_ter_id_origen);
@@ -740,7 +803,7 @@ create or replace package body pk_ogt_imputacion as
                            un_reconocimiento       => 0
                         );
                         if mi_id_ingreso_interes is null then
-                           p_resp := 'OPGET->RDD>No registrar ingreso de la cuenta de cobro '
+                           p_resp := 'OPGET->RDD>No registra ingreso de la cuenta de cobro '
                                     || p_id_cuenta_cobro;
                            seguimiento(p_resp);
                            p_procesado := false;
@@ -762,9 +825,10 @@ create or replace package body pk_ogt_imputacion as
                               mi_id_tercero,
                               mi_concepto_interes,
                               mi_rec_liquidacion.valor_interes );
+                        --Registro el concepto de causacion de interes mi_concepto_causa_interes
                         end if; --if mi_id_ingreso_interes is null then
-                        --Crear causacion interes
-                        mi_id_ingreso_interes := ogt_pk_ingreso.fn_crear(
+                        --Crear el ingreso de causacion interes
+                        mi_id_causa_ingreso_interes := ogt_pk_ingreso.fn_crear(
                            una_vigencia            => p_vigencia_ingreso,
                            una_fecha_legalizacion  => mi_fecha_pago, --sysdate,
                            una_fecha_consignacion  => mi_fecha_pago, --sysdate,
@@ -788,7 +852,7 @@ create or replace package body pk_ogt_imputacion as
                            una_forma_recaudo       => 'E',
                            un_reconocimiento       => 0
                         );
-                        if mi_id_ingreso_interes is null then
+                        if mi_id_causa_ingreso_interes is null then
                            p_resp := 'OPGET->RDD>No registrar causacion interes de la cuenta de cobro '
                                     || p_id_cuenta_cobro;
                            seguimiento(p_resp);
@@ -806,7 +870,7 @@ create or replace package body pk_ogt_imputacion as
                            ) values ( --mi_det_pen_num,
                               p_doc_numero,
                               p_doc_tipo,
-                              mi_id_ingreso_interes,
+                              mi_id_causa_ingreso_interes,
                               p_ter_id_origen,
                               mi_id_tercero,
                               mi_concepto_causa_interes,
@@ -1329,6 +1393,8 @@ create or replace package body pk_ogt_imputacion as
       when others then
          p_resp := sqlerrm;
    end pr_traer_estado_encabezado;
+
+
 
 end pk_ogt_imputacion;
 /

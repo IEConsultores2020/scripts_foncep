@@ -1,0 +1,3 @@
+--pi_ogt_sinonimos_publicos.sql
+--connect as sys
+CREATE OR REPLACE PUBLIC SYNONYM OGT_DETALLE_PENSIONADO FOR OGT.OGT_DETALLE_PENSIONADO;

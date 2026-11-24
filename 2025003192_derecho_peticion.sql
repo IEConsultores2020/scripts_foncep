@@ -1,4 +1,10 @@
---EXCEL PENSIONES
+/*
+Buenos días, comedidamente se solicita generar la información de PERNO, de acuerdo con el siguiente detalle:
+1. Se solicita archivo excel con la información detallada de los devengados por las personas relacionadas, indicando los valores pagados por cada concepto, adicionalmente relacionar y discriminar los conceptos de prestaciones sociales durante el periodo comprendido entre el 1o de enero de 2018 al 31 de julio de 2025.
+2. Se solicita reporte con la información de las personas relacionadas con el valor de IBL registrado para el cálculo de seguridad social en pensiones durante el periodo comprendido entre el 1o de enero de 2018 al 31 de julio de 2025.
+Así mismo se adjunta archivo excel con la relación de los funcionarios solicitados y la estructura de los reportes.
+*/
+
 select sa.descripcion ent_salud, pe.descripcion ent_pension,
     psc.dependencia, psc.centro_costo, cargo cod_cargo, nom_cargo, grado, 
     p.numero_identificacion cedula,

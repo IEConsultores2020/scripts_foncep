@@ -1,16 +1,15 @@
-select distinct tabla
-  from auditoria
- where tabla like 'SL_COMPANIA%' --'RH_T_LM_VALORES'
-   and extract(year from fecha) = 2026
-   order by codigo desc
-   and columna = 'TIPO_RA'
-   and valor_nuevo=
-   and ( valor_ant is not null
-    or valor_nuevo is not null )
---and operacion not in ('INSERTAR','ELIMINAR')
- group by operacion
- order by fecha desc;
-SELECT * FROM OGT_RELACION_AUTORIZACION
+select auditoria.sistema, TO_CHAR(auditoria.fecha, 'DD/MM/YYYY HH24:MI:SS') fechahora, auditoria.columna, auditoria.operacion, auditoria.valor_ant, auditoria.valor_nuevo  
+from auditoria
+where codigo in
+   ( select codigo
+      from auditoria
+    where tabla like 'RH_DESCUENTOS%' --'RH_T_LM_VALORES'
+      and extract(year from fecha) = 2026
+      and extract(month from fecha) = 10
+      and columna in ('FUNCIONARIO','TIPO')
+      and valor_ant in ('595','LIBRANZA')
+   )
+order by codigo asc;
 
 --200250811 8PM  52141 registros
 --20250812 11AM  52145 crea table 2025012

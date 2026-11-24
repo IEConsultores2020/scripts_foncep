@@ -1,50 +1,66 @@
---Visto desde RH
-SELECT b.codigo_presupuesto,
- c.descripcion, c.codigo_maestro, SUM(a.valor) valor
---select c.*
-  FROM rh_t_lm_valores a, rh_lm_cuenta b, rh_lm_centros_costo c
- WHERE b.stipo_funcionario = a.stipofuncionario
-   AND b.sconcepto = a.sconcepto
-   AND b.cc = c.codigo
-   AND TO_CHAR(periodo, 'YYYYMMDD') = 20260430 	
-   									--20260531 --TO_CHAR(:P_FECHA_FIN,'YYYYMMDD')
-   AND a.ntipo_nomina 				= 1 		
-   									          --0
-   AND a.nro_ra         		= 10        
-   	--								        --12
-   AND b.scompania 		= 206
-   AND b.tipo_ra 		= 1 --:P_TIPO_RA
-   AND b.grupo_ra		= '5' -- IN (:P_GRUPO_RA)
-   AND b.ncierre 		= 1
-   AND dfecha_inicio_vig <= '01-MAY-26'   --'01-APR-26' --:P_FECHA_FIN
-   AND (dfecha_final_vig >= '31-MAY-26'   --'30-APR-26' /*:P_FECHA_FIN*/
-       OR dfecha_final_vig IS NULL)
-   AND c.codigo_maestro in ('2-4-24-01-01',  -- APORTES A FONDOS PENSIONALES        2
-                            '2-4-24-02-01',  -- FONDO DE SOLIDARIDAD                4
-                            '2-4-24-02-01')  ---APORTES A SEGURIDAD SOCIAL EN SALUD 3
- GROUP BY b.codigo_presupuesto, 
-          c.descripcion,
-          c.codigo_maestro
---ORDER BY c.codigo_maestro
-;
-
---Consulta desde OPGET
-select CODIGO_CENTRO_COSTOS, SUM(APORTE_EMPLEADO)
-  from ogt_anexo_nomina
- where vigencia = 2026
-   and consecutivo = 10
-   AND CODIGO_CENTRO_COSTOS IN (5,      --APORTE SALUD
-                                1285,   --APORTE REGIMEN SOLIDARIDAD
-                                1267    --APORTE PENSION
-                                )
-group by codigo_centro_costos   
+--Validaciones del paquetes
+select 
+  :MES MES,
+  ogt_pk_predis.Ogt_Fn_aportesemp_Mes(
+    una_vigencia         => 2026,
+    una_entidad          => 206,
+    una_unidad_ejecutora => '01',
+    un_mes               => :MES,
+    un_rubro_interno     => 1804) APO_EMP_MES,
+  ogt_pk_predis.Ogt_Fn_aportespagemp_Mes(
+    una_vigencia         => 2026,
+    una_entidad          => 206,
+    una_unidad_ejecutora => '01',
+    un_mes               => :MES,
+    un_rubro_interno     => 1804) APOPAG_EMP_MES,
+  ogt_pk_predis.Ogt_Fn_Valor_Mes(
+    una_vigencia         => 2026,
+    una_entidad          => 206,
+    una_unidad_ejecutora => '01',
+    un_mes               => :MES,
+    un_rubro_interno     => 1804) PAG_MES,
+  ogt_pk_predis.OGT_FN_VALOR_ACUM(
+    una_vigencia          => 2026,
+    una_entidad          => 206,
+    una_unidad_ejecutora => '01',
+    un_mes               => :MES,
+    un_rubro_interno     => 1804) PAG_ACUM
+from dual   
 ;
 
 
-select codigo_centro_costos, cuenta_contable_entidad, valor
-from ogt_centro_costos
-where entidad=206
-  and vigencia = 2026
-  and extract(month from fecha_desde) =5
-  --and consecutivo=10
-  AND CODIGO_CENTRO_COSTOS IN (5, 1285, 1267)
+select *
+from pr_v_rubros
+where  vigencia=2026 and descripcion 
+    --like '%eldo%sico%'  ---Sueldo básico 1804
+    like '%Apor%alud%'    --Aportes a la seguridad social en salud pública  1833
+                          --Aportes a la seguridad social en salud privada  1834
+;
+/*
+ SELECT NVL(SUM(VALOR_REGISTRO), 0)
+      INTO mi_valor_ra*/
+    SELECT *
+      FROM OGT_REGISTRO_PRESUPUESTAL A, OGT_RELACION_AUTORIZACION B
+     WHERE A.VIGENCIA = B.VIGENCIA
+       AND A.ENTIDAD = B.ENTIDAD
+       AND A.UNIDAD_EJECUTORA = B.UNIDAD_EJECUTORA
+       AND A.TIPO_DOCUMENTO = B.TIPO_DOCUMENTO
+       AND A.CONSECUTIVO = B.CONSECUTIVO
+       AND A.RUBRO_INTERNO in
+            (select interno_rubro
+              from pr_v_rubros
+              where vigencia= :una_vigencia
+              and descripcion in ('Aportes a la seguridad social en pensiones públicas',
+              'Aportes a la seguridad social en pensiones privadas',
+              'Aportes a la seguridad social en salud pública',
+              'Aportes a la seguridad social en salud privada')
+            )
+       AND B.VIGENCIA = TO_CHAR(:una_vigencia)
+       AND B.ENTIDAD = :una_entidad
+       AND B.UNIDAD_EJECUTORA = :una_unidad_ejecutora
+       AND B.TIPO_DOCUMENTO = :mi_tipo_documento_ra
+       AND B.IND_APROBADO = :mi_valor_uno
+       AND SUBSTR(B.ESTADO, 4, 1) = :mi_estado_uno
+       AND TO_NUMBER(TO_CHAR(B.fecha_aprobacion, 'MM')) = :un_mes
+       AND TO_CHAR(B.FECHA_APROBACION, 'YYYY') = TO_CHAR(:una_vigencia)
+       AND NVL(A.VALOR_REGISTRO, 0) > :mi_valor_cero;

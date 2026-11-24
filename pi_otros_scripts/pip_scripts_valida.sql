@@ -33,219 +33,229 @@ select e.nro_referencia_pago,
 --Verifica si el acta ya fue creada
 select * 
 from  
---delete
 ogt_documento
 where tipo='ALE'
---and estado='AP'
 and unte_codigo='FINANCIERO'
-and numero in (58824)
-and numero_externo in ('2026000230') --,'2025000003','2025000012')
+--and numero in (58824)
+and numero_externo in ('2026000524','2026000525','2026000526')
 AND extract(year from fecha) IN (2026)
-
 ;
 
---Verifica si el documento fue creado
-select * /*ogt_documento.numero, ogt_documento.numero_legal, 
-          ogt_documento.numero, ogt_documento.tipo,
-          ogt_documento.fecha, ogt_documento.fecha_emision_titulo, 
-          ogt_documento.fecha_compra_titulo*/
+
+-->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+----Inicio verificaciones y borrado
+-->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+--Verifica ingreso
+select *
+from  
+-- delete
+ ogt_ingreso
+where --id=68375 and doc_numero='55608' 
+extract(year from fecha_consignacion)=2026
+and doc_numero||'-'||doc_tipo --in ('58824-XYZ')
+in
+  (select  doc_numero||'-'||doc_tipo
+    from ogt_detalle_documento 
+    where doc_numero||'-'||doc_tipo -- = '58824-XYZ' 
+    in
+        (
+        select numero_legal||'-'||tipo 
+            from ogt_documento
+        where numero_legal in --('2026000525') 
+          ( select numero --, numero_externo
+            from  ogt_documento
+            where tipo='ALE'
+            --and estado='AP'
+             and unte_codigo='FINANCIERO'
+             and extract(year from fecha)=2026
+             --and numero = '58824'
+            AND numero_externo = '2026000525' --in  ('2026000525','2026000525','2026000526') 
+          )
+            and tipo='XYZ'  
+            --and estado = 'AP'
+        )
+  )
+order by id desc
+;
+
+
+--OGT.INCU_DEIN_FK
+--INFO CUENTA DEPENDE
+--DEIN_CUCO_CODIGO, DEIN_ING_ID, DEIN_ID
+--CUCO_CODIGO, ING_ID, ID
+
+select *
 from 
---delete
-ogt_documento
-where bin_tipo_cuenta = 'FD'
-and extract(year from fecha) IN (2026)
-and numero_legal in --('58824')
-     ( select numero
-      from --DELETE 
-      ogt_documento
-      where tipo='ALE'
-      and estado='AP'
-      and unte_codigo='FINANCIERO'
-      AND numero_externo in ('2026000230'))
-  and tipo='XYZ'
-  and estado = 'AP'
---and fecha = SYSDATE
+-- delete
+ogt_info_cuenta
+where DEIN_CUCO_CODIGO||''||DEIN_ING_ID||''|| DEIN_ID in 
+      (
+        select CUCO_CODIGO||''||ING_ID||''||ID
+        from  ogt_detalle_ing 
+        where ing_id in 
+          (
+            select id
+            from   ogt_ingreso
+            where --id=68375 and
+            /*doc_numero>='55502' and 
+            doc_tipo='XYZ'*/
+            doc_numero||'-'||doc_tipo in -- ('58818-XYZ')))
+              (
+                select doc_numero||'-'||doc_tipo
+                from ogt_detalle_documento 
+                where doc_numero||'-'||doc_tipo in
+                    (select numero_legal||'-'||tipo
+                        from ogt_documento
+                    where numero_legal in -- '55502'
+                      ( select numero
+                        from ogt_documento
+                        where tipo='ALE'
+                        --and estado='AP'
+                        and unte_codigo='FINANCIERO'
+                        AND numero_externo in  ('2026000524','2026000525','2026000526')
+                      )
+                        and tipo='XYZ'  
+                      -- and estado = 'RE'
+                    )
+              )
+          )
+      )
+    ;
+
+----OGT ----OGT ----OGT ----OGT ----OGT ----OGT ----OGT 
+----Verifica detalles ingreso
+
+
+select *
+from  
+-- delete
+ogt_detalle_ing 
+where ing_id in 
+  (
+    select id
+    from   ogt_ingreso
+    where --id=68375 and
+    /*doc_numero>='55502' and 
+    doc_tipo='XYZ'*/
+    doc_numero||'-'||doc_tipo in --('58824-XYZ'))
+      (select doc_numero||'-'||doc_tipo
+        from ogt_detalle_documento 
+        where doc_numero||'-'||doc_tipo in
+            (select numero_legal||'-'||tipo
+                from ogt_documento
+            where numero_legal in -- '55502'
+              ( select numero
+                from --DELETE 
+                ogt_documento
+                where tipo='ALE'
+                --and estado<>'AP'
+                and unte_codigo='FINANCIERO'
+                and numero_externo = '2026000525' -- in ('2026000524','2026000525','2026000526')
+              )
+                and tipo='XYZ'  
+            )
+      )
+  )
 ;
 
----Post query documento
-  select pk_sit_infbasica.sit_fn_existe_id(:ogt_documento.ter_id_receptor
+--Verificar pensionado
+select *
+from 
+-- delete 
+ogt_detalle_pensionado dp
+where dp.id_ingreso in 
+  (select id
+    from ogt_ingreso
+    where doc_numero||'-'||doc_tipo in --= '55502-XYZ'
+    (
+      select doc_numero||'-'||doc_tipo
+      from ogt_detalle_documento 
+      where doc_numero||'-'||doc_tipo in
+          (select numero_legal||'-'||tipo
+              from ogt_documento
+          where numero_legal in --'58818'
+            ( select numero
+              from --DELETE 
+              ogt_documento
+              where tipo='ALE'
+             -- and estado='RE'
+              and unte_codigo='FINANCIERO'
+              AND numero_externo in ('2026000524','2026000525','2026000526')
+            )
+              and tipo='XYZ'  
+             -- and estado = 'RE'
+          )  
+    )
+  )
+order by id desc
 ;
 
 
 --Verifica detalle documento
 select *
 from 
---delete
-ogt_detalle_documento --where valor = 822356068.70 
---where doc_numero in ('55815')
+-- delete
+ogt_detalle_documento 
+--set ter_id_recaudador=49
 where doc_numero||'-'||doc_tipo in
   (select ogt_documento.numero||'-'||ogt_documento.tipo
     from ogt_documento
-    where numero_legal in ('58824')
+    where numero_externo in  ('2026000524','2026000525','2026000526')   ---56361 de 2025
     and extract(year from fecha) IN (2026)
   )
 ;
 
 
---Verifica ingreso
-select *
-from  
---delete
- ogt_ingreso
-where --id=68375 and doc_numero='55608' 
-extract(year from fecha_consignacion)=2026
-and doc_numero = 
---order by doc_numero desc
-and doc_numero||'-'||doc_tipo --in ('58824-XYZ')
-in
-  (select  * --doc_numero||'-'||doc_tipo
-    from ogt_detalle_documento 
-    where doc_numero||'-'||doc_tipo  = '58824-XYZ' 
-    in
-        (select numero_legal||'-'||tipo 
-            from ogt_documento
-        where numero_legal in  ('58824')
-          ( select numero , numero_externo
-            from --DELETE 
-            ogt_documento
-            where tipo='ALE'
-            --and estado='AP'
-             and unte_codigo='FINANCIERO'
-             and extract(year from fecha)=2026
-             --and numero = '58824'
-            AND numero_externo = '2026000230'  -- in ('2026000203','2026000204','2026000205','2026000206') 
-          )
-            and tipo='XYZ'  
-            and estado = 'AP'
-        )
-  )
-order by id desc
-;
-
-----OGT ----OGT ----OGT ----OGT ----OGT ----OGT ----OGT 
-----Verifica detalles ingreso
-
-select *
-from  
---delete
-ogt_detalle_ing 
-where ing_id in 
-  (select id
-  from   ogt_ingreso
-  where --id=68375 and
-  /*doc_numero>='55502' and 
-  doc_tipo='XYZ'*/
-  doc_numero||'-'||doc_tipo in ('58824-XYZ'))
-    (select doc_numero||'-'||doc_tipo
-      from ogt_detalle_documento 
-      where doc_numero||'-'||doc_tipo in
-          (select numero_legal||'-'||tipo
-              from ogt_documento
-          where numero_legal in -- '55502'
-            ( select numero
-              from --DELETE 
-              ogt_documento
-              where tipo='ALE'
-              and estado='AP'
-              and unte_codigo='FINANCIERO'
-              AND numero_externo = '2025000001')
-              and tipo='XYZ'  
-              and estado = 'AP'
-          )
-    ))
-;
-
---
-select *
+--Verifica si el ACTA fue creado
+select * /*ogt_documento.numero, ogt_documento.numero_legal, 
+          ogt_documento.numero, ogt_documento.tipo,
+          ogt_documento.fecha, ogt_documento.fecha_emision_titulo, 
+          ogt_documento.fecha_compra_titulo*/
 from 
---delete
-ogt_info_cuenta
-where DEIN_CUCO_CODIGO||''||DEIN_ING_ID||''|| DEIN_ID in 
-      (select CUCO_CODIGO||''||ING_ID||''||ID
-      from  ogt_detalle_ing 
-      where ing_id in 
-        (select id
-        from   ogt_ingreso
-        where --id=68375 and
-        /*doc_numero>='55502' and 
-        doc_tipo='XYZ'*/
-        doc_numero||'-'||doc_tipo in  ('58818-XYZ')))
-          (select doc_numero||'-'||doc_tipo
-            from ogt_detalle_documento 
-            where doc_numero||'-'||doc_tipo in
-                (select numero_legal||'-'||tipo
-                    from ogt_documento
-                where numero_legal in -- '55502'
-                  ( select numero
-                    from --DELETE 
-                    ogt_documento
-                    where tipo='ALE'
-                    and estado='AP'
-                    and unte_codigo='FINANCIERO'
-                    AND numero_externo = '2026000214')
-                    and tipo='XYZ'  
-                    and estado = 'RE'
-                )
-          ))
-      )
-    ;
-
---Verificar pensionado
-select *
-from ogt_detalle_pensionado dp
-where dp.id_ingreso in 
-  (select id
-    from ogt_ingreso
-    where doc_numero||'-'||doc_tipo in --= '55502-XYZ'
-    (select doc_numero||'-'||doc_tipo
-      from ogt_detalle_documento 
-      where doc_numero||'-'||doc_tipo in
-          (select numero_legal||'-'||tipo
-              from ogt_documento
-          where numero_legal = '58818'
-            /*( select numero
-              from --DELETE 
-              ogt_documento
-              where tipo='ALE'
-              and estado='RE'
-              and unte_codigo='FINANCIERO'
-              AND numero_externo = '2026000214')*/
-              and tipo='XYZ'  
-              and estado = 'RE'
-          )
-    ))
-order by id desc
+-- delete
+ogt_documento
+where /*bin_tipo_cuenta = 'FD'
+and extract(year from fecha) IN (2026)
+and*/ numero_legal in --('58824')
+    ( select numero
+      from --DELETE 
+      ogt_documento
+      where tipo='ALE'
+     -- and estado='AP'
+      and unte_codigo='FINANCIERO'
+      AND numero_externo in ('2026000524','2026000525','2026000526')
+    )
+  and tipo='XYZ'
+ -- and estado = 'AP'
+--and fecha = SYSDATE
 ;
 
---Reporte
-select *
-from ogt_documento acta, ogt_documento d, ogt_detalle_documento dd, ogt_ingreso i, ogt_detalle_pensionado p
-where acta.tipo='ALE' AND acta.estado='AP' AND acta.unte_codigo='FINANCIERO' and acta.numero_externo= :nro_referencia_pago /*'2025000001'*/ AND 
-      d.tipo='XYZ' AND d.estado='RE' AND acta.numero = d.numero_legal and
-      d.numero_legal||'-'||d.tipo = dd.doc_numero||'-'|| dd.doc_tipo and
-      dd.doc_numero||'-'||dd.doc_tipo = i.doc_numero||'-'||i.doc_tipo and 
-      i.id = p.id_ingreso
-order by i.id desc
-;
-
-
-
---No se usa para obtener el centro de costo. Se toma de sisla.
 select * 
-  from ogt_tercero_cc
- where id_tercero in --400293
-      (select id_limay
-        from sl_relacion_tac)
- ;
-
-select id_limay, id_sisla centro_costo
-  from sl_relacion_tac
- where codigo_compa = 107766;
-
-select rt.codigo_compa, rt.id_limay, rt.id_sisla, tc.id_tercero, tc.cod_centro_costo
-from sl_relacion_tac rt, ogt_tercero_cc tc
-where rt.id_limay = tc.id_tercero
+from  
+-- delete
+ogt_documento
+where tipo='ALE'
+--and estado='AP'
+and unte_codigo='FINANCIERO'
+--and numero in (58824)
+and numero_externo in ('2026000524','2026000525','2026000526')
+AND extract(year from fecha) IN (2026)
 ;
+
+--Si borra detalle documento, debe cambiar el encabezado a PAG
+select nro_referencia_pago, estado
+from 
+-- update
+sl_pcp_encabezado
+set estado = 'PAG'
+where nro_referencia_pago in  ('2026000524','2026000525','2026000526');
+
+-- commit
+
+-->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+-----FIN VERIFICACION Y/O BORRADO
+-->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 declare
   mi_consecutivo number;
@@ -332,3 +342,8 @@ select cc.id_cuenta_cobro
    and e.nro_referencia_pago in ('2025000001'));
 
    commit;
+
+
+   DELETE OGT_DOCUMENTO where numero=60061
+
+   commit

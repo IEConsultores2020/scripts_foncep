@@ -139,4 +139,11 @@ ORDER BY 1
 
     select vigencia, count(1)
     from pr_v_orden_pago_regis_predis   
-    group by vigencia
+    group by vigencia;
+
+
+SELECT *
+        FROM OGT_REGISTRO_PRESUPUESTAL   
+where vigencia=2019         
+and unidad_ejecutora='01'
+and tipo_documento='OP'

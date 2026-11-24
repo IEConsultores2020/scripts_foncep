@@ -6,6 +6,7 @@ grant ogt_admin to sl with admin option;
 grant select,insert,update,delete on ogt_documento to sl with grant option;
 grant select,insert,update,delete on ogt_detalle_documento to sl with grant option;
 grant select,insert,update,delete on ogt_detalle_pensionado to sl with grant option;
+
 grant select on ogt_concepto_tesoreria to sl with grant option;
 grant select on ogt_tercero_cc to sl with grant option;
 grant select on ogt_ingreso to sl with grant option;
@@ -20,8 +21,9 @@ grant update, insert on ogt_ingreso to sl;
 
 grant execute on fn_actualiza_ejecutora to sl;
 
-create public synonym pk_ogt_imputacion FOR sl.pk_ogt_imputacion;
-create public synonym seguimiento FOR sl.seguimiento;
+create or replace public synonym pk_ogt_imputacion FOR ogt.pk_ogt_imputacion;
+--create public synonym seguimiento FOR sl.seguimiento;
+
 
 --connectado como shd
 grant execute,debug on shd.pk_sit_infentidades to sl with grant option;
@@ -35,4 +37,16 @@ GRANT CREATE JOB TO SL;
 GRANT EXECUTE ON DBMS_SCHEDULER TO SL;
 -- Optional, but useful for full management capabilities
 GRANT MANAGE SCHEDULER TO SL; 
+
+
+--Conectado como SYS
+grant select,update on sl.sl_relacion_terceros to ogt with grant option;
+grant execute on sl.pk_sl_interfaz_opget_cp to ogt with grant option;
+grant select, update on sl.sl_pcp_encabezado to ogt with grant option;
+grant select, update on sl.sl_pcp_cuenta_cobro to ogt with grant option;
+grant select, update on sl.sl_pcp_liquidaciones to ogt with grant option;
+grant select, update on sl.sl_pcp_pago to ogt with grant option;
+grant select, update on sl.sl_relacion_tac to ogt with grant option;
+
+
 

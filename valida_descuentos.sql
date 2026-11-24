@@ -27,6 +27,40 @@ AND fecha_inicio = '07/feb/2025'
 
 select *
 from RH_DETALLE_PAGOS_F
-where funcionario = 509
+where --funcionario = 509
 and DESCUENTOS_TIPO = 'LIBRANZA'
-and descuentos_numero in (4,5)
+and descuentos_numero in (4,5);
+
+select tipo, nit, nombre, sum(monto)
+from (
+    select case
+            when dp.descuentos_tipo like 'APORTEAFP%' then 'APORTEAFP'
+            when dp.descuentos_tipo like 'APORTEAFC%' then 'APORTEAFC'
+            when dp.descuentos_tipo like 'APORTES%' then 'APORTES'
+            when dp.descuentos_tipo like 'CREDITOVIVIENDA%' then 'CREDITOVIVIENDA'
+            when dp.descuentos_tipo like 'FONDOEMPLEADOS%' then 'FONDOEMPLEADOS'
+            when dp.descuentos_tipo like 'LIBRANZA%' then 'LIBRANZA'
+            when dp.descuentos_tipo like 'PLANCOMPLEMENTARIO%' then 'PLANCOMPLEMENTARIO'
+            when dp.descuentos_tipo like 'SINDICATO%' then 'SINDICATO'
+            else ''
+        end tipo,
+        b.numero_identificacion_benefici nit,
+        b.beneficiario nombre,
+        f.valor_cuota,
+        dp.monto monto /*,
+        --f.*
+        --select b. --*/
+    from rh_descuentos_f f, 
+        rh_detalle_pagos_f dp,
+        rh_beneficiarios b
+    where f.funcionario = dp.funcionario
+    and f.tipo=dp.descuentos_tipo
+    and f.numero_descuento=dp.descuentos_numero
+    and f.clase = dp.clase
+    and f.beneficiario = b.codigo_beneficiario
+    and extract(month from dp.fecha_pago)=8
+) t
+where t.tipo is not null
+group by tipo, nit, nombre
+order by tipo
+

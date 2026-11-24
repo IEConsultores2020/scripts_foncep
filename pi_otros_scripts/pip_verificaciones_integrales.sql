@@ -1,6 +1,17 @@
 select e.id, e.nro_referencia_pago, e.estado
 from sl_pcp_encabezado e
-where e.nro_referencia_pago = '2026000216';
+where e.nro_referencia_pago in ('2026000524','2026000525')
+;
+
+update sl_pcp_encabezado e
+set e.estado='REG'
+where e.nro_referencia_pago in ('2026000524','2026000525','2026000526')
+;
+
+--commit;
+
+select *
+from SL_PCP_PAGO
 
 
 --CUENTAS DE COBRO EN SISLA
@@ -11,26 +22,36 @@ select e.nro_referencia_pago,
        --cc.id ctac_id,
        cc.id_cuenta_cobro,
        cc.codigo_entidad centi,
-       --cc.id_encabezado,
+       cc.id_encabezado,
        cc.estado cest,
        --cc.valor_capital cvcapital,
        --cc.valor_intereses cvinteres,
       -- e.*,
-       --l.id li_id,
+       l.id li_id,
       -- l.estado li_est,
        l.interno_persona id_persona, 
        l.valor_capital capital, l.valor_interes interes,
-       p.id_banco, l.*
-      -- select *
+       p.id_banco --, l.*
+      -- select l.*
   from sl_pcp_encabezado e,
-       sl_pcp_cuenta_cobro cc,
+      sl_pcp_cuenta_cobro cc,
        sl_pcp_liquidaciones l,
        sl_pcp_pago p
  where e.id = cc.id_encabezado
    and cc.id = l.id_det_cuenta_cobro
    and e.nro_referencia_pago = p.nro_referencia_pago
-   --and e.estado = 'PAG'
-   and e.nro_referencia_pago in ('2026000216'); --,'2025000003');
+  -- and e.estado not in 'IMP'
+  and e.nro_referencia_pago IN ('2026000524','2026000525','2026000526')
+  -- order by e.nro_referencia_pago desc
+;
+
+select *
+from sl_pcp_liquidaciones l
+order by id_factura, id_det_cuenta_cobro, interno_persona
+;
+
+   select * from  sl_pcp_cuenta_cobro cc
+;
 
    select id_sisla, id_tercero
    from SL_RELACION_TERCEROS
@@ -81,16 +102,16 @@ from sl_pcp_pago
 where nro_referencia_pago in ('2026000211'); 
 
 ----Cunsultar el acta del radicado
-select * from 
+select numero_externo from 
  ogt_documento
  where tipo = 'ALE'
-   --and estado = 'RE'
+   and estado = 'RE'
    and unte_codigo = 'FINANCIERO'
-   and numero_externo in ( '2026000211') 
+   --and*/ numero_externo like '2026000427%' --in ( '2026000211') 
    and extract(year from fecha) in ( 2026 );
 
----Consultar los documentos asociados al acta
-select * from 
+---Consultar el acta asociados a una referencia de pago
+select numero, tipo, estado, fecha,numero_legal from 
  ogt_documento
  where numero_legal in (
    select numero
@@ -98,37 +119,172 @@ select * from
     where tipo = 'ALE'
       --and estado='RE'
       and unte_codigo = 'FINANCIERO'
-      and numero_externo in ( '2026000211')
+      and numero_externo in ( '2026000524','2026000525')
 )
 and tipo = 'XYZ'   
 ;
 
---truncate table sl.tab_lch_segui;
+----Consultar al actas de un día mes.
+select * --numero acta, numero_externo factura, estado, fecha
+from ogt_documento
+ where tipo = 'ALE'
+   --and estado = 'RE'
+   and unte_codigo = 'FINANCIERO'
+   and numero_externo = nvl(:factura,numero_externo) --'2026000358' 
+   and extract(year from fecha) in nvl(:agno,extract(year from fecha))
+   and extract(month from fecha) in nvl(:mes,extract(month from fecha))
+   and extract(day from fecha) in nvl(:dd,extract(day from fecha))
+   ;
 
-select * --distinct mensaje 
-from sl.tab_lch_segui   
-where fecha >= '28/JUL/2026'
-and mensaje like 'Tiempo llenar_tabla_tmp_liquidaciones%'
-order by consec desc
+
+--Consultar el acta con su factura, cuenta de cobro 
+select d.numero acta, d.numero_externo factura, tsl.id_cuenta_cobro cta_cobro,
+    d.estado Eacta, tsl.estado Efctra,
+    d.fecha fecha_acta, tsl.fecha_sistema fecha_factura, 
+     tsl.codigo_entidad entdd, valor_capital "$K", valor_intereses "$i"
+-- select  * 
+from ogt_documento d
+join
+  (
+    select e.nro_referencia_pago, e.estado, e.fecha_vencimiento, cc.codigo_entidad, cc.id_cuenta_cobro,
+      l.interno_persona, e.fecha_sistema, cc.valor_capital, cc.valor_intereses
+    -- select l.*
+    from sl_pcp_encabezado e
+    join sl_pcp_cuenta_cobro cc on e.id = cc.id_encabezado
+    join sl_pcp_liquidaciones l on cc.id = l.id_det_cuenta_cobro
+    join sl_pcp_pago p on e.nro_referencia_pago = p.nro_referencia_pago
+    where  e.nro_referencia_pago = nvl(:factura,e.nro_referencia_pago) --'2026000358' 
+    and cc.id_cuenta_cobro = nvl(:cuenta_cobro,cc.id_cuenta_cobro)
+    and extract(year from e.fecha_sistema) = nvl(:agno,extract(year from e.fecha_sistema))
+    and extract(month from e.fecha_sistema) = nvl(:mes,extract(month from e.fecha_sistema))
+    and extract(day from e.fecha_sistema) = nvl(:dd,extract(day from e.fecha_sistema))
+    ) tsl on tsl.fecha_sistema <= d.fecha and d.numero_externo = tsl.nro_referencia_pago
+ where d.tipo = 'ALE'
+   and d.unte_codigo = 'FINANCIERO'
+   and d.estado = nvl(:estado_acta_RE_AP,d.estado)
+ order by 1,2,3 
+   ;
+
+--Consultar el acta con su factura, cuenta de cobro, liquidación y pensionado
+select d.numero acta, d.numero_externo factura, tsl.id_cuenta_cobro,
+    d.estado Eacta, tsl.estado Efctra,
+    d.fecha fecha_acta, tsl.fecha_sistema fecha_factura, 
+     tsl.codigo_entidad entdd, valor_capital "$K", valor_intereses "$i", 
+    interno_persona Prsona, --fini_pens,
+     k_pens "$k_pens", i_pens "$i_pens"
+-- select  * 
+from ogt_documento d
+join
+  (
+    select e.nro_referencia_pago, e.estado, e.fecha_vencimiento, cc.codigo_entidad, cc.id_cuenta_cobro,
+      l.interno_persona, e.fecha_sistema, cc.valor_capital, cc.valor_intereses, 
+       l.fecha_periodo_ini fini_pens, l.valor_capital k_pens, l.valor_interes i_pens
+    -- select l.*
+    from sl_pcp_encabezado e
+    join sl_pcp_cuenta_cobro cc on e.id = cc.id_encabezado
+    join sl_pcp_liquidaciones l on cc.id = l.id_det_cuenta_cobro
+    join sl_pcp_pago p on e.nro_referencia_pago = p.nro_referencia_pago
+    where  e.nro_referencia_pago = nvl(:factura,e.nro_referencia_pago) --'2026000358' 
+    and cc.id_cuenta_cobro = nvl(:cuenta_cobro,cc.id_cuenta_cobro)
+    and extract(year from e.fecha_sistema) = nvl(:agno,extract(year from e.fecha_sistema))
+    and extract(month from e.fecha_sistema) = nvl(:mes,extract(month from e.fecha_sistema))
+    and extract(day from e.fecha_sistema) = nvl(:dd,extract(day from e.fecha_sistema))
+    ) tsl on tsl.fecha_sistema <= d.fecha and d.numero_externo = tsl.nro_referencia_pago
+ where d.tipo = 'ALE'
+   and d.unte_codigo = 'FINANCIERO'
+   and d.estado = nvl(:estado_acta_RE_AP,d.estado)
+ order by 1,2,3 
+   ;   
+
+--Consultar actas que no se imputaron
+select d.numero acta, 
+    d.estado estado_acta, d.fecha fecha_acta, 
+     tsl.codigo_entidad, tm.mensaje,
+      d.tipo 
+   ,d.unte_codigo 
+   , d.estado
+     --select distinct d.estado
+from ogt_documento d
+join
+  (
+    select e.nro_referencia_pago, e.estado, e.fecha_vencimiento, cc.codigo_entidad, cc.id_cuenta_cobro,
+      l.interno_persona, e.fecha_sistema
+    -- select *
+    from sl_pcp_encabezado e
+    join sl_pcp_cuenta_cobro cc on e.id = cc.id_encabezado
+    join sl_pcp_liquidaciones l on cc.id = l.id_det_cuenta_cobro
+    join sl_pcp_pago p on e.nro_referencia_pago = p.nro_referencia_pago
+    where  e.nro_referencia_pago = nvl(:factura,e.nro_referencia_pago) --'2026000358' 
+    and cc.id_cuenta_cobro = nvl(:cuenta_cobro,cc.id_cuenta_cobro)
+    and extract(year from e.fecha_sistema) = nvl(:agno,extract(year from e.fecha_sistema))
+    and extract(month from e.fecha_sistema) = nvl(:mes,extract(month from e.fecha_sistema))
+    and extract(day from e.fecha_sistema) = nvl(:dd,extract(day from e.fecha_sistema))
+    ) tsl on tsl.fecha_sistema <= d.fecha and d.numero_externo = tsl.nro_referencia_pago
+    left join 
+      (select distinct mensaje from tab_lch_segui
+        where extract(year from fecha) = nvl(:agno,extract(year from fecha))
+        and extract(month from fecha) >= nvl(:mes,extract(month from fecha))
+        and extract(day from fecha) >= nvl(:dd,extract(day from fecha))) tm 
+      on tm.mensaje like  'OGT->LEG>%FALLID%'||tsl.nro_referencia_pago||'%'||tsl.id_cuenta_cobro||'%' 
+ where d.tipo = 'ALE'
+   and d.unte_codigo = 'FINANCIERO'
+   --and d.numero in (60082,60085)
+   and d.estado = 'RE'
+ order by 1,2,3 
+   ;
+
+
+
+commit;
+
+select *
+from sl.tab_lch_segui
+where extract(year from fecha) = nvl(:agno,extract(year from fecha))
+and extract(month from fecha) >= nvl(:mes,extract(month from fecha))
+and extract(day from fecha) >= nvl(:dd,extract(day from fecha))
+and mensaje like  'OGT->LEG>%FALLID%'||:factura||'%'||:cuenta_cobro||'%'   --2026000427  2026000357
 ;
 
-and consec = (select max(consec) from tab_lch_segui 
-              where /*mensaje like '%55585%'*/
-                mensaje like '%2026000206%') -- 'OGT->LEG>%FALLID%') --'OGT->LEG>Legalización EXITOSA ingreso: 608727%')
---and mensaje like 'OGT->LEG>Recaudo FALLIDO en SISLA para referencia:%'
-order by consec DESC
-; --55585  2026000187
 
---truncate table tab_lch_segui;
+--truncate table ;
+--create table tab_lch_segui20261013 as
+select consec, mensaje
+from tab_lch_segui   
+order by consec desc
+;  --3982435  3982453
 
-commit
+
+--delete  tab_lch_segui   
+--commit;
+
+
+select distinct mensaje --max(consec) 
+  from tab_lch_segui 
+  where mensaje like  'OGT->LEG>%FALLID%2026000524%'
+  and fecha >= '13-OCT-2026'
+  order by 1;
+
+60086 OGT->LEG>Recaudo FALLIDO en SISLA para referencia: 2026000562. Saldo cuenta de cobro: 2025000952 es menor a valor pago capital: 18634
+60082 OGT->LEG>Recaudo FALLIDO en SISLA para referencia: 2026000555. Saldo cuenta de cobro: 2021000100 es menor a valor pago capital: 1122678
+60085 OGT->LEG>Recaudo FALLIDO en SISLA para referencia: 2026000559. Saldo cuenta de cobro: 2025000629 es menor a valor pago capital: 9317
+
+select *
+from tab_lch_segui
+order by 2 desc
+/*
+where consec > (
+select max(consec) from tab_lch_segui   where mensaje like  '%2026000524%'
+)*/;
+
+-- delete tab_lch_segui;
+-- commit
 
 declare
   p_resp varchar2(4000);
   p_procesado boolean;
 begin
   pk_ogt_imputacion.pr_procesar_imputacion(    
-      p_nro_referencia_pago => '2026000204',
+      p_nro_referencia_pago => '2026000525',
       p_usuario             => 'user',
       p_resp                => p_resp,
       p_procesado           => p_procesado
@@ -138,70 +294,26 @@ begin
 end;   
 
 
-begin
-  pk_ogt_imputacion.pr_procesar_imputacion (    
-
-      p_usuario     => user
-   ) ;
-end;   
-
-update --select * from
-   sl_pcp_encabezado 
-  set estado='PAG'
-  where nro_referencia_pago =   '2026000214'
-  ;
-
---rollback;
-
---commit;
-
-
-  SELECT * 
-  FROM ogt_info_ing
-  WHERE VALOR= '31132';
-
-
-  ogt_fn_dinamica_actualiza (
-      mi_clase_info    => 'CONCEPTO_TESORERIA',
-      mi_tipo_info     => 'DESCRIPCION',
-      p_tipo_info => ' WHERE  id         =  ''00-02-37-19-00-00-00'' '
-   ) ;
-
-   SELECT NUMERO_LEGAL
-   FROM DOCUMENTO
-----
---ID no  corresponde
-
-
-SELECT * FROM ogt_DOCUMENTO  WHERE numero = '55540'   AND tipo   = 'XYZ'
-
-SELECT * --numero, tipo, fecha_compra_titulo, numero_legal, tipo_legal 
-FROM ogt_DOCUMENTO  WHERE /*numero=98232 and*/ numero_legal = '55540'   AND tipo   = 'XYZ'
-
-select doc_numero from ogt_ingreso where doc_numero=98232 and doc_tipo='XYZ';
-
-select * from all_synonyms where synonym_name like '%SL_PCP_USUARIOS%';
-
-select * from all_privileges where grantee like '%PK_SL_PCP_USUARIOS%';
-
-pk_sl_pcp_usuarios.pr_listar_usuarios(p_cursor => :mi_cursor);
-
-select usu.id, usu.usuario, usu.nombre_usuario, bin.resultado, usu.estado
-     from   SL_PCP_USUARIOS usu, bintablas bin
-     where  /*to_char(usu.centro_costo) = bin.argumento
-     and*/    bin.grupo = 'SISLA'
-     and    nombre = 'CENTROS_COSTO_CP'
-     and    usu.centro_costo = null
-     order by bin.resultado;
-
-select * from sl_pcp_usuarios     ;
+--commit
 
 select *
-from bintablas
-where grupo = 'GENERAL'
-and nombre = 'IDENTIFICACION'
-and argumento = 'TAC';
+from binconsecutivo
+where grupo='OPGET'
+and nombre='DOC_NUM'
+and vigencia=2002
+and codigo_compania='000'
+
+set echo on
+declare
+  mi_sec number;
+begin
+  mi_sec :=  pk_secuencial.fn_traer_consecutivo('OPGET', 'DOC_NUM', '2002', '000' );
+  dbms_output.put_line('mi_sec:'||mi_sec);
+end;
+commit
+rollback;
 
 
-
+select *
+from ogt_detalle_pensionado;
 

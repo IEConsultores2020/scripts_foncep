@@ -1,0 +1,32 @@
+DECLARE
+    v_conteo NUMBER;
+BEGIN
+    -- Comprobamos si la tabla ya existe en el esquema 'SL'
+    SELECT COUNT(*)
+    INTO v_conteo
+    FROM all_tables
+    WHERE owner = 'SL' 
+      AND table_name = 'SL_PCP_CONTROL_USUARIOS';
+
+    -- Si el conteo es 0 (no existe), procedemos a crearla
+    IF v_conteo = 0 THEN
+        EXECUTE IMMEDIATE '
+            CREATE TABLE "SL"."SL_PCP_CONTROL_USUARIOS" 
+            ( 
+                "ID_USUARIO" NUMBER(18,0) NOT NULL ENABLE, 
+                "CENTRO_COSTO" NUMBER(10,0) NOT NULL ENABLE, 
+                "ESTADO" VARCHAR2(10) NOT NULL ENABLE, 
+                "FECHA_SISTEMA" DATE DEFAULT SYSDATE
+            ) SEGMENT CREATION IMMEDIATE 
+            PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 
+            NOCOMPRESS LOGGING
+            STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+            PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+            BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+            TABLESPACE "SLDAT"
+        ';
+        DBMS_OUTPUT.PUT_LINE('Tabla SL_PCP_CONTROL_USUARIOS creada exitosamente.');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('La tabla SL_PCP_CONTROL_USUARIOS ya existe. Se omitió la creación.');
+    END IF;
+END;

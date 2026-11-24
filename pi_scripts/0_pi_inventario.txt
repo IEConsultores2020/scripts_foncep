@@ -1,0 +1,33 @@
+--Adicionó campo para el incluir información de pensionado en el acta.
+1_pi_alter_tables_ogt.sql
+
+--Modificación de las tablas del portal de pagos para adicionar el estado
+2_pi_alter_tablas_pcp.sql
+
+--Creación nuevo tipo documento. Tercero TAC en bintablas, para la forma OGT_ACTA_INGRESO
+3_pi_insert_bintabla_pcp.sql
+
+--Se crea tabla en OGT para registrar los pagos por pensionado
+4_pi_ogt_crea_tabla_detalle_pensionado.sql
+
+--Crear synonymos publicos
+5_pi_ogt_sinonimos_publicos.sql
+
+--Permisos a ogt
+6_pi_permisos.sql
+
+--Script de creación paquete almacenado de la imputación.
+/* 
+    prerequisito: configuraciones contables y tesorería.
+    
+	paquete ogt_pk_ingreso, recompilar siguiente paquete al final de la ejecución.
+*/                
+      
+7_pi_pk_ogt_imputacion_c_spec.sql
+8_pi_pk_ogt_imputacion_c_body.sql
+
+--Jobs
+9_pi_autoriza_crear_jobs.sql
+10_pi_ogt_job_mputacion.sql
+
+
